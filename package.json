@@ -1,0 +1,31 @@
+{
+  "name": "file-box",
+  "version": "0.0.1",
+  "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local, remote url, or cloud storage)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zixia/node-file-box.git"
+  },
+  "keywords": [
+    "file",
+    "virtual",
+    "cloud",
+    "url",
+    "stream",
+    "http",
+    "api"
+  ],
+  "author": "Huan LI <zixia@zixia.net>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/zixia/node-file-box/issues"
+  },
+  "homepage": "https://github.com/zixia/node-file-box#readme"
+}
