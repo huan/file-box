@@ -35,15 +35,15 @@ export class FileBox implements Pipeable {
    * Static Properties
    *
    */
-  public static async fromRemote(
+  public static fromRemote(
     url       : string,
     name?     : string,
     metadata? : { [idx: string]: string },
-  ): Promise<FileBox> {
+  ): FileBox {
     const type = FileBoxType.Remote
 
     if (!name) {
-      name = await this.fetchRemoteFileName(url)
+      name = nodePath.parse(url).base
     }
 
     const options: FileBoxOptions = {
@@ -56,35 +56,6 @@ export class FileBox implements Pipeable {
 
     const box = new FileBox(options)
     return box
-  }
-
-  private static async fetchRemoteFileName(
-    url: string,
-  ): Promise<string> {
-    /**
-     * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
-     *  > Content-Disposition: attachment; filename="cool.html"
-     */
-
-    // const headers = new Headers({
-    //   // a: 'b',
-    // })
-
-    const request = new Request(url, {
-      method: 'HEAD',
-      // headers,
-      mode: 'cors',
-      redirect: 'follow',
-    })
-
-    const name = await fetch(request)
-      .then(resp => resp.headers.get('Content-Disposition'))
-      .then(value => value!.match(/attachment; filename="(.+)"/))
-      .then(matches => matches![1])
-
-    // TODO: check the ext for name, if not exist, use MimeType to set one.
-
-    return name
   }
 
   public static fromLocal(
@@ -153,8 +124,10 @@ export class FileBox implements Pipeable {
    *
    *
    */
+  // need be update from the remote url(possible)
+  public name: string
+
   public readonly lastModified: number
-  public readonly name        : string
   public readonly size        : number
   public readonly type        : FileBoxType
 
@@ -217,6 +190,43 @@ export class FileBox implements Pipeable {
     throw new Error('WIP')
   }
 
+  public async syncRemoteName(): Promise<void> {
+    /**
+     * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
+     *  > Content-Disposition: attachment; filename="cool.html"
+     */
+
+    // const headers = new Headers({
+    //   // a: 'b',
+    // })
+    if (this.type !== FileBoxType.Remote) {
+      throw new Error('type is not Remote')
+    }
+    if (!this.url) {
+      throw new Error('no url')
+    }
+
+    const request = new Request(this.url, {
+      method: 'HEAD',
+      // headers,
+      mode: 'cors',
+      redirect: 'follow',
+    })
+
+    const name = await fetch(request)
+      .then(resp => resp.headers.get('Content-Disposition'))
+      .then(value => value!.match(/attachment; filename="(.+)"/))
+      .then(matches => matches![1] || undefined)
+
+    // TODO: check the ext for name, if not exist, use MimeType to set one.
+
+    if (!name) {
+      throw new Error('get remote name fail')
+    }
+
+    this.name = name
+  }
+
   public pipe<T extends NodeJS.WritableStream>(
     destination: T,
   ): T {
@@ -271,8 +281,7 @@ export class FileBox implements Pipeable {
   private pipeRemote(
     destination: NodeJS.WritableStream,
   ): void {
-    const url = this.url
-    if (!url) {
+    if (!this.url) {
       throw new Error('no url')
     }
 
@@ -287,7 +296,7 @@ export class FileBox implements Pipeable {
     }
     const headers = new Headers(headerOptions)
 
-    const request = new Request(url, {
+    const request = new Request(this.url, {
       headers,
       mode: 'cors',
       redirect: 'follow',
@@ -295,7 +304,8 @@ export class FileBox implements Pipeable {
 
     fetch(request).then(response => {
       // https://groups.google.com/a/chromium.org/forum/#!topic/blink-dev/0EW0_vT_MOU
-      (response.body as any).pipeThrough(destination)
+      // https://github.com/bitinn/node-fetch/issues/134
+      (response.body as any as Pipeable).pipe(destination)
     })
   }
 

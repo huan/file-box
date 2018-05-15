@@ -1,18 +1,19 @@
 {
   "name": "file-box",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local, remote url, or cloud storage)",
-  "main": "index.js",
+  "main": "dist/src/index.js",
+  "typings": "dist/src/index.d.ts",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
-    "clean": "shx rm -fr dist/* bundles/*",
-    "dist": "npm run clean && npm run build && npm run rollup && npm run dist:es6to5",
+    "clean": "shx rm -fr dist/*",
+    "dist": "npm run clean && tsc",
     "lint": "npm run lint:ts",
     "lint:ts": "tslint --project tsconfig.json && tsc --noEmit",
     "test": "npm run lint && npm run test:unit",
-    "test:unit": "blue-tape -r ts-node/register \"src/**/*.spec.ts\" \"tests/**/*.spec.ts\"",
+    "test:unit": "blue-tape -r ts-node/register \"src/**/*.test.ts\" \"tests/**/*.test.ts\"",
     "test:pack": "bash -x scripts/npm-pack-testing.sh"
   },
   "repository": {
