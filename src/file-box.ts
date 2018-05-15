@@ -18,6 +18,10 @@ import {
   Stream,
 }                     from 'stream'
 
+import {
+  VERSION,
+}             from './config'
+
 export interface Pipeable {
   pipe: typeof Stream.prototype.pipe,
 }
@@ -169,6 +173,10 @@ export class FileBox implements Pipeable {
     return box
   }
 
+  public static version() {
+    return VERSION
+  }
+
   /**
    *
    *
@@ -200,6 +208,10 @@ export class FileBox implements Pipeable {
     // Contents = stream, buffer, or null if not read
     this.contents = options.contents || null
 
+  }
+
+  public version() {
+    return VERSION
   }
 
   public toJSON(): string {
@@ -285,6 +297,7 @@ export class FileBox implements Pipeable {
     }
     this.stream.pipe(destination)
   }
+
 }
 
 export default FileBox

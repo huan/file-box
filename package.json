@@ -7,7 +7,13 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo test"
+    "clean": "shx rm -fr dist/* bundles/*",
+    "dist": "npm run clean && npm run build && npm run rollup && npm run dist:es6to5",
+    "lint": "npm run lint:ts",
+    "lint:ts": "tslint --project tsconfig.json && tsc --noEmit",
+    "test": "npm run lint && npm run test:unit",
+    "test:unit": "blue-tape -r ts-node/register \"src/**/*.spec.ts\" \"tests/**/*.spec.ts\"",
+    "test:pack": "bash -x scripts/npm-pack-testing.sh"
   },
   "repository": {
     "type": "git",
@@ -32,13 +38,26 @@
     "@types/blue-tape": "^0.1.31",
     "@types/isomorphic-fetch": "0.0.34",
     "@types/node": "^10.0.8",
+    "@types/semver": "^5.5.0",
     "blue-tape": "^1.0.0",
+    "git-scripts": "^0.2.1",
     "reflect-metadata": "^0.1.12",
+    "semver": "^5.5.0",
+    "shx": "^0.2.2",
     "ts-node": "^6.0.3",
     "tslint": "^5.10.0",
     "typescript": "^2.8.3"
   },
   "dependencies": {
     "isomorphic-fetch": "^2.2.1"
+  },
+  "git": {
+    "scripts": {
+      "pre-push": "bash scripts/pre-push.sh"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "latest"
   }
 }
