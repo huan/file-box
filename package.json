@@ -1,7 +1,7 @@
 {
   "name": "file-box",
   "version": "0.1.1",
-  "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local, remote url, or cloud storage)",
+  "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "main": "dist/src/index.js",
   "typings": "dist/src/index.d.ts",
   "directories": {

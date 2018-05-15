@@ -19,7 +19,6 @@
     , "noImplicitThis": true
     , "strictNullChecks": true
 
-
     , "noLib": false
     , "skipLibCheck": true
     , "lib": [

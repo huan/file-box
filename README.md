@@ -1,6 +1,6 @@
 # FILEBOX
 
-Pack a file in a File Box for easy move/transfer between servers with the least payload, and no matter of where it is.(local, remote url, or cloud storage)
+Pack a file in a Box for easy transport between servers with the least payload, no mater than where it is.(local path, remote url, or cloud storage)
 
 ![File Box](https://zixia.github.io/node-file-box/images/file-box-logo.jpg)
 
@@ -25,7 +25,7 @@ PLEASE COME BACK AFTER 4 WEEKS ...
 
 [Node.js Documentation > URL Strings and URL Objects](https://nodejs.org/docs/latest/api/url.html#url_url_strings_and_url_objects)
 
-```
+```asciiart
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                            href                                             │
 ├──────────┬──┬─────────────────────┬─────────────────────┬───────────────────────────┬───────┤
@@ -49,7 +49,7 @@ PLEASE COME BACK AFTER 4 WEEKS ...
 
 [Node.js Documentation > path.parse(path)](https://nodejs.org/api/path.html#path_path_parse_path)
 
-```
+```asciiart
 ┌─────────────────────┬────────────┐
 │          dir        │    base    │
 ├──────┬              ├──────┬─────┤
