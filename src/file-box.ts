@@ -15,48 +15,18 @@ import * as fetch     from 'isomorphic-fetch'
 import {
   PassThrough,
   // Readable,
-  Stream,
+  // Stream,
 }                     from 'stream'
 
 import {
   VERSION,
 }             from './config'
 
-export interface Pipeable {
-  pipe: typeof Stream.prototype.pipe,
-}
-
-export enum FileBoxType {
-  UNKNOWN = 0,
-  BUFFER,
-  LOCAL,
-  REMOTE,
-  STREAM,
-}
-
-export interface FileBoxOptions {
-    /**
-     * File base name: name + ext
-     *  like: "file.txt"
-     */
-    name: string
-
-    /**
-     * URI to the file
-     * See:
-     *  https://nodejs.org/api/fs.html#fs_url_object_support
-     *  https://danielmiessler.com/study/url-uri/
-     */
-    url?      : string
-    metadata? : Object  // FIXME
-    buffer?   : Buffer
-    stream?   : NodeJS.ReadableStream
-
-    /**
-     * FileType: LOCAL, REMOTE, BUFFER, STREAM
-     */
-    type: FileBoxType
-}
+import {
+  FileBoxType,
+  FileBoxOptions,
+  Pipeable,
+}                   from './file-box.type'
 
 export class FileBox implements Pipeable {
 
@@ -66,14 +36,14 @@ export class FileBox implements Pipeable {
    *
    */
   public static async fromRemote(
-    url:    string,
-    name?:  string,
-    metadata?:  Object,
+    url       : string,
+    name?     : string,
+    metadata? : { [idx: string]: string },
   ): Promise<FileBox> {
-    const type = FileBoxType.REMOTE
+    const type = FileBoxType.Remote
 
     if (!name) {
-      name = await this.fetchRemoteFilename(url)
+      name = await this.fetchRemoteFileName(url)
     }
 
     const options: FileBoxOptions = {
@@ -85,11 +55,10 @@ export class FileBox implements Pipeable {
     }
 
     const box = new FileBox(options)
-
     return box
   }
 
-  private static async fetchRemoteFilename(
+  private static async fetchRemoteFileName(
     url: string,
   ): Promise<string> {
     /**
@@ -122,7 +91,7 @@ export class FileBox implements Pipeable {
     path:   string,
     name?:  string,
   ): FileBox {
-    const type = FileBoxType.LOCAL
+    const type = FileBoxType.Local
 
     if (!name) {
       name = nodePath.parse(path).base
@@ -142,7 +111,7 @@ export class FileBox implements Pipeable {
     stream: NodeJS.ReadableStream,
     name:   string,
   ): FileBox {
-    const type = FileBoxType.STREAM
+    const type = FileBoxType.Stream
 
     const options: FileBoxOptions = {
       type,
@@ -160,7 +129,7 @@ export class FileBox implements Pipeable {
     buffer: Buffer,
     name:   string,
   ): FileBox {
-    const type = FileBoxType.BUFFER
+    const type = FileBoxType.Buffer
 
     const options: FileBoxOptions = {
       type,
@@ -189,13 +158,12 @@ export class FileBox implements Pipeable {
   public readonly size        : number
   public readonly type        : FileBoxType
 
-
   /**
    * Lazy load data:
    *  Do not read file to Buffer until there's a consumer.
    */
   private readonly buffer?: Buffer
-  private readonly url        : string
+  private readonly url?   : string
   private readonly stream?: NodeJS.ReadableStream
 
   private readonly metadata?: { [idx: string]: string }
@@ -205,8 +173,39 @@ export class FileBox implements Pipeable {
   ) {
 
     this.name = options.name
-    // Contents = stream, buffer, or null if not read
-    this.contents = options.contents || null
+    this.type = options.type
+
+    switch (options.type) {
+      case FileBoxType.Buffer:
+        if (!options.buffer) {
+          throw new Error('no buffer')
+        }
+        this.buffer = options.buffer
+        break
+
+      case FileBoxType.Local:
+      case FileBoxType.Remote:
+        if (!options.url) {
+          throw new Error('no url(path)')
+        }
+        this.url = options.url
+
+        if (options.metadata) {
+          this.metadata = options.metadata
+        }
+
+        break
+
+      case FileBoxType.Stream:
+        if (!options.stream) {
+          throw new Error('no stream')
+        }
+        this.stream = options.stream
+        break
+
+      default:
+        throw new Error('unknown type: ' + FileBoxType[options.type])
+    }
 
   }
 
@@ -215,26 +214,26 @@ export class FileBox implements Pipeable {
   }
 
   public toJSON(): string {
-    return ''
+    throw new Error('WIP')
   }
 
   public pipe<T extends NodeJS.WritableStream>(
     destination: T,
   ): T {
     switch (this.type) {
-      case FileBoxType.BUFFER:
+      case FileBoxType.Buffer:
         this.pipeBuffer(destination)
         break
 
-      case FileBoxType.LOCAL:
+      case FileBoxType.Local:
         this.pipeLocal(destination)
         break
 
-      case FileBoxType.REMOTE:
+      case FileBoxType.Remote:
         this.pipeRemote(destination)
         break
 
-      case FileBoxType.STREAM:
+      case FileBoxType.Stream:
         this.pipeStream(destination)
         break
 
@@ -249,7 +248,7 @@ export class FileBox implements Pipeable {
    * https://stackoverflow.com/a/16044400/1123955
    */
   private pipeBuffer(
-    destination: NodeJS.WritableStream
+    destination: NodeJS.WritableStream,
   ): void {
     const buffer = this.buffer
 
@@ -262,7 +261,9 @@ export class FileBox implements Pipeable {
     destination: NodeJS.WritableStream,
   ): void {
     const path = this.url
-
+    if (!path) {
+      throw new Error('no url(path)')
+    }
     const readStream = fs.createReadStream(path)
     readStream.pipe(destination)
   }
@@ -271,11 +272,20 @@ export class FileBox implements Pipeable {
     destination: NodeJS.WritableStream,
   ): void {
     const url = this.url
-    // const metadata = this.metadata
+    if (!url) {
+      throw new Error('no url')
+    }
 
-    const headers = new Headers({
-      a: 'b',
-    })
+    let headerOptions = {
+      //
+    }
+    if (this.metadata) {
+      headerOptions = {
+        ...headerOptions,
+        ...this.metadata,
+      }
+    }
+    const headers = new Headers(headerOptions)
 
     const request = new Request(url, {
       headers,
