@@ -6,32 +6,15 @@ Pack a file in a Box for easy transport between servers with the least payload, 
 
 ## API Reference
 
-1. `name`: the file name of the file in the box
+### 1. Load File in Box
 
-```ts
-const fileBox = FileBox.fromRemote(
-  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
-)
-console.log(fileBox.name) // Output: file-box-logo.jpg
-```
-
-1. `version()`: version of the FileBox
-
-1. `toJSON()`: to be implemented
-
-1. `syncRemoteName()`: try to get the filename from the HTTP Response Header
-
-HTTP Header Example: `Content-Disposition: attachment; filename="filename.ext"`
-
-### Load File to Box
-
-1. `fromLocal(filePath: string): FileBox`
+#### 1.1 `fromLocal(filePath: string): FileBox`
 
 ```ts
 const fileBox = FileBox.fromLocal('/tmp/test.txt')
 ```
 
-1. `fromRemote(url: string, name?: string, headers?: { [idx: string]: string }): FileBox`
+#### 1.2 `fromRemote(url: string, name?: string, headers?: { [idx: string]: string }): FileBox`
 
 ```ts
 const fileBox = FileBox.fromRemote(
@@ -41,19 +24,32 @@ const fileBox = FileBox.fromRemote(
 )
 ```
 
-1. `fromStream(stream: NoddeJS.ReadableStream, name: string): FileBox`
+#### 1.3 `fromStream(stream: NoddeJS.ReadableStream, name: string): FileBox`
 
 ```ts
 const fileBox = FileBox.fromStream(res, '/tmp/download.zip')
 ```
 
-1. `fromBuffer(buffer: Buffer, name: string): FileBox`
+#### 1.4 `fromBuffer(buffer: Buffer, name: string): FileBox`
 
 ```ts
 const fileBox = FileBox.fromBuffer(buf, '/tmp/download.zip')
 ```
 
-### Pipe File to Strem
+### 2. Get File from Box
+
+### 2.1 Save to File System
+
+1. `save(path: string): Promise<void>`
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+)
+await fileBox.save('/tmp/logo.jpg')
+```
+
+#### 2.2 Pipe to Stream
 
 1. `pipe(destination: Writable): Promise<void>`
 
@@ -65,16 +61,24 @@ const writableStream = fs.createWritable('/tmp/logo.jpg')
 fileBox.pipe(writableStream)
 ```
 
-### Save to File System
+### 3. Misc
 
-1. `save(path: string): Promise<void>`
+#### 3.1 `name`: the file name of the file in the box
 
 ```ts
 const fileBox = FileBox.fromRemote(
   'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
 )
-await fileBox.save('/tmp/logo.jpg')
+console.log(fileBox.name) // Output: file-box-logo.jpg
 ```
+
+#### 3.2 `version()`: version of the FileBox
+
+#### 3.3 `toJSON()`: to be implemented
+
+#### 3.4 `syncRemoteName()`: try to get the filename from the HTTP Response Header
+
+HTTP Header Example: `Content-Disposition: attachment; filename="filename.ext"`
 
 ## FEATURES
 
