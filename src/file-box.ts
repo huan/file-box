@@ -8,14 +8,14 @@
  */
 import * as fs        from 'fs'
 import * as nodePath  from 'path'
-// import * as nodeUrl   from 'url'
+import * as nodeUrl   from 'url'
+import * as http      from 'http'
+import * as https     from 'https'
 
 import * as fetch     from 'isomorphic-fetch'
 
 import {
   PassThrough,
-  // Readable,
-  // Stream,
 }                     from 'stream'
 
 import {
@@ -25,8 +25,9 @@ import {
 import {
   FileBoxType,
   FileBoxOptions,
+  FileBoxOptionsRemote,
   Pipeable,
-}                   from './file-box.type'
+}                         from './file-box.type'
 
 export class FileBox implements Pipeable {
 
@@ -36,9 +37,9 @@ export class FileBox implements Pipeable {
    *
    */
   public static packRemote(
-    url       : string,
-    name?     : string,
-    metadata? : { [idx: string]: string },
+    url      : string,
+    name?    : string,
+    headers? : http.OutgoingHttpHeaders,
   ): FileBox {
     const type = FileBoxType.Remote
 
@@ -51,7 +52,7 @@ export class FileBox implements Pipeable {
 
       name,
       url,
-      metadata,
+      headers,
     }
 
     const box = new FileBox(options)
@@ -119,34 +120,46 @@ export class FileBox implements Pipeable {
 
   /**
    *
-   *
    * Instance Properties
    *
-   *
    */
-  // need be update from the remote url(possible)
+  // not readonly: need be update from the remote url(possible)
   public name: string
 
   public readonly lastModified: number
   public readonly size        : number
-  public readonly type        : FileBoxType
+  public readonly boxType     : FileBoxType
 
   /**
    * Lazy load data:
    *  Do not read file to Buffer until there's a consumer.
    */
   private readonly buffer?: Buffer
-  private readonly url?   : string
+  private readonly url?   : string  // local file store as file:///path...
   private readonly stream?: NodeJS.ReadableStream
 
-  private readonly metadata?: { [idx: string]: string }
+  private readonly headers?: http.OutgoingHttpHeaders
 
   constructor(
-    options: FileBoxOptions,
+    fileOrOptions: string | FileBoxOptions,
   ) {
+    let options: FileBoxOptions
+
+    if (typeof fileOrOptions === 'string') {
+      /**
+       * Default to Local File
+       */
+      options = {
+        type: FileBoxType.Local,
+        name: nodePath.basename(fileOrOptions),
+        url: nodePath.resolve(fileOrOptions),
+      }
+    } else {
+      options = fileOrOptions
+    }
 
     this.name = options.name
-    this.type = options.type
+    this.boxType = options.type
 
     switch (options.type) {
       case FileBoxType.Buffer:
@@ -156,17 +169,17 @@ export class FileBox implements Pipeable {
         this.buffer = options.buffer
         break
 
-      case FileBoxType.Local:
       case FileBoxType.Remote:
+      case FileBoxType.Local:
         if (!options.url) {
           throw new Error('no url(path)')
         }
         this.url = options.url
 
-        if (options.metadata) {
-          this.metadata = options.metadata
+        const headers = (options as FileBoxOptionsRemote).headers
+        if (headers) {
+          this.headers = headers
         }
-
         break
 
       case FileBoxType.Stream:
@@ -177,7 +190,7 @@ export class FileBox implements Pipeable {
         break
 
       default:
-        throw new Error('unknown type: ' + FileBoxType[options.type])
+        throw new Error('unknown type')
     }
 
   }
@@ -199,7 +212,7 @@ export class FileBox implements Pipeable {
     // const headers = new Headers({
     //   // a: 'b',
     // })
-    if (this.type !== FileBoxType.Remote) {
+    if (this.boxType !== FileBoxType.Remote) {
       throw new Error('type is not Remote')
     }
     if (!this.url) {
@@ -230,7 +243,7 @@ export class FileBox implements Pipeable {
   public pipe<T extends NodeJS.WritableStream>(
     destination: T,
   ): T {
-    switch (this.type) {
+    switch (this.boxType) {
       case FileBoxType.Buffer:
         this.pipeBuffer(destination)
         break
@@ -248,7 +261,7 @@ export class FileBox implements Pipeable {
         break
 
       default:
-        throw new Error('not supported FileBoxType: ' + FileBoxType[this.type])
+        throw new Error('not supported FileBoxType: ' + FileBoxType[this.boxType])
     }
 
     return destination
@@ -260,22 +273,20 @@ export class FileBox implements Pipeable {
   private pipeBuffer(
     destination: NodeJS.WritableStream,
   ): void {
-    const buffer = this.buffer
-
     const bufferStream = new PassThrough()
     bufferStream.pipe(destination)
-    bufferStream.end(buffer)
+    bufferStream.end(this.buffer)
   }
 
   private pipeLocal(
     destination: NodeJS.WritableStream,
   ): void {
-    const path = this.url
-    if (!path) {
+    const filePath = this.url
+    if (!filePath) {
       throw new Error('no url(path)')
     }
-    const readStream = fs.createReadStream(path)
-    readStream.pipe(destination)
+    fs.createReadStream(filePath)
+      .pipe(destination)
   }
 
   private pipeRemote(
@@ -285,28 +296,30 @@ export class FileBox implements Pipeable {
       throw new Error('no url')
     }
 
-    let headerOptions = {
-      //
-    }
-    if (this.metadata) {
-      headerOptions = {
-        ...headerOptions,
-        ...this.metadata,
-      }
-    }
-    const headers = new Headers(headerOptions)
+    const parsedUrl = nodeUrl.parse(this.url)
+    const protocol  = parsedUrl.protocol as 'http:' | 'https:'
 
-    const request = new Request(this.url, {
-      headers,
-      mode: 'cors',
-      redirect: 'follow',
-    })
+    let options: http.RequestOptions | https.RequestOptions
+    // let request
+    let get: typeof https.get
 
-    fetch(request).then(response => {
-      // https://groups.google.com/a/chromium.org/forum/#!topic/blink-dev/0EW0_vT_MOU
-      // https://github.com/bitinn/node-fetch/issues/134
-      (response.body as any as Pipeable).pipe(destination)
-    })
+    if (protocol === 'https:') {
+      // request       = https.request.bind(https)
+      get           = https.get
+      options       = parsedUrl as any as https.RequestOptions
+      options.agent = https.globalAgent
+    } else if (protocol === 'http:') {
+      // request       = http.request.bind(http)
+      get           = http.get
+      options       = parsedUrl as any as http.RequestOptions
+      options.agent = http.globalAgent
+    } else {
+      throw new Error('protocol unknown: ' + protocol)
+    }
+
+    options.headers = this.headers || {}
+
+    get(options, res => res.pipe(destination))
   }
 
   private pipeStream(
@@ -316,6 +329,36 @@ export class FileBox implements Pipeable {
       throw new Error('no stream!')
     }
     this.stream.pipe(destination)
+  }
+
+  /**
+   * save file
+   *
+   * @todo use async operations instead of async, i.e. fs.exists() instead of fs.existsSync
+   * @param filePath save file
+   */
+  public async save(
+    filePath?: string,
+    overwrite = false,
+  ): Promise<void> {
+    const fullFilePath = nodePath.resolve(filePath || this.name)
+
+    if (!overwrite && fs.existsSync(fullFilePath)) {
+      throw new Error(`save(${fullFilePath}) file is already exist!`)
+    }
+
+    const writeStream = fs.createWriteStream(fullFilePath)
+    try {
+      await new Promise((resolve, reject) => {
+        this.pipe(writeStream)
+        writeStream
+          .once('end'   , resolve)
+          .once('error' , reject)
+      })
+    } catch (e) {
+      // log.error('PuppeteerMessage', `saveFile() call readyStream() error: ${e.message}`)
+      throw new Error(`save() exception: ${e.message}`)
+    }
   }
 
 }

@@ -4,11 +4,92 @@ Pack a file in a Box for easy transport between servers with the least payload, 
 
 ![File Box](https://zixia.github.io/node-file-box/images/file-box-logo.jpg)
 
-## WIP
+## API Reference
 
-WORKING IN PROGRESS ...
+### 1. Load File in to Box
 
-PLEASE COME BACK AFTER 4 WEEKS ...
+#### 1.1 `packLocal(filePath: string): FileBox`
+
+```ts
+const fileBox = FileBox.fromLocal('/tmp/test.txt')
+```
+
+#### 1.2 `packRemote(url: string, name?: string, headers?: http.OutgoingHttpHeaders): FileBox`
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+  'logo.jpg',
+  {},
+)
+```
+
+#### 1.3 `packStream(stream: NoddeJS.ReadableStream, name: string): FileBox`
+
+```ts
+const fileBox = FileBox.fromStream(res, '/tmp/download.zip')
+```
+
+#### 1.4 `packBuffer(buffer: Buffer, name: string): FileBox`
+
+```ts
+const fileBox = FileBox.fromBuffer(buf, '/tmp/download.zip')
+```
+
+### 2. Get File out from Box
+
+### 2.1 Save to File System
+
+1. `save(path: string): Promise<void>`
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+)
+await fileBox.save('/tmp/logo.jpg')
+```
+
+#### 2.2 Pipe to Stream
+
+1. `pipe(destination: Writable): Promise<void>`
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+)
+const writableStream = fs.createWritable('/tmp/logo.jpg')
+fileBox.pipe(writableStream)
+```
+
+### 3. Misc
+
+#### 3.1 `name`
+
+File name of the file in the box
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+)
+console.log(fileBox.name) // Output: file-box-logo.jpg
+```
+
+#### 3.2 `version()`
+
+Version of the FileBox
+
+#### 3.3 `toJSON()`
+
+Serialize FileBox metadata to JSON.
+
+**To be implemented.**
+
+#### 3.4 `syncRemoteName()`
+
+Sync the filename with the HTTP Response Header
+
+HTTP Header Example:
+> Content-Disposition: attachment; filename="filename.ext"
 
 ## FEATURES
 
@@ -57,6 +138,20 @@ PLEASE COME BACK AFTER 4 WEEKS ...
 "  /    home/user/dir / file  .txt "
 └──────┴──────────────┴──────┴─────┘
 ```
+
+## CHANGE LOG
+
+### v0.6 (master)
+
+1. Rename `fromLocal()`, `fromRemote()`, `fromStream()`, and `fromBuffer()` to `packXXX()`
+
+### v0.4 (May 2018)
+
+1. Add `headers` option for `fromRemote()` method
+
+### v0.2 (Apr 2018)
+
+Initial version.
 
 ## SEE ALSO
 
