@@ -4,11 +4,17 @@ Pack a file in a Box for easy transport between servers with the least payload, 
 
 ![File Box](https://zixia.github.io/node-file-box/images/file-box-logo.jpg)
 
-## WIP
+## API Reference
 
-WORKING IN PROGRESS ...
+1. `fromLocal(filePath: string): FileBox`
 
-PLEASE COME BACK AFTER 4 WEEKS ...
+1. `fromRemote(url: string, headers: { [idx: string]: string }): FileBox`
+
+1. `fromStream(stream: Readable): FileBox`
+
+1. `fromBuffer(buffer: Buffer): FileBox`
+
+1. `pipe(destination: Writable): Promise<void>`
 
 ## FEATURES
 
@@ -57,6 +63,16 @@ PLEASE COME BACK AFTER 4 WEEKS ...
 "  /    home/user/dir / file  .txt "
 └──────┴──────────────┴──────┴─────┘
 ```
+
+## CHANGE LOG
+
+### v0.4 (master)
+
+1. Add `headers` option for `fromRemote()` method
+
+### v0.2 (Apr 2018)
+
+Initial version.
 
 ## SEE ALSO
 

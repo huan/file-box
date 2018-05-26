@@ -8,14 +8,14 @@
  */
 import * as fs        from 'fs'
 import * as nodePath  from 'path'
-// import * as nodeUrl   from 'url'
+import * as nodeUrl   from 'url'
+import * as http      from 'http'
+import * as https     from 'https'
 
 import * as fetch     from 'isomorphic-fetch'
 
 import {
   PassThrough,
-  // Readable,
-  // Stream,
 }                     from 'stream'
 
 import {
@@ -273,25 +273,26 @@ export class FileBox implements Pipeable {
   private pipeBuffer(
     destination: NodeJS.WritableStream,
   ): void {
-    const buffer = this.buffer
-
     const bufferStream = new PassThrough()
     bufferStream.pipe(destination)
-    bufferStream.end(buffer)
+    bufferStream.end(this.buffer)
   }
 
   private pipeLocal(
     destination: NodeJS.WritableStream,
   ): void {
-    const path = this.url
-    if (!path) {
+    const filePath = this.url
+    if (!filePath) {
       throw new Error('no url(path)')
     }
-    const readStream = fs.createReadStream(path)
-    readStream.pipe(destination)
+    fs.createReadStream(filePath)
+      .pipe(destination)
   }
 
-  private pipeRemote(
+  /**
+   * Backup
+   */
+  protected pipeRemoteBak(
     destination: NodeJS.WritableStream,
   ): void {
     if (!this.url) {
@@ -309,6 +310,39 @@ export class FileBox implements Pipeable {
       // https://github.com/bitinn/node-fetch/issues/134
       (response.body as any as Pipeable).pipe(destination)
     })
+  }
+
+  private pipeRemote(
+    destination: NodeJS.WritableStream,
+  ): void {
+    if (!this.url) {
+      throw new Error('no url')
+    }
+
+    const parsedUrl = nodeUrl.parse(this.url)
+    const protocol  = parsedUrl.protocol as 'http:' | 'https:'
+
+    let options: http.RequestOptions | https.RequestOptions
+    // let request
+    let get: typeof https.get
+
+    if (protocol === 'https:') {
+      // request       = https.request.bind(https)
+      get           = https.get
+      options       = parsedUrl as any as https.RequestOptions
+      options.agent = https.globalAgent
+    } else if (protocol === 'http:') {
+      // request       = http.request.bind(http)
+      get           = http.get
+      options       = parsedUrl as any as http.RequestOptions
+      options.agent = http.globalAgent
+    } else {
+      throw new Error('protocol unknown: ' + protocol)
+    }
+
+    options.headers = this.headers || {}
+
+    get(options, res => res.pipe(destination))
   }
 
   private pipeStream(

@@ -1,9 +1,10 @@
 import {
-  Stream,
+  // Stream,
+  Readable,
 }                     from 'stream'
 
 export interface Pipeable {
-  pipe: typeof Stream.prototype.pipe,
+  pipe: typeof Readable.prototype.pipe,
 }
 
 export enum FileBoxType {
