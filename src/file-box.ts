@@ -35,7 +35,7 @@ export class FileBox implements Pipeable {
    * Static Properties
    *
    */
-  public static fromRemote(
+  public static packRemote(
     url       : string,
     name?     : string,
     metadata? : { [idx: string]: string },
@@ -58,7 +58,7 @@ export class FileBox implements Pipeable {
     return box
   }
 
-  public static fromLocal(
+  public static packLocal(
     path:   string,
     name?:  string,
   ): FileBox {
@@ -78,7 +78,7 @@ export class FileBox implements Pipeable {
     return box
   }
 
-  public static fromStream(
+  public static packStream(
     stream: NodeJS.ReadableStream,
     name:   string,
   ): FileBox {
@@ -96,7 +96,7 @@ export class FileBox implements Pipeable {
     return box
   }
 
-  public static fromBuffer(
+  public static packBuffer(
     buffer: Buffer,
     name:   string,
   ): FileBox {
