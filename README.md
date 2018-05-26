@@ -6,7 +6,7 @@ Pack a file in a Box for easy transport between servers with the least payload, 
 
 ## API Reference
 
-### 1. Load File in Box
+### 1. Load File in to Box
 
 #### 1.1 `fromLocal(filePath: string): FileBox`
 
@@ -36,7 +36,7 @@ const fileBox = FileBox.fromStream(res, '/tmp/download.zip')
 const fileBox = FileBox.fromBuffer(buf, '/tmp/download.zip')
 ```
 
-### 2. Get File from Box
+### 2. Get File out from Box
 
 ### 2.1 Save to File System
 
@@ -63,7 +63,9 @@ fileBox.pipe(writableStream)
 
 ### 3. Misc
 
-#### 3.1 `name`: the file name of the file in the box
+#### 3.1 `name`
+
+File name of the file in the box
 
 ```ts
 const fileBox = FileBox.fromRemote(
@@ -72,13 +74,22 @@ const fileBox = FileBox.fromRemote(
 console.log(fileBox.name) // Output: file-box-logo.jpg
 ```
 
-#### 3.2 `version()`: version of the FileBox
+#### 3.2 `version()`
 
-#### 3.3 `toJSON()`: to be implemented
+Version of the FileBox
 
-#### 3.4 `syncRemoteName()`: try to get the filename from the HTTP Response Header
+#### 3.3 `toJSON()`
 
-HTTP Header Example: `Content-Disposition: attachment; filename="filename.ext"`
+Serialize FileBox metadata to JSON.
+
+**To be implemented.**
+
+#### 3.4 `syncRemoteName()`
+
+Sync the filename with the HTTP Response Header
+
+HTTP Header Example:
+> Content-Disposition: attachment; filename="filename.ext"
 
 ## FEATURES
 
