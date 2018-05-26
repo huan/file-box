@@ -6,15 +6,75 @@ Pack a file in a Box for easy transport between servers with the least payload, 
 
 ## API Reference
 
+1. `name`: the file name of the file in the box
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+)
+console.log(fileBox.name) // Output: file-box-logo.jpg
+```
+
+1. `version()`: version of the FileBox
+
+1. `toJSON()`: to be implemented
+
+1. `syncRemoteName()`: try to get the filename from the HTTP Response Header
+
+HTTP Header Example: `Content-Disposition: attachment; filename="filename.ext"`
+
+### Load File to Box
+
 1. `fromLocal(filePath: string): FileBox`
 
-1. `fromRemote(url: string, headers: { [idx: string]: string }): FileBox`
+```ts
+const fileBox = FileBox.fromLocal('/tmp/test.txt')
+```
 
-1. `fromStream(stream: Readable): FileBox`
+1. `fromRemote(url: string, name?: string, headers?: { [idx: string]: string }): FileBox`
 
-1. `fromBuffer(buffer: Buffer): FileBox`
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+  'logo.jpg',
+  {},
+)
+```
+
+1. `fromStream(stream: NoddeJS.ReadableStream, name: string): FileBox`
+
+```ts
+const fileBox = FileBox.fromStream(res, '/tmp/download.zip')
+```
+
+1. `fromBuffer(buffer: Buffer, name: string): FileBox`
+
+```ts
+const fileBox = FileBox.fromBuffer(buf, '/tmp/download.zip')
+```
+
+### Pipe File to Strem
 
 1. `pipe(destination: Writable): Promise<void>`
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+)
+const writableStream = fs.createWritable('/tmp/logo.jpg')
+fileBox.pipe(writableStream)
+```
+
+### Save to File System
+
+1. `save(path: string): Promise<void>`
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+)
+await fileBox.save('/tmp/logo.jpg')
+```
 
 ## FEATURES
 

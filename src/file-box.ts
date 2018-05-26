@@ -123,7 +123,7 @@ export class FileBox implements Pipeable {
    * Instance Properties
    *
    */
-  // need be update from the remote url(possible)
+  // not readonly: need be update from the remote url(possible)
   public name: string
 
   public readonly lastModified: number
