@@ -161,6 +161,8 @@ Initial version.
 * [Web technology for developers > Web APIs > File](https://developer.mozilla.org/en-US/docs/Web/API/File)
 * [Web technology for developers > Web APIs > Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
 * [Web technology for developers > Web APIs > FileReader](https://developer.mozilla.org/en-US/docs/Web/API/FileReader)
+* [A simple HTTP Request & Response Service.](https://httpbin.org)
+* [Hurl.it — Make HTTP Requests](https://www.hurl.it)
 
 ## THANKS
 
