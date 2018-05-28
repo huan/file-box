@@ -1,3 +1,4 @@
+import * as http      from 'http'
 import {
   // Stream,
   Readable,
@@ -39,7 +40,7 @@ export interface FileBoxOptionsLocal {
 export interface FileBoxOptionsRemote {
   type     : FileBoxType.Remote
   url      : string
-  headers? : { [idx: string]: string }
+  headers? : http.OutgoingHttpHeaders
 }
 export interface FileBoxOptionsBuffer {
   type   : FileBoxType.Buffer

@@ -27,7 +27,7 @@ import {
   FileBoxOptions,
   FileBoxOptionsRemote,
   Pipeable,
-}                   from './file-box.type'
+}                         from './file-box.type'
 
 export class FileBox implements Pipeable {
 
@@ -36,10 +36,10 @@ export class FileBox implements Pipeable {
    * Static Properties
    *
    */
-  public static fromRemote(
+  public static packRemote(
     url      : string,
     name?    : string,
-    headers? : { [idx: string]: string },
+    headers? : http.OutgoingHttpHeaders,
   ): FileBox {
     const type = FileBoxType.Remote
 
@@ -59,7 +59,7 @@ export class FileBox implements Pipeable {
     return box
   }
 
-  public static fromLocal(
+  public static packLocal(
     path:   string,
     name?:  string,
   ): FileBox {
@@ -79,7 +79,7 @@ export class FileBox implements Pipeable {
     return box
   }
 
-  public static fromStream(
+  public static packStream(
     stream: NodeJS.ReadableStream,
     name:   string,
   ): FileBox {
@@ -97,7 +97,7 @@ export class FileBox implements Pipeable {
     return box
   }
 
-  public static fromBuffer(
+  public static packBuffer(
     buffer: Buffer,
     name:   string,
   ): FileBox {
@@ -138,7 +138,7 @@ export class FileBox implements Pipeable {
   private readonly url?   : string  // local file store as file:///path...
   private readonly stream?: NodeJS.ReadableStream
 
-  private readonly headers?: { [idx: string]: string }
+  private readonly headers?: http.OutgoingHttpHeaders
 
   constructor(
     fileOrOptions: string | FileBoxOptions,
@@ -287,29 +287,6 @@ export class FileBox implements Pipeable {
     }
     fs.createReadStream(filePath)
       .pipe(destination)
-  }
-
-  /**
-   * Backup
-   */
-  protected pipeRemoteBak(
-    destination: NodeJS.WritableStream,
-  ): void {
-    if (!this.url) {
-      throw new Error('no url')
-    }
-
-    const request = new Request(this.url, {
-      headers: new Headers(this.headers),
-      mode: 'cors',
-      redirect: 'follow',
-    })
-
-    fetch(request).then(response => {
-      // https://groups.google.com/a/chromium.org/forum/#!topic/blink-dev/0EW0_vT_MOU
-      // https://github.com/bitinn/node-fetch/issues/134
-      (response.body as any as Pipeable).pipe(destination)
-    })
   }
 
   private pipeRemote(

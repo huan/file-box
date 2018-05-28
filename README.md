@@ -8,13 +8,13 @@ Pack a file in a Box for easy transport between servers with the least payload, 
 
 ### 1. Load File in to Box
 
-#### 1.1 `fromLocal(filePath: string): FileBox`
+#### 1.1 `packLocal(filePath: string): FileBox`
 
 ```ts
 const fileBox = FileBox.fromLocal('/tmp/test.txt')
 ```
 
-#### 1.2 `fromRemote(url: string, name?: string, headers?: { [idx: string]: string }): FileBox`
+#### 1.2 `packRemote(url: string, name?: string, headers?: http.OutgoingHttpHeaders): FileBox`
 
 ```ts
 const fileBox = FileBox.fromRemote(
@@ -24,13 +24,13 @@ const fileBox = FileBox.fromRemote(
 )
 ```
 
-#### 1.3 `fromStream(stream: NoddeJS.ReadableStream, name: string): FileBox`
+#### 1.3 `packStream(stream: NoddeJS.ReadableStream, name: string): FileBox`
 
 ```ts
 const fileBox = FileBox.fromStream(res, '/tmp/download.zip')
 ```
 
-#### 1.4 `fromBuffer(buffer: Buffer, name: string): FileBox`
+#### 1.4 `packBuffer(buffer: Buffer, name: string): FileBox`
 
 ```ts
 const fileBox = FileBox.fromBuffer(buf, '/tmp/download.zip')
@@ -141,7 +141,11 @@ HTTP Header Example:
 
 ## CHANGE LOG
 
-### v0.4 (master)
+### v0.6 (master)
+
+1. Rename `fromLocal()`, `fromRemote()`, `fromStream()`, and `fromBuffer()` to `packXXX()`
+
+### v0.4 (May 2018)
 
 1. Add `headers` option for `fromRemote()` method
 
@@ -157,6 +161,8 @@ Initial version.
 * [Web technology for developers > Web APIs > File](https://developer.mozilla.org/en-US/docs/Web/API/File)
 * [Web technology for developers > Web APIs > Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
 * [Web technology for developers > Web APIs > FileReader](https://developer.mozilla.org/en-US/docs/Web/API/FileReader)
+* [A simple HTTP Request & Response Service.](https://httpbin.org)
+* [Hurl.it — Make HTTP Requests](https://www.hurl.it)
 
 ## THANKS
 

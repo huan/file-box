@@ -37,7 +37,7 @@ const tstest = {
 }
 
 test('File smoke testing', async t => {
-  const box = FileBox.fromLocal('x')
+  const box = FileBox.packLocal('x')
   t.ok(box)
 })
 
@@ -61,7 +61,7 @@ export class TestFileBox {
   public static testFileCreateLocal(
     @tstest.parameterFixture() localFileFixture: any,
   ) {
-    const file = FileBox.fromLocal(localFileFixture)
+    const file = FileBox.packLocal(localFileFixture)
 
     test('File.createLocal()', async t => {
       t.ok(file, 'ok')
