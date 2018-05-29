@@ -28,6 +28,7 @@ import {
   FileBoxOptionsRemote,
   Pipeable,
 }                         from './file-box.type'
+import { dataUrlToBase64 } from './misc';
 
 export class FileBox implements Pipeable {
 
@@ -111,6 +112,37 @@ export class FileBox implements Pipeable {
 
     const box = new FileBox(options)
 
+    return box
+  }
+
+  public static packBase64(
+    base64: string,
+    name:   string,
+  ): FileBox {
+    const buffer = Buffer.from(base64, 'base64')
+    const type   = FileBoxType.Buffer
+
+    const options: FileBoxOptions = {
+      type,
+      name,
+      buffer,
+    }
+
+    const box = new FileBox(options)
+
+    return box
+  }
+
+  public static packDataUrl(
+    dataUrl : string,
+    name    : string,
+  ): FileBox {
+    const base64 = dataUrlToBase64(dataUrl)
+
+    const box = this.packBase64(
+      base64,
+      name,
+    )
     return box
   }
 
