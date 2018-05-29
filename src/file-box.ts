@@ -367,7 +367,6 @@ export class FileBox implements Pipeable {
   /**
    * save file
    *
-   * @todo use async operations instead of async, i.e. fs.exists() instead of fs.existsSync
    * @param filePath save file
    */
   public async save(
@@ -376,22 +375,19 @@ export class FileBox implements Pipeable {
   ): Promise<void> {
     const fullFilePath = nodePath.resolve(filePath || this.name)
 
-    if (!overwrite && fs.existsSync(fullFilePath)) {
+    const exist = await new Promise<boolean>(resolve => fs.exists(fullFilePath, resolve))
+
+    if (!overwrite && exist) {
       throw new Error(`save(${fullFilePath}) file is already exist!`)
     }
 
     const writeStream = fs.createWriteStream(fullFilePath)
-    try {
-      await new Promise((resolve, reject) => {
-        this.pipe(writeStream)
-        writeStream
-          .once('end'   , resolve)
-          .once('error' , reject)
-      })
-    } catch (e) {
-      // log.error('PuppeteerMessage', `saveFile() call readyStream() error: ${e.message}`)
-      throw new Error(`save() exception: ${e.message}`)
-    }
+    await new Promise((resolve, reject) => {
+      this.pipe(writeStream)
+      writeStream
+        .once('end'   , resolve)
+        .once('error' , reject)
+    })
   }
 
 }
