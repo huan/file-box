@@ -20,15 +20,16 @@ import {
 
 import {
   VERSION,
-}             from './config'
-
+}                         from './config'
 import {
   FileBoxType,
   FileBoxOptions,
   FileBoxOptionsRemote,
   Pipeable,
 }                         from './file-box.type'
-import { dataUrlToBase64 } from './misc';
+import {
+  dataUrlToBase64,
+}                         from './misc'
 
 export class FileBox implements Pipeable {
 
