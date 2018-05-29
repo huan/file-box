@@ -194,4 +194,4 @@ This module is inspired by https://github.com/gulpjs/vinyl and https://github.co
 
 * Docs released under Creative Commons
 * Code released under the Apache-2.0 License
-* Code & Docs © 2016-2018 Huan LI \<zixia@zixia.net\>
+* Code & Docs © 2018 Huan LI \<zixia@zixia.net\>
