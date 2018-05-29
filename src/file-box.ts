@@ -7,12 +7,8 @@
  *
  */
 import * as fs        from 'fs'
+import * as http  from 'http'
 import * as nodePath  from 'path'
-import * as nodeUrl   from 'url'
-import * as http      from 'http'
-import * as https     from 'https'
-
-import * as fetch     from 'isomorphic-fetch'
 
 import {
   PassThrough,
@@ -29,6 +25,9 @@ import {
 }                         from './file-box.type'
 import {
   dataUrlToBase64,
+  httpHeaderToFileName,
+  httpHeadHeader,
+  httpStream,
 }                         from './misc'
 
 export class FileBox implements Pipeable {
@@ -236,15 +235,15 @@ export class FileBox implements Pipeable {
     throw new Error('WIP')
   }
 
+  /**
+   * @todo use http.get/gets instead of Request
+   */
   public async syncRemoteName(): Promise<void> {
     /**
      * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
      *  > Content-Disposition: attachment; filename="cool.html"
      */
 
-    // const headers = new Headers({
-    //   // a: 'b',
-    // })
     if (this.boxType !== FileBoxType.Remote) {
       throw new Error('type is not Remote')
     }
@@ -252,25 +251,16 @@ export class FileBox implements Pipeable {
       throw new Error('no url')
     }
 
-    const request = new Request(this.url, {
-      method: 'HEAD',
-      // headers,
-      mode: 'cors',
-      redirect: 'follow',
-    })
-
-    const name = await fetch(request)
-      .then(resp => resp.headers.get('Content-Disposition'))
-      .then(value => value!.match(/attachment; filename="(.+)"/))
-      .then(matches => matches![1] || undefined)
+    const headers = await httpHeadHeader(this.url)
+    const filename = httpHeaderToFileName(headers)
 
     // TODO: check the ext for name, if not exist, use MimeType to set one.
 
-    if (!name) {
+    if (!filename) {
       throw new Error('get remote name fail')
     }
 
-    this.name = name
+    this.name = filename
   }
 
   public pipe<T extends NodeJS.WritableStream>(
@@ -329,30 +319,8 @@ export class FileBox implements Pipeable {
       throw new Error('no url')
     }
 
-    const parsedUrl = nodeUrl.parse(this.url)
-    const protocol  = parsedUrl.protocol as 'http:' | 'https:'
-
-    let options: http.RequestOptions | https.RequestOptions
-    // let request
-    let get: typeof https.get
-
-    if (protocol === 'https:') {
-      // request       = https.request.bind(https)
-      get           = https.get
-      options       = parsedUrl as any as https.RequestOptions
-      options.agent = https.globalAgent
-    } else if (protocol === 'http:') {
-      // request       = http.request.bind(http)
-      get           = http.get
-      options       = parsedUrl as any as http.RequestOptions
-      options.agent = http.globalAgent
-    } else {
-      throw new Error('protocol unknown: ' + protocol)
-    }
-
-    options.headers = this.headers || {}
-
-    get(options, res => res.pipe(destination))
+    httpStream(this.url, this.headers)
+      .then(res => res.pipe(destination))
   }
 
   private pipeStream(

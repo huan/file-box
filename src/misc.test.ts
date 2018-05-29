@@ -5,7 +5,11 @@ import * as test  from 'blue-tape'
 
 import {
   dataUrlToBase64,
-}                   from './misc'
+  httpHeadHeader,
+  httpHeaderToFileName,
+  httpStream,
+}                         from './misc'
+import * as http from 'http'
 
 test('dataUrl to base64', async t => {
   const base64 = [
@@ -20,4 +24,57 @@ test('dataUrl to base64', async t => {
   ].join('')
 
   t.equal(base64, dataUrlToBase64(dataUrl), 'should get base64 from dataUrl')
+})
+
+test('httpHeadHeader', async t => {
+  const URL = 'https://github.com/zixia/node-file-box/archive/v0.6.tar.gz'
+
+  const EXPECTED_HEADERS_KEY   = 'content-disposition'
+  const EXPECTED_HEADERS_VALUE = 'attachment; filename=node-file-box-0.6.tar.gz'
+
+  const headers = await httpHeadHeader(URL)
+
+  t.equal(headers[EXPECTED_HEADERS_KEY], EXPECTED_HEADERS_VALUE, 'should get the headers right')
+})
+
+test('httpHeaderToFileName', async t => {
+  const HEADERS_QUOTATION_MARK: any = {
+    'content-disposition': 'attachment; filename="db-0.0.19.zip"',
+  }
+  const HEADERS_NO_QUOTATION_MARK: any = {
+    'content-disposition': 'attachment; filename=db-0.0.19.zip',
+  }
+  const EXPECTED_FILE_NAME = 'db-0.0.19.zip'
+
+  let filename = httpHeaderToFileName(HEADERS_QUOTATION_MARK)
+  t.equal(filename, EXPECTED_FILE_NAME, 'should get filename with quotation mark')
+
+  filename = httpHeaderToFileName(HEADERS_NO_QUOTATION_MARK)
+  t.equal(filename, EXPECTED_FILE_NAME, 'should get filename with no quotation mark')
+})
+
+test.only('httpStream', async t => {
+  const URL = 'https://httpbin.org/headers'
+
+  const MOL_KEY = 'Mol'
+  const MOL_VAL = '42'
+
+  const headers = {} as { [idx: string]: string }
+  headers[MOL_KEY] = MOL_VAL
+
+  const res = await httpStream(URL, headers)
+
+  const obj = JSON.parse(await streamToString(res))
+  t.equal(obj.headers[MOL_KEY], MOL_VAL, 'should send the header right')
+
+  async function streamToString(
+    stream: http.IncomingMessage,
+  ): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      const chunks: string[] = []
+      stream.on('data', chunk => chunks.push(chunk.toString()))
+      stream.on('end', () => resolve(chunks.join('')))
+      stream.on('error', reject)
+    })
+  }
 })

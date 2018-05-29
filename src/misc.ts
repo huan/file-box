@@ -1,5 +1,115 @@
+import * as http  from 'http'
+import * as https from 'https'
+import * as nodeUrl   from 'url'
 
 export function dataUrlToBase64(dataUrl: string): string {
   const dataList = dataUrl.split(',')
   return dataList[dataList.length - 1]
+}
+
+/**
+ * Get http headers for specific `url`
+ * follow 302 redirection for max `REDIRECT_TTL` times.
+ *
+ * @credit https://stackoverflow.com/a/43632171/1123955
+ */
+export async function httpHeadHeader(url: string): Promise<http.IncomingHttpHeaders> {
+
+  let REDIRECT_TTL = 7
+
+  while (true) {
+    if (REDIRECT_TTL-- <= 0) {
+      throw new Error('ttl expired! too many 302 redirections.')
+    }
+
+    const res = await _headHeader(url)
+
+    if (!/^3/.test(String(res.statusCode))) {
+      return res.headers
+    }
+
+    // console.log('302 found for ' + url)
+
+    if (!res.headers.location) {
+      throw new Error('302 found but no location!')
+    }
+
+    url = res.headers.location
+  }
+
+  async function _headHeader(destUrl: string): Promise<http.IncomingMessage> {
+    const parsedUrl = nodeUrl.parse(destUrl)
+    const options = {
+      protocol : parsedUrl.protocol,
+      hostname : parsedUrl.hostname,
+      method   : 'HEAD',
+      // method   : 'GET',
+      path     : parsedUrl.path,
+    }
+
+    let request: typeof http.request
+
+    if (parsedUrl.protocol === 'https:') {
+      request = https.request
+    } else if (parsedUrl.protocol === 'http:') {
+      request = http.request
+    } else {
+      throw new Error('unknown protocol: ' + parsedUrl.protocol)
+    }
+
+    return new Promise<http.IncomingMessage>((resolve, reject) => {
+      request(options, resolve)
+        .on('error', reject)
+        .end()
+    })
+  }
+}
+
+export function httpHeaderToFileName(headers: http.IncomingHttpHeaders) {
+  const contentDisposition = headers['content-disposition']
+
+  if (!contentDisposition) {
+    return null
+  }
+
+  // 'content-disposition': 'attachment; filename=db-0.0.19.zip'
+  const matches = contentDisposition.match(/attachment; filename="?(.+[^"])"?$/i)
+
+  if (matches && matches[1]) {
+    return matches[1]
+  }
+
+  return null
+}
+
+export async function httpStream(
+  url     : string,
+  headers : http.OutgoingHttpHeaders = {},
+): Promise<http.IncomingMessage> {
+
+  const parsedUrl = nodeUrl.parse(url)
+  const protocol  = parsedUrl.protocol
+
+  let options: http.RequestOptions
+
+  let get: typeof https.get
+
+  if (protocol === 'https:') {
+    get           = https.get
+    options       = parsedUrl
+    options.agent = https.globalAgent
+  } else if (protocol === 'http:') {
+    get           = http.get
+    options       = parsedUrl
+    options.agent = http.globalAgent
+  } else {
+    throw new Error('protocol unknown: ' + protocol)
+  }
+
+  options.headers = Object.assign(options.headers || {}, {
+    ...headers,
+  })
+
+  const res = await new Promise<http.IncomingMessage>(resolve => get(options, resolve))
+  return res
 }
