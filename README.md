@@ -61,6 +61,17 @@ const writableStream = fs.createWritable('/tmp/logo.jpg')
 fileBox.pipe(writableStream)
 ```
 
+#### 2.3 Base64 Data
+
+1. `base64(): Promise<string>`
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+)
+console.log(await fileBox.base64())
+```
+
 ### 3. Misc
 
 #### 3.1 `name`
@@ -145,6 +156,7 @@ HTTP Header Example:
 
 1. Rename `fromLocal()`, `fromRemote()`, `fromStream()`, and `fromBuffer()` to `packXXX()`
 1. Add two new factory methods: `fromBase64()`, `fromDataUrl()`
+1. Add `base64()` to get the BASE64 encoded file data
 
 ### v0.4 (May 2018)
 

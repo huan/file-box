@@ -1,3 +1,5 @@
+#!/usr/bin/env ts-node
+
 import * as assert from 'assert'
 
 import 'reflect-metadata'
@@ -77,3 +79,16 @@ export class TestFileBox {
   }
 
 }
+
+test('base64()', async t => {
+  const BASE64_DECODED = 'FileBoxBase64\n'
+  const BASE64_ENCODED = 'RmlsZUJveEJhc2U2NAo='
+
+  const fileBox = FileBox.packBase64(BASE64_ENCODED, 'test.txt')
+  const base64 = await fileBox.base64()
+
+  t.equal(base64, BASE64_ENCODED, 'should get base64 back')
+
+  const text = Buffer.from(base64, 'base64').toString()
+  t.equal(text, BASE64_DECODED, 'should get the text right')
+})

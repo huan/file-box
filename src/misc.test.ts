@@ -8,8 +8,8 @@ import {
   httpHeadHeader,
   httpHeaderToFileName,
   httpStream,
+  streamToBuffer,
 }                         from './misc'
-import * as http from 'http'
 
 test('dataUrl to base64', async t => {
   const base64 = [
@@ -53,7 +53,7 @@ test('httpHeaderToFileName', async t => {
   t.equal(filename, EXPECTED_FILE_NAME, 'should get filename with no quotation mark')
 })
 
-test.only('httpStream', async t => {
+test('httpStream', async t => {
   const URL = 'https://httpbin.org/headers'
 
   const MOL_KEY = 'Mol'
@@ -64,17 +64,7 @@ test.only('httpStream', async t => {
 
   const res = await httpStream(URL, headers)
 
-  const obj = JSON.parse(await streamToString(res))
+  const buffer = await streamToBuffer(res)
+  const obj = JSON.parse(buffer.toString())
   t.equal(obj.headers[MOL_KEY], MOL_VAL, 'should send the header right')
-
-  async function streamToString(
-    stream: http.IncomingMessage,
-  ): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      const chunks: string[] = []
-      stream.on('data', chunk => chunks.push(chunk.toString()))
-      stream.on('end', () => resolve(chunks.join('')))
-      stream.on('error', reject)
-    })
-  }
 })

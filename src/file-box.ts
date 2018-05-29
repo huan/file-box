@@ -28,6 +28,7 @@ import {
   httpHeaderToFileName,
   httpHeadHeader,
   httpStream,
+  streamToBuffer,
 }                         from './misc'
 
 export class FileBox implements Pipeable {
@@ -358,6 +359,20 @@ export class FileBox implements Pipeable {
     })
   }
 
+  public async base64(): Promise<string> {
+    if (this.boxType === FileBoxType.Buffer) {
+      if (!this.buffer) {
+        throw new Error('no buffer!')
+      }
+      return this.buffer.toString('base64')
+    }
+
+    const stream = new PassThrough()
+    this.pipe(stream)
+
+    const buffer = await streamToBuffer(stream)
+    return buffer.toString('base64')
+  }
 }
 
 export default FileBox
