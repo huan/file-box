@@ -63,7 +63,7 @@ fileBox.pipe(writableStream)
 
 #### 2.3 `base64(): Promise<string>`
 
-Get out the base64 data of the file.
+Get the base64 data of file.
 
 ```ts
 const fileBox = FileBox.fromRemote(
