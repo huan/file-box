@@ -144,6 +144,7 @@ HTTP Header Example:
 ### v0.6 (master)
 
 1. Rename `fromLocal()`, `fromRemote()`, `fromStream()`, and `fromBuffer()` to `packXXX()`
+1. Add two new factory methods: `fromBase64()`, `fromDataUrl()`
 
 ### v0.4 (May 2018)
 
