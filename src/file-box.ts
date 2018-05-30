@@ -7,12 +7,8 @@
  *
  */
 import * as fs        from 'fs'
+import * as http  from 'http'
 import * as nodePath  from 'path'
-import * as nodeUrl   from 'url'
-import * as http      from 'http'
-import * as https     from 'https'
-
-import * as fetch     from 'isomorphic-fetch'
 
 import {
   PassThrough,
@@ -20,14 +16,20 @@ import {
 
 import {
   VERSION,
-}             from './config'
-
+}                         from './config'
 import {
   FileBoxType,
   FileBoxOptions,
   FileBoxOptionsRemote,
   Pipeable,
 }                         from './file-box.type'
+import {
+  dataUrlToBase64,
+  httpHeaderToFileName,
+  httpHeadHeader,
+  httpStream,
+  streamToBuffer,
+}                         from './misc'
 
 export class FileBox implements Pipeable {
 
@@ -111,6 +113,37 @@ export class FileBox implements Pipeable {
 
     const box = new FileBox(options)
 
+    return box
+  }
+
+  public static packBase64(
+    base64: string,
+    name:   string,
+  ): FileBox {
+    const buffer = Buffer.from(base64, 'base64')
+    const type   = FileBoxType.Buffer
+
+    const options: FileBoxOptions = {
+      type,
+      name,
+      buffer,
+    }
+
+    const box = new FileBox(options)
+
+    return box
+  }
+
+  public static packDataUrl(
+    dataUrl : string,
+    name    : string,
+  ): FileBox {
+    const base64 = dataUrlToBase64(dataUrl)
+
+    const box = this.packBase64(
+      base64,
+      name,
+    )
     return box
   }
 
@@ -203,15 +236,15 @@ export class FileBox implements Pipeable {
     throw new Error('WIP')
   }
 
+  /**
+   * @todo use http.get/gets instead of Request
+   */
   public async syncRemoteName(): Promise<void> {
     /**
      * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
      *  > Content-Disposition: attachment; filename="cool.html"
      */
 
-    // const headers = new Headers({
-    //   // a: 'b',
-    // })
     if (this.boxType !== FileBoxType.Remote) {
       throw new Error('type is not Remote')
     }
@@ -219,25 +252,16 @@ export class FileBox implements Pipeable {
       throw new Error('no url')
     }
 
-    const request = new Request(this.url, {
-      method: 'HEAD',
-      // headers,
-      mode: 'cors',
-      redirect: 'follow',
-    })
-
-    const name = await fetch(request)
-      .then(resp => resp.headers.get('Content-Disposition'))
-      .then(value => value!.match(/attachment; filename="(.+)"/))
-      .then(matches => matches![1] || undefined)
+    const headers = await httpHeadHeader(this.url)
+    const filename = httpHeaderToFileName(headers)
 
     // TODO: check the ext for name, if not exist, use MimeType to set one.
 
-    if (!name) {
+    if (!filename) {
       throw new Error('get remote name fail')
     }
 
-    this.name = name
+    this.name = filename
   }
 
   public pipe<T extends NodeJS.WritableStream>(
@@ -296,30 +320,8 @@ export class FileBox implements Pipeable {
       throw new Error('no url')
     }
 
-    const parsedUrl = nodeUrl.parse(this.url)
-    const protocol  = parsedUrl.protocol as 'http:' | 'https:'
-
-    let options: http.RequestOptions | https.RequestOptions
-    // let request
-    let get: typeof https.get
-
-    if (protocol === 'https:') {
-      // request       = https.request.bind(https)
-      get           = https.get
-      options       = parsedUrl as any as https.RequestOptions
-      options.agent = https.globalAgent
-    } else if (protocol === 'http:') {
-      // request       = http.request.bind(http)
-      get           = http.get
-      options       = parsedUrl as any as http.RequestOptions
-      options.agent = http.globalAgent
-    } else {
-      throw new Error('protocol unknown: ' + protocol)
-    }
-
-    options.headers = this.headers || {}
-
-    get(options, res => res.pipe(destination))
+    httpStream(this.url, this.headers)
+      .then(res => res.pipe(destination))
   }
 
   private pipeStream(
@@ -334,7 +336,6 @@ export class FileBox implements Pipeable {
   /**
    * save file
    *
-   * @todo use async operations instead of async, i.e. fs.exists() instead of fs.existsSync
    * @param filePath save file
    */
   public async toFile(
@@ -343,24 +344,35 @@ export class FileBox implements Pipeable {
   ): Promise<void> {
     const fullFilePath = nodePath.resolve(filePath || this.name)
 
-    if (!overwrite && fs.existsSync(fullFilePath)) {
+    const exist = await new Promise<boolean>(resolve => fs.exists(fullFilePath, resolve))
+
+    if (!overwrite && exist) {
       throw new Error(`save(${fullFilePath}) file is already exist!`)
     }
 
     const writeStream = fs.createWriteStream(fullFilePath)
-    try {
-      await new Promise((resolve, reject) => {
-        this.pipe(writeStream)
-        writeStream
-          .once('end'   , resolve)
-          .once('error' , reject)
-      })
-    } catch (e) {
-      // log.error('PuppeteerMessage', `saveFile() call readyStream() error: ${e.message}`)
-      throw new Error(`save() exception: ${e.message}`)
-    }
+    await new Promise((resolve, reject) => {
+      this.pipe(writeStream)
+      writeStream
+        .once('end'   , resolve)
+        .once('error' , reject)
+    })
   }
 
+  public async base64(): Promise<string> {
+    if (this.boxType === FileBoxType.Buffer) {
+      if (!this.buffer) {
+        throw new Error('no buffer!')
+      }
+      return this.buffer.toString('base64')
+    }
+
+    const stream = new PassThrough()
+    this.pipe(stream)
+
+    const buffer = await streamToBuffer(stream)
+    return buffer.toString('base64')
+  }
 }
 
 export default FileBox

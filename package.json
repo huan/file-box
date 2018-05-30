@@ -1,6 +1,6 @@
 {
   "name": "file-box",
-  "version": "0.6.3",
+  "version": "0.6.13",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "main": "dist/src/index.js",
   "typings": "dist/src/index.d.ts",
@@ -49,9 +49,7 @@
     "tslint": "^5.10.0",
     "typescript": "^2.8.3"
   },
-  "dependencies": {
-    "isomorphic-fetch": "^2.2.1"
-  },
+  "dependencies": {},
   "git": {
     "scripts": {
       "pre-push": "bash scripts/pre-push.sh"

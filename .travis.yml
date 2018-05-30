@@ -10,26 +10,25 @@ cache:
   directories:
     - node_modules
 
+script:
+  - echo $TRAVIS_OS_NAME
+  - node --version
+  - npm --version
+  - echo "Testing started ..."
+  - npm test
+
 stages:
   - test
   - pack
   - name: deploy
-    if: branch =~ ^(master|v\d+\.\d+)$
-        AND (type NOT IN (cron, pull_request))
+    if: (type = push) AND branch =~ ^(master|v\d+\.\d+)$
 
 jobs:
   include:
-    - stage: test
-      script:
-        - echo $TRAVIS_OS_NAME
-        - node --version
-        - npm --version
-        - echo "Testing started ..."
-        - npm test || travis_terminate 1
-
     - stage: pack
       script:
-        - npm run test:pack && echo 'Npm pack testing is passed' || travis_terminate 1
+        - npm run test:pack
+        - echo 'Npm Pack Testing Finished.'
 
     - stage: deploy
       script:
@@ -43,8 +42,6 @@ jobs:
         email: zixia@zixia.net
         api_key: "$NPM_TOKEN"
         skip_cleanup: true
-        on:
-          all_branches: true
 
 notifications:
   email:

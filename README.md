@@ -38,9 +38,9 @@ const fileBox = FileBox.fromBuffer(buf, '/tmp/download.zip')
 
 ### 2. Get File out from Box
 
-### 2.1 Save to File System
+### 2.1 `save(path: string): Promise<void>`
 
-1. `save(path: string): Promise<void>`
+Save file to current work path(cwd) of the local file system.
 
 ```ts
 const fileBox = FileBox.fromRemote(
@@ -49,9 +49,9 @@ const fileBox = FileBox.fromRemote(
 await fileBox.save('/tmp/logo.jpg')
 ```
 
-#### 2.2 Pipe to Stream
+#### 2.2 `pipe(destination: Writable): Promise<void>`
 
-1. `pipe(destination: Writable): Promise<void>`
+Pipe to a writable stream.
 
 ```ts
 const fileBox = FileBox.fromRemote(
@@ -59,6 +59,18 @@ const fileBox = FileBox.fromRemote(
 )
 const writableStream = fs.createWritable('/tmp/logo.jpg')
 fileBox.pipe(writableStream)
+```
+
+#### 2.3 `base64(): Promise<string>`
+
+Get the base64 data of file.
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+)
+const base64Text = await fileBox.base64()
+console.log(base64Text) // Output: the base64 encoded data of the file
 ```
 
 ### 3. Misc
@@ -144,6 +156,8 @@ HTTP Header Example:
 ### v0.6 (master)
 
 1. Rename `fromLocal()`, `fromRemote()`, `fromStream()`, and `fromBuffer()` to `packXXX()`
+1. Add two new factory methods: `fromBase64()`, `fromDataUrl()`
+1. Add `base64()` to get the BASE64 encoded file data
 
 ### v0.4 (May 2018)
 
@@ -178,6 +192,6 @@ This module is inspired by https://github.com/gulpjs/vinyl and https://github.co
 
 ## COPYRIGHT & LICENSE
 
-* Code & Docs © 2016-2018 Huan LI \<zixia@zixia.net\>
-* Code released under the Apache-2.0 License
 * Docs released under Creative Commons
+* Code released under the Apache-2.0 License
+* Code & Docs © 2018 Huan LI \<zixia@zixia.net\>
