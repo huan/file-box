@@ -337,7 +337,7 @@ export class FileBox implements Pipeable {
    * @todo use async operations instead of async, i.e. fs.exists() instead of fs.existsSync
    * @param filePath save file
    */
-  public async save(
+  public async toFile(
     filePath?: string,
     overwrite = false,
   ): Promise<void> {
