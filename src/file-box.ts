@@ -359,7 +359,7 @@ export class FileBox implements Pipeable {
     })
   }
 
-  public async base64(): Promise<string> {
+  public async toBase64(): Promise<string> {
     if (this.boxType === FileBoxType.Buffer) {
       if (!this.buffer) {
         throw new Error('no buffer!')
