@@ -7,8 +7,10 @@
  *
  */
 import * as fs        from 'fs'
-import * as http  from 'http'
+import * as http      from 'http'
 import * as nodePath  from 'path'
+
+import * as mime  from 'mime'
 
 import {
   PassThrough,
@@ -38,6 +40,20 @@ export class FileBox implements Pipeable {
    * Static Properties
    *
    */
+
+  /**
+   * Alias for `FileBox.packRemote()`
+   *
+   * @alias packRemote()
+   */
+  public static packUrl(
+    url      : string,
+    name?    : string,
+    headers? : http.OutgoingHttpHeaders,
+  ): FileBox {
+    return this.packRemote(url, name, headers)
+  }
+
   public static packRemote(
     url      : string,
     name?    : string,
@@ -46,7 +62,8 @@ export class FileBox implements Pipeable {
     const type = FileBoxType.Remote
 
     if (!name) {
-      name = nodePath.parse(url).base
+      const parsedUrl = nodePath.parse(url)
+      name = parsedUrl.base
     }
 
     const options: FileBoxOptions = {
@@ -59,6 +76,18 @@ export class FileBox implements Pipeable {
 
     const box = new FileBox(options)
     return box
+  }
+
+  /**
+   * Alias for `FileBox.packLocal()`
+   *
+   * @alias packLocal
+   */
+  public static packFile(
+    path  : string,
+    name? : string,
+  ): FileBox {
+    return this.packLocal(path, name)
   }
 
   public static packLocal(
@@ -134,6 +163,9 @@ export class FileBox implements Pipeable {
     return box
   }
 
+  /**
+   * dataURL: `data:image/png;base64,${base64Text}`,
+   */
   public static packDataUrl(
     dataUrl : string,
     name    : string,
@@ -159,9 +191,9 @@ export class FileBox implements Pipeable {
   // not readonly: need be update from the remote url(possible)
   public name: string
 
-  public readonly lastModified: number
-  public readonly size        : number
-  public readonly boxType     : FileBoxType
+  public readonly lastModified : number
+  public readonly size         : number
+  public readonly boxType      : FileBoxType
 
   /**
    * Lazy load data:
@@ -170,6 +202,8 @@ export class FileBox implements Pipeable {
   private readonly buffer?: Buffer
   private readonly url?   : string  // local file store as file:///path...
   private readonly stream?: NodeJS.ReadableStream
+
+  public mimeType? : string
 
   private readonly headers?: http.OutgoingHttpHeaders
 
@@ -191,8 +225,10 @@ export class FileBox implements Pipeable {
       options = fileOrOptions
     }
 
-    this.name = options.name
+    this.name    = options.name
     this.boxType = options.type
+
+    this.mimeType = mime.getType(this.name) || undefined
 
     switch (options.type) {
       case FileBoxType.Buffer:
@@ -255,13 +291,15 @@ export class FileBox implements Pipeable {
     const headers = await httpHeadHeader(this.url)
     const filename = httpHeaderToFileName(headers)
 
-    // TODO: check the ext for name, if not exist, use MimeType to set one.
-
-    if (!filename) {
-      throw new Error('get remote name fail')
+    if (filename) {
+      this.name = filename
     }
 
-    this.name = filename
+    if (!this.name) {
+      throw new Error('no name')
+    }
+
+    this.mimeType = headers['content-type'] || mime.getType(this.name) || undefined
   }
 
   public pipe<T extends NodeJS.WritableStream>(
@@ -342,6 +380,11 @@ export class FileBox implements Pipeable {
     filePath?: string,
     overwrite = false,
   ): Promise<void> {
+    if (this.boxType === FileBoxType.Remote) {
+      if (!this.mimeType || !this.name) {
+        await this.syncRemoteName()
+      }
+    }
     const fullFilePath = nodePath.resolve(filePath || this.name)
 
     const exist = await new Promise<boolean>(resolve => fs.exists(fullFilePath, resolve))
@@ -372,6 +415,26 @@ export class FileBox implements Pipeable {
 
     const buffer = await streamToBuffer(stream)
     return buffer.toString('base64')
+  }
+
+  /**
+   * dataUrl: `data:image/png;base64,${base64Text}',
+   */
+  public async toDataURL(): Promise<string> {
+    const base64 = await this.toBase64()
+
+    if (!this.mimeType) {
+      throw new Error('no mimeType')
+    }
+
+    const dataUrl = [
+      'data:',
+      this.mimeType,
+      ';base64,',
+      base64,
+    ].join('')
+
+    return dataUrl
   }
 }
 

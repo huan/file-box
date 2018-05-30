@@ -65,7 +65,9 @@ export async function httpHeadHeader(url: string): Promise<http.IncomingHttpHead
   }
 }
 
-export function httpHeaderToFileName(headers: http.IncomingHttpHeaders) {
+export function httpHeaderToFileName(
+  headers: http.IncomingHttpHeaders,
+): null | string {
   const contentDisposition = headers['content-disposition']
 
   if (!contentDisposition) {

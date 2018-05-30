@@ -36,9 +36,19 @@ const fileBox = FileBox.fromStream(res, '/tmp/download.zip')
 const fileBox = FileBox.fromBuffer(buf, '/tmp/download.zip')
 ```
 
+#### 1.5 `FileBox.fromJSON()`
+
+Restore a `FileBox.toJSON()` text string back to a FileBox instance.
+
+WIP: **Not Implement Yet**
+
+```ts
+const restoredFileBox = FileBox.fromJSON(jsonText)
+```
+
 ### 2. Get File out from Box
 
-### 2.1 `save(path: string): Promise<void>`
+### 2.1 `toFile(path: string): Promise<void>`
 
 Save file to current work path(cwd) of the local file system.
 
@@ -46,7 +56,7 @@ Save file to current work path(cwd) of the local file system.
 const fileBox = FileBox.fromRemote(
   'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
 )
-await fileBox.save('/tmp/logo.jpg')
+await fileBox.toFile('/tmp/logo.jpg')
 ```
 
 #### 2.2 `pipe(destination: Writable): Promise<void>`
@@ -61,7 +71,7 @@ const writableStream = fs.createWritable('/tmp/logo.jpg')
 fileBox.pipe(writableStream)
 ```
 
-#### 2.3 `base64(): Promise<string>`
+#### 2.3 `toBase64(): Promise<string>`
 
 Get the base64 data of file.
 
@@ -69,8 +79,38 @@ Get the base64 data of file.
 const fileBox = FileBox.fromRemote(
   'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
 )
-const base64Text = await fileBox.base64()
+const base64Text = await fileBox.toBase64()
 console.log(base64Text) // Output: the base64 encoded data of the file
+```
+
+#### 2.4 `toJSON(): string`
+
+Get the `JSON.stringify`-ed text.
+
+**Not Implement Yet: Working In Progress...**
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+)
+const jsonText1 = fileBox.toJSON()
+const jsonText2 = JSON.stringify(fileBox)
+assert(jsonText1 === jsonText2)
+
+console.log(jsonText1) // Output: the stringified data of the fileBox
+
+const restoredFileBox = fileBox.fromJSON(jsonText1)
+restoredFileBox.toFile('/tmp/file-box-logo.jpg')
+```
+
+#### 2.5 `toDataURL(): Promise<string>`
+
+Get the DataURL of the file.
+
+```ts
+const fileBox = FileBox.packFile('tests/fixtures/hello.txt')
+const dataUrl = await fileBox.toDataURL()
+console.log(dataUrl) // Output: data:text/plain;base64,d29ybGQK'
 ```
 
 ### 3. Misc
