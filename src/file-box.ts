@@ -166,7 +166,7 @@ export class FileBox implements Pipeable {
   /**
    * dataURL: `data:image/png;base64,${base64Text}`,
    */
-  public static fromDataUrl(
+  public static fromDataURL(
     dataUrl : string,
     name    : string,
   ): FileBox {

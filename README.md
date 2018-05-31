@@ -6,17 +6,56 @@ FileBox is a virtual container for packing a file data into it for future read, 
 
 Currently the FileBox supports almost all kinds of the data input/output methods/formats:
 
-| Type | Load | Save | Description |
+| File Type | Pack Method | Unpack Method | Description |
 | :--- | :--- | :--- | :--- |
 | Local File | `fromFile()` | `toFile()` | Local file in file system |
 | Remote URL | `fromUrl()` | `toUrl()`(TBW) | Remote file in a HTTP/HTTPS URL |
 | Buffer | `fromBuffer()` | `toBuffer()` | JavaScript Buffer data |
 | Stream | `fromStream()` | `toStream()` | JavaScript Stream |
 | Base64 | `fromBase64()` | `toBase64()` | Base64 encoded data |
-| DataURL | `fromDataUrl()` | `toDataURL()` | DataURL data |
+| DataURL | `fromDataURL()` | `toDataURL()` | DataURL data |
 | JSON | `fromJSON()` | `toJSON()` | JSON data |
 
-## API Reference
+## EXAMPLES
+
+The following example demos:
+
+1. Save URL to File
+1. Convert Buffer to Stream
+1. Pack from Base64 then Unpack to DataURL
+
+```ts
+import { FileBox } from 'file-box'
+
+/**
+ * Save URL to File
+ */
+const fileBox1 = FileBox.fromUrl(
+  'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
+  'logo.jpg',
+)
+fileBox1.toFile('/tmp/file-box-logo.jpg')
+
+/**
+ * Convert Buffer to Stream
+ */
+import * as fs from 'fs'
+const fileBox2 = FileBox.fromBuffer(
+  Buffer.from('world'),
+  'hello.txt',
+)
+const writeStream = fs.createWriteStream('/tmp/hello.txt')
+fileBox2.pipe(writeStream)
+
+/**
+ * Pack Base64, Unpack to DataURL
+ */
+const fileBox3 = FileBox.fromBase64('d29ybGQK', 'hello.txt')
+console.log(fileBox3.toDataURL())
+// Output: data:text/plain;base64,d29ybGQK
+```
+
+## API REFERENCE
 
 ### 1. Load File in to Box
 
@@ -33,7 +72,7 @@ const fileBox = FileBox.fromLocal('/tmp/test.txt')
 Alais: `fromRemote()`
 
 ```ts
-const fileBox = FileBox.fromRemote(
+const fileBox = FileBox.fromUrl(
   'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
   'logo.jpg',
 )
@@ -60,12 +99,12 @@ const fileBox = FileBox.fromBase64('d29ybGQK', 'hello.txt')
 fileBox.toFile()
 ```
 
-#### 1.6 `FileBox.fromDataUrl(dataUrl: string, name: string): FileBox`
+#### 1.6 `FileBox.fromDataURL(dataUrl: string, name: string): FileBox`
 
 Decoded a DataURL data.
 
 ```ts
-const fileBox = FileBox.fromDataUrl('data:text/plain;base64,d29ybGQK', 'hello.txt')
+const fileBox = FileBox.fromDataURL('data:text/plain;base64,d29ybGQK', 'hello.txt')
 fileBox.toFile()
 ```
 
@@ -234,7 +273,7 @@ HTTP Header Example:
 
 ### v0.6 (master) (Jun 2018)
 
-1. Add two new factory methods: `fromBase64()`, `fromDataUrl()`
+1. Add two new factory methods: `fromBase64()`, `fromDataURL()`
 1. Add `toBase64()` and `toDataURL()` to get the BASE64 encoded file data
 
 ### v0.4 (May 2018)
