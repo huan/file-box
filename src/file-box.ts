@@ -218,14 +218,15 @@ export class FileBox implements Pipeable {
        */
       options = {
         type: FileBoxType.Local,
-        name: nodePath.basename(fileOrOptions),
+        name: fileOrOptions,
         url: nodePath.resolve(fileOrOptions),
       }
     } else {
       options = fileOrOptions
     }
 
-    this.name    = options.name
+    // Only keep `basename` in this.name
+    this.name    = nodePath.basename(options.name)
     this.boxType = options.type
 
     this.mimeType = mime.getType(this.name) || undefined
