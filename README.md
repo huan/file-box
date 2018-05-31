@@ -51,7 +51,8 @@ fileBox2.pipe(writeStream)
  * 3. Pack Base64, Unpack to DataURL
  */
 const fileBox3 = FileBox.fromBase64('d29ybGQK', 'hello.txt')
-console.log(fileBox3.toDataURL())
+fileBox3.toDataURL()
+        .then(console.log)
 // Output: data:text/plain;base64,d29ybGQK
 ```
 
