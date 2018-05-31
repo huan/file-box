@@ -161,17 +161,21 @@ const fileBox = FileBox.fromRemote(
 console.log(fileBox.name) // Output: file-box-logo.jpg
 ```
 
-#### 3.2 `version()`
+#### 3.2 `version(): string`
 
 Version of the FileBox
 
-#### 3.3 `toJSON()`
+#### 3.3 `toJSON(): string`
 
 Serialize FileBox metadata to JSON.
 
 **To be implemented.**
 
-#### 3.4 `syncRemoteName()`
+#### 3.4 `ready(): Promise<void>`
+
+Update the necessary internal data and make everything ready for use.
+
+#### 3.5 `syncRemoteName(): Promise<void>`
 
 Sync the filename with the HTTP Response Header
 
