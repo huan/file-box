@@ -28,7 +28,7 @@ The following example demos:
 import { FileBox } from 'file-box'
 
 /**
- * Save URL to File
+ * 1. Save URL to File
  */
 const fileBox1 = FileBox.fromUrl(
   'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
@@ -37,7 +37,7 @@ const fileBox1 = FileBox.fromUrl(
 fileBox1.toFile('/tmp/file-box-logo.jpg')
 
 /**
- * Convert Buffer to Stream
+ * 2. Convert Buffer to Stream
  */
 import * as fs from 'fs'
 const fileBox2 = FileBox.fromBuffer(
@@ -48,7 +48,7 @@ const writeStream = fs.createWriteStream('/tmp/hello.txt')
 fileBox2.pipe(writeStream)
 
 /**
- * Pack Base64, Unpack to DataURL
+ * 3. Pack Base64, Unpack to DataURL
  */
 const fileBox3 = FileBox.fromBase64('d29ybGQK', 'hello.txt')
 console.log(fileBox3.toDataURL())
