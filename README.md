@@ -4,29 +4,33 @@ FileBox is a virtual container for packing a file data into it for future read, 
 
 ![File Box](https://zixia.github.io/node-file-box/images/file-box-logo.jpg)
 
-Currently the FileBox loader(`fromXXX()`) supported the following data:
+Currently the FileBox supports almost all kinds of the data input/output methods/formats:
 
-1. Local File(Path)
-1. Remote File(URL)
-1. Base64
-1. Buffer
-1. Stream
+| Type | Load | Save | Description |
+| :--- | :--- | :--- | :--- |
+| Local File | `fromFile()` | `toFile()` | Local file in file system |
+| Remote URL | `fromUrl()` | `toUrl()`(TBW) | Remote file in a HTTP/HTTPS URL |
+| Buffer | `fromBuffer()` | `toBuffer()` | JavaScript Buffer data |
+| Stream | `fromStream()` | `toStream()` | JavaScript Stream |
+| Base64 | `fromBase64()` | `toBase64()` | Base64 encoded data |
+| DataURL | `fromDataUrl()` | `toDataURL()` | DataURL data |
+| JSON | `fromJSON()` | `toJSON()` | JSON data |
 
 ## API Reference
 
 ### 1. Load File in to Box
 
-#### 1.1 `fromLocal(filePath: string): FileBox`
+#### 1.1 `fromFile(filePath: string): FileBox`
 
-Alias: `fromFile()`
+Alias: `fromLocal()`
 
 ```ts
 const fileBox = FileBox.fromLocal('/tmp/test.txt')
 ```
 
-#### 1.2 `fromRemote(url: string, name?: string, headers?: http.OutgoingHttpHeaders): FileBox`
+#### 1.2 `fromUrl(url: string, name?: string, headers?: http.OutgoingHttpHeaders): FileBox`
 
-Alais: `fromUrl()`
+Alais: `fromRemote()`
 
 ```ts
 const fileBox = FileBox.fromRemote(

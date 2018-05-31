@@ -42,19 +42,19 @@ export class FileBox implements Pipeable {
    */
 
   /**
-   * Alias for `FileBox.fromRemote()`
+   * Alias for `FileBox.fromUrl()`
    *
-   * @alias fromRemote()
+   * @alias fromUrl()
    */
-  public static fromUrl(
+  public static fromRemote(
     url      : string,
     name?    : string,
     headers? : http.OutgoingHttpHeaders,
   ): FileBox {
-    return this.fromRemote(url, name, headers)
+    return this.fromUrl(url, name, headers)
   }
 
-  public static fromRemote(
+  public static fromUrl(
     url      : string,
     name?    : string,
     headers? : http.OutgoingHttpHeaders,
@@ -79,18 +79,18 @@ export class FileBox implements Pipeable {
   }
 
   /**
-   * Alias for `FileBox.fromLocal()`
+   * Alias for `FileBox.fromFile()`
    *
-   * @alias fromLocal
+   * @alias fromFile
    */
-  public static fromFile(
+  public static fromLocal(
     path  : string,
     name? : string,
   ): FileBox {
-    return this.fromLocal(path, name)
+    return this.fromFile(path, name)
   }
 
-  public static fromLocal(
+  public static fromFile(
     path:   string,
     name?:  string,
   ): FileBox {
@@ -311,70 +311,68 @@ export class FileBox implements Pipeable {
   public pipe<T extends NodeJS.WritableStream>(
     destination: T,
   ): T {
+    this.toStream().then(
+      stream => stream.pipe(destination),
+    )
+    return destination
+  }
+
+  public async toStream(): Promise<NodeJS.ReadableStream> {
+    let stream: NodeJS.ReadableStream
+
     switch (this.boxType) {
       case FileBoxType.Buffer:
-        this.pipeBuffer(destination)
+        stream = this.streamBuffer()
         break
 
       case FileBoxType.Local:
-        this.pipeLocal(destination)
+        stream = this.streamLocal()
         break
 
       case FileBoxType.Remote:
-        this.pipeRemote(destination)
+        stream = await this.streamRemote()
         break
 
       case FileBoxType.Stream:
-        this.pipeStream(destination)
+        if (!this.stream) {
+          throw new Error('no stream')
+        }
+        stream = this.stream
         break
 
       default:
         throw new Error('not supported FileBoxType: ' + FileBoxType[this.boxType])
     }
 
-    return destination
+    return stream
   }
 
   /**
    * https://stackoverflow.com/a/16044400/1123955
    */
-  private pipeBuffer(
-    destination: NodeJS.WritableStream,
-  ): void {
+  private streamBuffer(): NodeJS.ReadableStream {
     const bufferStream = new PassThrough()
-    bufferStream.pipe(destination)
     bufferStream.end(this.buffer)
+    return bufferStream
   }
 
-  private pipeLocal(
-    destination: NodeJS.WritableStream,
-  ): void {
+  private streamLocal(): NodeJS.ReadableStream {
     const filePath = this.url
     if (!filePath) {
       throw new Error('no url(path)')
     }
-    fs.createReadStream(filePath)
-      .pipe(destination)
+    return fs.createReadStream(filePath)
   }
 
-  private pipeRemote(
-    destination: NodeJS.WritableStream,
-  ): void {
-    if (!this.url) {
-      throw new Error('no url')
-    }
-
-    httpStream(this.url, this.headers)
-      .then(res => res.pipe(destination))
-  }
-
-  private pipeStream(
-    destination: NodeJS.WritableStream,
-  ): void {
-    if (!this.stream) {
-      throw new Error('no stream!')
-    }
-    this.stream.pipe(destination)
+  private async streamRemote(): Promise<NodeJS.ReadableStream> {
+    return new Promise<NodeJS.ReadableStream>((resolve, reject) => {
+      if (this.url) {
+        httpStream(this.url, this.headers)
+        .then(resolve)
+      } else {
+        reject(new Error('no url'))
+      }
+    })
   }
 
   /**
