@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zixia/node-file-box.git"
+    "url": "git+https://github.com/zixia/file-box.git"
   },
   "keywords": [
     "file",
@@ -32,9 +32,9 @@
   "author": "Huan LI <zixia@zixia.net>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/zixia/node-file-box/issues"
+    "url": "https://github.com/zixia/file-box/issues"
   },
-  "homepage": "https://github.com/zixia/node-file-box#readme",
+  "homepage": "https://github.com/zixia/file-box#readme",
   "devDependencies": {
     "@types/blue-tape": "^0.1.31",
     "@types/isomorphic-fetch": "0.0.34",
