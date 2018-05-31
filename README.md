@@ -271,7 +271,7 @@ HTTP Header Example:
 
 ## CHANGE LOG
 
-### v0.6 (master) (Jun 2018)
+### v0.8 (master) (Jun 2018)
 
 1. Add two new factory methods: `fromBase64()`, `fromDataURL()`
 1. Add `toBase64()` and `toDataURL()` to get the BASE64 encoded file data
