@@ -32,7 +32,6 @@ Alais: `fromUrl()`
 const fileBox = FileBox.fromRemote(
   'https://zixia.github.io/node-file-box/images/file-box-logo.jpg',
   'logo.jpg',
-  {},
 )
 ```
 

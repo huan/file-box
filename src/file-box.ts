@@ -272,6 +272,12 @@ export class FileBox implements Pipeable {
     throw new Error('WIP')
   }
 
+  public async ready(): Promise<void> {
+    if (this.boxType === FileBoxType.Remote) {
+      await this.syncRemoteName()
+    }
+  }
+
   /**
    * @todo use http.get/gets instead of Request
    */
