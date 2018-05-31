@@ -42,19 +42,19 @@ export class FileBox implements Pipeable {
    */
 
   /**
-   * Alias for `FileBox.packRemote()`
+   * Alias for `FileBox.fromRemote()`
    *
-   * @alias packRemote()
+   * @alias fromRemote()
    */
-  public static packUrl(
+  public static fromUrl(
     url      : string,
     name?    : string,
     headers? : http.OutgoingHttpHeaders,
   ): FileBox {
-    return this.packRemote(url, name, headers)
+    return this.fromRemote(url, name, headers)
   }
 
-  public static packRemote(
+  public static fromRemote(
     url      : string,
     name?    : string,
     headers? : http.OutgoingHttpHeaders,
@@ -79,18 +79,18 @@ export class FileBox implements Pipeable {
   }
 
   /**
-   * Alias for `FileBox.packLocal()`
+   * Alias for `FileBox.fromLocal()`
    *
-   * @alias packLocal
+   * @alias fromLocal
    */
-  public static packFile(
+  public static fromFile(
     path  : string,
     name? : string,
   ): FileBox {
-    return this.packLocal(path, name)
+    return this.fromLocal(path, name)
   }
 
-  public static packLocal(
+  public static fromLocal(
     path:   string,
     name?:  string,
   ): FileBox {
@@ -110,7 +110,7 @@ export class FileBox implements Pipeable {
     return box
   }
 
-  public static packStream(
+  public static fromStream(
     stream: NodeJS.ReadableStream,
     name:   string,
   ): FileBox {
@@ -128,7 +128,7 @@ export class FileBox implements Pipeable {
     return box
   }
 
-  public static packBuffer(
+  public static fromBuffer(
     buffer: Buffer,
     name:   string,
   ): FileBox {
@@ -145,7 +145,7 @@ export class FileBox implements Pipeable {
     return box
   }
 
-  public static packBase64(
+  public static fromBase64(
     base64: string,
     name:   string,
   ): FileBox {
@@ -166,13 +166,13 @@ export class FileBox implements Pipeable {
   /**
    * dataURL: `data:image/png;base64,${base64Text}`,
    */
-  public static packDataUrl(
+  public static fromDataUrl(
     dataUrl : string,
     name    : string,
   ): FileBox {
     const base64 = dataUrlToBase64(dataUrl)
 
-    const box = this.packBase64(
+    const box = this.fromBase64(
       base64,
       name,
     )

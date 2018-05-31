@@ -1,20 +1,32 @@
 # FILEBOX
 
-Pack a file in a Box for easy transport between servers with the least payload, no mater than where it is.(local path, remote url, or cloud storage)
+FileBox is a virtual container for packing a file data into it for future read, and easily transport between servers with the least payload, no mater than where it is (local path, remote url, or cloud storage).
 
 ![File Box](https://zixia.github.io/node-file-box/images/file-box-logo.jpg)
+
+Currently the FileBox loader(`fromXXX()`) supported the following data:
+
+1. Local File(Path)
+1. Remote File(URL)
+1. Base64
+1. Buffer
+1. Stream
 
 ## API Reference
 
 ### 1. Load File in to Box
 
-#### 1.1 `packLocal(filePath: string): FileBox`
+#### 1.1 `fromLocal(filePath: string): FileBox`
+
+Alias: `fromFile()`
 
 ```ts
 const fileBox = FileBox.fromLocal('/tmp/test.txt')
 ```
 
-#### 1.2 `packRemote(url: string, name?: string, headers?: http.OutgoingHttpHeaders): FileBox`
+#### 1.2 `fromRemote(url: string, name?: string, headers?: http.OutgoingHttpHeaders): FileBox`
+
+Alais: `fromUrl()`
 
 ```ts
 const fileBox = FileBox.fromRemote(
@@ -24,19 +36,37 @@ const fileBox = FileBox.fromRemote(
 )
 ```
 
-#### 1.3 `packStream(stream: NoddeJS.ReadableStream, name: string): FileBox`
+#### 1.3 `fromStream(stream: NoddeJS.ReadableStream, name: string): FileBox`
 
 ```ts
 const fileBox = FileBox.fromStream(res, '/tmp/download.zip')
 ```
 
-#### 1.4 `packBuffer(buffer: Buffer, name: string): FileBox`
+#### 1.4 `fromBuffer(buffer: Buffer, name: string): FileBox`
 
 ```ts
 const fileBox = FileBox.fromBuffer(buf, '/tmp/download.zip')
 ```
 
-#### 1.5 `FileBox.fromJSON()`
+#### 1.5 `FileBox.fromBase64(base64: string, name: string): FileBox`
+
+Decoded a base64 encoded file data.
+
+```ts
+const fileBox = FileBox.fromBase64('d29ybGQK', 'hello.txt')
+fileBox.toFile()
+```
+
+#### 1.6 `FileBox.fromDataUrl(dataUrl: string, name: string): FileBox`
+
+Decoded a DataURL data.
+
+```ts
+const fileBox = FileBox.fromDataUrl('data:text/plain;base64,d29ybGQK', 'hello.txt')
+fileBox.toFile()
+```
+
+#### 1.7 `FileBox.fromJSON()`
 
 Restore a `FileBox.toJSON()` text string back to a FileBox instance.
 
@@ -48,9 +78,11 @@ const restoredFileBox = FileBox.fromJSON(jsonText)
 
 ### 2. Get File out from Box
 
-### 2.1 `toFile(path: string): Promise<void>`
+### 2.1 `toFile(name?: string): Promise<void>`
 
-Save file to current work path(cwd) of the local file system.
+Save file to current work path(cwd) of the local file system with the default `name`.
+
+if `name` specified with a full path, then will use the speficied file name instead.
 
 ```ts
 const fileBox = FileBox.fromRemote(
@@ -108,7 +140,7 @@ restoredFileBox.toFile('/tmp/file-box-logo.jpg')
 Get the DataURL of the file.
 
 ```ts
-const fileBox = FileBox.packFile('tests/fixtures/hello.txt')
+const fileBox = FileBox.fromFile('tests/fixtures/hello.txt')
 const dataUrl = await fileBox.toDataURL()
 console.log(dataUrl) // Output: data:text/plain;base64,d29ybGQK'
 ```
@@ -193,11 +225,10 @@ HTTP Header Example:
 
 ## CHANGE LOG
 
-### v0.6 (master)
+### v0.6 (master) (Jun 2018)
 
-1. Rename `fromLocal()`, `fromRemote()`, `fromStream()`, and `fromBuffer()` to `packXXX()`
 1. Add two new factory methods: `fromBase64()`, `fromDataUrl()`
-1. Add `base64()` to get the BASE64 encoded file data
+1. Add `toBase64()` and `toDataURL()` to get the BASE64 encoded file data
 
 ### v0.4 (May 2018)
 
