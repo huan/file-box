@@ -10,9 +10,9 @@ Currently the FileBox supports almost all kinds of the data input/output methods
 | :--- | :--- | :--- | :--- |
 | Local File | `fromFile()` | `toFile()` | Local file in file system |
 | Remote URL | `fromUrl()` | `toUrl()`(TBW) | Remote file in a HTTP/HTTPS URL |
-| Buffer | `fromBuffer()` | `toBuffer()` | JavaScript Buffer data |
+| Buffer | `fromBuffer()` | `toBuffer()` | JavaScript Buffer |
 | Stream | `fromStream()` | `toStream()` | JavaScript Stream |
-| Base64 | `fromBase64()` | `toBase64()` | Base64 encoded data |
+| Base64 | `fromBase64()` | `toBase64()` | Base64 data |
 | DataURL | `fromDataURL()` | `toDataURL()` | DataURL data |
 | JSON | `fromJSON()` | `toJSON()` | JSON data |
 
