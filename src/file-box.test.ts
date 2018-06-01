@@ -123,3 +123,11 @@ test('toDataURL()', async t => {
 
   t.equal(dataUrl, EXPECTED_DATA_URL, 'should get the data url right')
 })
+
+test('toString()', async t => {
+  const FILE_PATH     = 'tests/fixtures/hello.txt'
+  const EXPECT_STRING = 'FileBox#Local<hello.txt>'
+
+  const fileBox = FileBox.fromFile(FILE_PATH)
+  t.equal(fileBox.toString(), EXPECT_STRING, 'should get the toString() result')
+})

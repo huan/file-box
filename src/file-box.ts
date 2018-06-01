@@ -269,6 +269,16 @@ export class FileBox implements Pipeable {
     return VERSION
   }
 
+  public toString() {
+    return [
+      'FileBox#',
+      FileBoxType[this.boxType],
+      '<',
+      this.name,
+      '>',
+    ].join('')
+  }
+
   public toJSON(): string {
     throw new Error('WIP')
   }
