@@ -39,7 +39,7 @@ const tstest = {
 }
 
 test('File smoke testing', async t => {
-  const box = FileBox.fromLocal('x')
+  const box = FileBox.fromFile('x')
   t.ok(box)
 })
 
@@ -63,7 +63,7 @@ export class TestFileBox {
   public static testFileCreateLocal(
     @tstest.parameterFixture() localFileFixture: any,
   ) {
-    const file = FileBox.fromLocal(localFileFixture)
+    const file = FileBox.fromFile(localFileFixture)
 
     test('File.createLocal()', async t => {
       t.ok(file, 'ok')
@@ -102,7 +102,7 @@ test('syncRemoteName()', async t => {
   const EXPECTED_NAME_FROM_HEADER = 'test.txt'
   const EXPECTED_TYPE_FROM_HEADER = 'application/json'
 
-  const fileBox = FileBox.fromRemote(URL)
+  const fileBox = FileBox.fromUrl(URL)
 
   t.equal(fileBox.name, EXPECTED_NAME_FROM_URL, 'should get the name from url')
   t.equal(fileBox.mimeType, EXPECTED_TYPE_FROM_URL, 'should get the mime type from url')
@@ -126,8 +126,18 @@ test('toDataURL()', async t => {
 
 test('toString()', async t => {
   const FILE_PATH     = 'tests/fixtures/hello.txt'
-  const EXPECT_STRING = 'FileBox#Local<hello.txt>'
+  const EXPECT_STRING = 'FileBox#File<hello.txt>'
 
   const fileBox = FileBox.fromFile(FILE_PATH)
   t.equal(fileBox.toString(), EXPECT_STRING, 'should get the toString() result')
+})
+
+test('toBuffer()', async t => {
+  const FILE_PATH     = 'tests/fixtures/hello.txt'
+  const EXPECT_STRING = 'world\n'
+
+  const fileBox = FileBox.fromFile(FILE_PATH)
+  const buffer = await fileBox.toBuffer()
+
+  t.equal(buffer.toString(), EXPECT_STRING, 'should get the toBuffer() result')
 })

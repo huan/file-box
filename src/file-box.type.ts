@@ -11,9 +11,9 @@ export interface Pipeable {
 export enum FileBoxType {
   Unknown = 0,
   Buffer,
-  Local,
-  Remote,
+  File,
   Stream,
+  Url,
 }
 
 /**
@@ -33,12 +33,12 @@ export interface FileBoxOptionsBase {
     name: string
 }
 
-export interface FileBoxOptionsLocal {
-  type : FileBoxType.Local
-  url  : string
+export interface FileBoxOptionsFile {
+  type : FileBoxType.File
+  path : string
 }
-export interface FileBoxOptionsRemote {
-  type     : FileBoxType.Remote
+export interface FileBoxOptionsUrl {
+  type     : FileBoxType.Url
   url      : string
   headers? : http.OutgoingHttpHeaders
 }
@@ -47,34 +47,13 @@ export interface FileBoxOptionsBuffer {
   buffer : Buffer
 }
 export interface FileBoxOptionsStream {
-  type    : FileBoxType.Stream
-  stream? : NodeJS.ReadableStream
+  type   : FileBoxType.Stream
+  stream : NodeJS.ReadableStream
 }
 
 export type FileBoxOptions = FileBoxOptionsBase & (
-    FileBoxOptionsLocal
-  | FileBoxOptionsRemote
-  | FileBoxOptionsBuffer
+    FileBoxOptionsBuffer
+  | FileBoxOptionsFile
   | FileBoxOptionsStream
+  | FileBoxOptionsUrl
 )
-
-// export interface RemoteOptions {
-//   url      : string,
-//   name?    : string,
-//   headers? : { [idx: string]: string },
-// }
-
-// export interface LocalOptions {
-//   path  : string,
-//   name? : string,
-// }
-
-// export interface StreamOptions {
-//   stream : NodeJS.ReadableStream,
-//   name   : string,
-// }
-
-// export interface BufferOptions {
-//   buffer : Buffer,
-//   name   : string,
-// }
