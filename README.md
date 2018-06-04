@@ -188,6 +188,16 @@ const dataUrl = await fileBox.toDataURL()
 console.log(dataUrl) // Output: data:text/plain;base64,d29ybGQK'
 ```
 
+#### 2.6 `toBuffer(): Promise<Buffer>`
+
+Get the Buffer of the file.
+
+```ts
+const fileBox = FileBox.fromFile('tests/fixtures/hello.txt')
+const buffer = await fileBox.toBuffer()
+console.log(buffer.toString()) // Output: world
+```
+
 ### 3. Misc
 
 #### 3.1 `name`
@@ -275,7 +285,7 @@ HTTP Header Example:
 ### v0.8 (master) (Jun 2018)
 
 1. Add two new factory methods: `fromBase64()`, `fromDataURL()`
-1. Add `toBase64()` and `toDataURL()` to get the BASE64 encoded file data
+1. Add `toBuffer()`, `toBase64()` and `toDataURL()` to get the Buffer and BASE64 encoded file data
 
 ### v0.4 (May 2018)
 
