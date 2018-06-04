@@ -1,5 +1,9 @@
 # FILEBOX
 
+[![NPM Version](https://badge.fury.io/js/file-box.svg)](https://badge.fury.io/js/file-box)
+[![Build Status](https://api.travis-ci.com/zixia/file-box.svg?branch=master)](https://travis-ci.com/zixia/file-box)
+[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
+
 FileBox is a virtual container for packing a file data into it for future read, and easily transport between servers with the least payload, no mater than where it is (local path, remote url, or cloud storage).
 
 ![File Box](https://zixia.github.io/file-box/images/file-box-logo.jpg)
