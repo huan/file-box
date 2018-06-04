@@ -1,7 +1,7 @@
 /**
  *
  * File Box
- * https://github.com/zixia/node-file-box
+ * https://github.com/zixia/file-box
  *
  * 2018 Huan LI <zixia@zixia.net>
  *
