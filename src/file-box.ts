@@ -379,14 +379,14 @@ export class FileBox implements Pipeable {
 
     const exist = await new Promise<boolean>(resolve => fs.exists(fullFilePath, resolve))
 
-    if (!overwrite && exist) {
-      throw new Error(`save(${fullFilePath}) file is already exist!`)
+    if (exist && !overwrite) {
+      throw new Error(`FileBox.toFile(${fullFilePath}): file exist. use FileBox.toFile(${fullFilePath}, true) to force overwrite.`)
     }
 
     const writeStream = fs.createWriteStream(fullFilePath)
     await new Promise((resolve, reject) => {
       writeStream
-        .once('end'   , resolve)
+        .once('close'   , resolve)
         .once('error' , reject)
 
       this.pipe(writeStream)
