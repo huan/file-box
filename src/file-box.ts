@@ -158,11 +158,12 @@ export class FileBox implements Pipeable {
    *
    */
   // not readonly: need be update from the remote url(possible)
-  public name: string
+  public boxType      : FileBoxType
+  public lastModified : number
+  public size         : number
 
-  public readonly lastModified : number
-  public readonly size         : number
-  public readonly boxType      : FileBoxType
+  public mimeType?    : string  // 'text/plain'
+  public name         : string
 
   /**
    * Lazy load data:
@@ -172,8 +173,6 @@ export class FileBox implements Pipeable {
   private readonly remoteUrl? : string
   private readonly localPath? : string
   private readonly stream?    : NodeJS.ReadableStream
-
-  public mimeType? : string
 
   private readonly headers?: http.OutgoingHttpHeaders
 
