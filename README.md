@@ -18,7 +18,7 @@ Currently the FileBox supports almost all kinds of the data input/output methods
 | Stream | `fromStream()` | `toStream()` | JavaScript Stream |
 | Base64 | `fromBase64()` | `toBase64()` | Base64 data |
 | DataURL | `fromDataURL()` | `toDataURL()` | DataURL data |
-| JSON | `fromJSON()` | `toJSON()` | JSON data |
+| JSON | `fromJSON()`(TBW) | `toJSON()`(TBW) | Serialize/Deserialize FileBox |
 
 ## EXAMPLES
 
