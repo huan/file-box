@@ -32,6 +32,10 @@ import {
   streamToBuffer,
 }                         from './misc'
 
+export interface Metadata {
+  [key: string]: any,
+}
+
 export class FileBox implements Pipeable {
 
   /**
@@ -45,14 +49,6 @@ export class FileBox implements Pipeable {
    *
    * @alias fromUrl()
    */
-  // public static fromRemote(
-  //   url      : string,
-  //   name?    : string,
-  //   headers? : http.OutgoingHttpHeaders,
-  // ): FileBox {
-  //   return this.fromUrl(url, name, headers)
-  // }
-
   public static fromUrl(
     url      : string,
     name?    : string,
@@ -76,12 +72,6 @@ export class FileBox implements Pipeable {
    *
    * @alias fromFile
    */
-  // public static fromLocal(
-  //   path  : string,
-  //   name? : string,
-  // ): FileBox {
-  //   return this.fromFile(path, name)
-  // }
 
   public static fromFile(
     path:   string,
@@ -162,8 +152,9 @@ export class FileBox implements Pipeable {
   public lastModified : number
   public size         : number
 
-  public mimeType?    : string  // 'text/plain'
-  public name         : string
+  public mimeType?         : string    // 'text/plain'
+  public name              : string
+  public readonly metadata : Metadata
 
   /**
    * Lazy load data:
@@ -193,6 +184,8 @@ export class FileBox implements Pipeable {
     } else {
       options = fileOrOptions
     }
+
+    this.metadata = {}
 
     // Only keep `basename` in this.name
     this.name    = nodePath.basename(options.name)

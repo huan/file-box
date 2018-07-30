@@ -141,3 +141,37 @@ test('toBuffer()', async t => {
 
   t.equal(buffer.toString(), EXPECT_STRING, 'should get the toBuffer() result')
 })
+
+test('metadata', async t => {
+  const FILE_PATH     = 'tests/fixtures/hello.txt'
+
+  const EXPECTED_NAME = 'myname'
+  const EXPECTED_AGE  = 'myage'
+  const EXPECTED_MOL  = 42
+
+  // interface MetadataType {
+  //   metaname : string,
+  //   metaage  : number,
+  //   metaobj: {
+  //     mol: number,
+  //   }
+  // }
+
+  const EXPECTED_METADATA = {
+    metaname: EXPECTED_NAME,
+    metaage: EXPECTED_AGE,
+    metaobj: {
+      mol: EXPECTED_MOL,
+    },
+  }
+
+  const fileBox = FileBox.fromFile(FILE_PATH)
+
+  fileBox.metadata.metaname = EXPECTED_NAME
+  fileBox.metadata.metaage  = EXPECTED_AGE
+  fileBox.metadata.metaobj = {
+    mol: EXPECTED_MOL,
+  }
+
+  t.deepEqual(fileBox.metadata, EXPECTED_METADATA, 'should get the metadata')
+})

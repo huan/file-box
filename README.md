@@ -290,6 +290,7 @@ HTTP Header Example:
 
 1. Add two new factory methods: `fromBase64()`, `fromDataURL()`
 1. Add `toBuffer()`, `toBase64()` and `toDataURL()` to get the Buffer and BASE64 encoded file data
+1. Add `metadata` property to store additional informations. ([#3](https://github.com/zixia/file-box/issues/3))
 
 ### v0.4 (May 2018)
 
