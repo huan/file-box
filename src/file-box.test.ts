@@ -167,11 +167,28 @@ test('metadata', async t => {
 
   const fileBox = FileBox.fromFile(FILE_PATH)
 
-  fileBox.metadata.metaname = EXPECTED_NAME
-  fileBox.metadata.metaage  = EXPECTED_AGE
-  fileBox.metadata.metaobj = {
-    mol: EXPECTED_MOL,
-  }
+  t.deepEqual(fileBox.metadata, {}, 'should get a empty {} if not set')
+
+  t.doesNotThrow(
+    () => {
+      fileBox.metadata = EXPECTED_METADATA
+    },
+    'should not throw for set metadata for the first time',
+  )
+
+  t.throws(
+    () => {
+      fileBox.metadata = EXPECTED_METADATA
+    },
+    'should throw for set metadata again',
+  )
+
+  t.throws(
+    () => {
+      fileBox.metadata.mol = EXPECTED_MOL
+    },
+    'should throw for change value of a property on metadata',
+  )
 
   t.deepEqual(fileBox.metadata, EXPECTED_METADATA, 'should get the metadata')
 })

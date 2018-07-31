@@ -35,6 +35,7 @@ import {
 export interface Metadata {
   [key: string]: any,
 }
+const EMPTY_META_DATA = Object.freeze({})
 
 export class FileBox implements Pipeable {
 
@@ -152,9 +153,23 @@ export class FileBox implements Pipeable {
   public lastModified : number
   public size         : number
 
-  public mimeType?         : string    // 'text/plain'
-  public name              : string
-  public readonly metadata : Metadata
+  public mimeType? : string    // 'text/plain'
+  public name      : string
+
+  public _metadata?: Metadata
+  public get metadata (): Metadata {
+    if (this._metadata) {
+      return this._metadata
+    }
+    return EMPTY_META_DATA
+  }
+  public set metadata (data: Metadata) {
+    if (this._metadata) {
+      throw new Error('metadata can not be modified after set')
+    }
+    this._metadata = { ...data }
+    Object.freeze(this._metadata)
+  }
 
   /**
    * Lazy load data:
@@ -184,8 +199,6 @@ export class FileBox implements Pipeable {
     } else {
       options = fileOrOptions
     }
-
-    this.metadata = {}
 
     // Only keep `basename` in this.name
     this.name    = nodePath.basename(options.name)
