@@ -3,6 +3,7 @@
 [![NPM Version](https://badge.fury.io/js/file-box.svg)](https://badge.fury.io/js/file-box)
 [![Build Status](https://api.travis-ci.com/huan/file-box.svg?branch=master)](https://travis-ci.com/huan/file-box)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
+[![Greenkeeper badge](https://badges.greenkeeper.io/huan/file-box.svg)](https://greenkeeper.io/)
 
 FileBox is a virtual container for packing a file data into it for future read, and easily transport between servers with the least payload, no mater than where it is (local path, remote url, or cloud storage).
 
@@ -215,21 +216,38 @@ const fileBox = FileBox.fromRemote(
 console.log(fileBox.name) // Output: file-box-logo.jpg
 ```
 
-#### 3.2 `version(): string`
+#### 3.2 `metadata: Metadata { [key: string]: any } `
+
+Metadata for the file in the box. This value can only be assigned once, and will be immutable afterwards, all following assign or modify actions on `metadata` will throw errors
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/file-box/images/file-box-logo.jpg',
+)
+fileBox.metadata = {
+  author      : 'zixia',
+  githubRepo  : 'https://github.com/zixia/file-box',
+}
+
+console.log(fileBox.metadata)       // Output: { author: 'zixia', githubRepo: 'https://github.com/zixia/file-box' }
+fileBox.metadata.author = 'Thanos'  // Will throw exception 
+```
+
+#### 3.3 `version(): string`
 
 Version of the FileBox
 
-#### 3.3 `toJSON(): string`
+#### 3.4 `toJSON(): string`
 
 Serialize FileBox metadata to JSON.
 
 **To be implemented.**
 
-#### 3.4 `ready(): Promise<void>`
+#### 3.5 `ready(): Promise<void>`
 
 Update the necessary internal data and make everything ready for use.
 
-#### 3.5 `syncRemoteName(): Promise<void>`
+#### 3.6 `syncRemoteName(): Promise<void>`
 
 Sync the filename with the HTTP Response Header
 
