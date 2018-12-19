@@ -40,11 +40,9 @@ export async function httpHeadHeader(url: string): Promise<http.IncomingHttpHead
   async function _headHeader(destUrl: string): Promise<http.IncomingMessage> {
     const parsedUrl = nodeUrl.parse(destUrl)
     const options = {
-      protocol : parsedUrl.protocol,
-      hostname : parsedUrl.hostname,
+      ...parsedUrl,
       method   : 'HEAD',
       // method   : 'GET',
-      path     : parsedUrl.path,
     }
 
     let request: typeof http.request
