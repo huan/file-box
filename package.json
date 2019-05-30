@@ -40,7 +40,7 @@
     "@types/blue-tape": "^0.1.31",
     "@types/isomorphic-fetch": "0.0.34",
     "@types/mime": "^2.0.0",
-    "@types/node": "^11.9.0",
+    "@types/node": "^12.0.4",
     "@types/semver": "^5.5.0",
     "blue-tape": "^1.0.0",
     "git-scripts": "^0.2.1",
