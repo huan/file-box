@@ -44,7 +44,7 @@ fileBox1.toFile('/tmp/file-box-logo.jpg')
 /**
  * 2. Convert Buffer to Stream
  */
-import * as fs from 'fs'
+import fs from 'fs'
 const fileBox2 = FileBox.fromBuffer(
   Buffer.from('world'),
   'hello.txt',

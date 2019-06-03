@@ -1,8 +1,8 @@
-import * as http      from 'http'
+import http      from 'http'
 import {
   // Stream,
   Readable,
-}                     from 'stream'
+}                from 'stream'
 
 export interface Pipeable {
   pipe: typeof Readable.prototype.pipe,

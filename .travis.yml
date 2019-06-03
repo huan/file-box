@@ -35,6 +35,7 @@ jobs:
         - echo "Deploying to NPM ..."
         - npm version
         - if ./scripts/development-release.ts; then ./scripts/package-publish-config-tag-next.ts; fi
+        - ./scripts/generate-version.ts
         - npm run dist
 
       deploy:
