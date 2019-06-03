@@ -3,7 +3,7 @@ import {
   VERSION,
 }             from 'file-box'
 
-if (VERSION === '0.0.0') {
+if (VERSION as any === '0.0.0') {
   throw new Error('version not set right before publish!')
 }
 

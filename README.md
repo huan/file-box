@@ -304,7 +304,11 @@ HTTP Header Example:
 
 ## CHANGE LOG
 
-### v0.8 (master) (Jun 2018)
+### v0.9 (master) (Jun 2019)
+
+1. Start using @chatie/tsconfig
+
+### v0.8 (Jun 2018)
 
 1. Add two new factory methods: `fromBase64()`, `fromDataURL()`
 1. Add `toBuffer()`, `toBase64()` and `toDataURL()` to get the Buffer and BASE64 encoded file data
