@@ -27,6 +27,7 @@ jobs:
   include:
     - stage: pack
       script:
+        - ./scripts/generate-version.ts
         - npm run test:pack
         - echo 'Npm Pack Testing Finished.'
 
