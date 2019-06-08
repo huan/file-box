@@ -37,7 +37,7 @@
   },
   "homepage": "https://github.com/huan/file-box#readme",
   "devDependencies": {
-    "@chatie/tsconfig": "^0.4.3",
+    "@chatie/tsconfig": "^0.6.1",
     "@types/blue-tape": "^0.1.31",
     "@types/isomorphic-fetch": "0.0.34",
     "@types/mime": "^2.0.0",
