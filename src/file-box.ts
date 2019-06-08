@@ -6,11 +6,11 @@
  * 2018 Huan LI <zixia@zixia.net>
  *
  */
-import * as fs        from 'fs'
-import * as http      from 'http'
-import * as nodePath  from 'path'
+import fs        from 'fs'
+import http      from 'http'
+import nodePath  from 'path'
 
-import * as mime  from 'mime'
+import mime  from 'mime'
 
 import {
   PassThrough,
@@ -20,8 +20,8 @@ import {
   VERSION,
 }                         from './config'
 import {
-  FileBoxType,
   FileBoxOptions,
+  FileBoxType,
   Pipeable,
 }                         from './file-box.type'
 import {
@@ -50,7 +50,7 @@ export class FileBox implements Pipeable {
    *
    * @alias fromUrl()
    */
-  public static fromUrl(
+  public static fromUrl (
     url      : string,
     name?    : string,
     headers? : http.OutgoingHttpHeaders,
@@ -60,10 +60,10 @@ export class FileBox implements Pipeable {
       name = parsedUrl.base
     }
     const options: FileBoxOptions = {
-      type : FileBoxType.Url,
-      name,
-      url,
       headers,
+      name,
+      type : FileBoxType.Url,
+      url,
     }
     return new FileBox(options)
   }
@@ -74,7 +74,7 @@ export class FileBox implements Pipeable {
    * @alias fromFile
    */
 
-  public static fromFile(
+  public static fromFile (
     path:   string,
     name?:  string,
   ): FileBox {
@@ -82,46 +82,46 @@ export class FileBox implements Pipeable {
       name = nodePath.parse(path).base
     }
     const options: FileBoxOptions = {
-      type : FileBoxType.File,
       name,
-      path: path,
+      path,
+      type : FileBoxType.File,
     }
 
     return new FileBox(options)
   }
 
-  public static fromStream(
+  public static fromStream (
     stream: NodeJS.ReadableStream,
     name:   string,
   ): FileBox {
     const options: FileBoxOptions = {
-      type: FileBoxType.Stream,
-      stream,
       name,
+      stream,
+      type: FileBoxType.Stream,
     }
     return new FileBox(options)
   }
 
-  public static fromBuffer(
+  public static fromBuffer (
     buffer: Buffer,
     name:   string,
   ): FileBox {
     const options: FileBoxOptions = {
-      type : FileBoxType.Buffer,
-      name,
       buffer,
+      name,
+      type : FileBoxType.Buffer,
     }
     return new FileBox(options)
   }
 
-  public static fromBase64(
+  public static fromBase64 (
     base64: string,
     name:   string,
   ): FileBox {
     const options: FileBoxOptions = {
-      type : FileBoxType.Buffer,
-      name,
       buffer: Buffer.from(base64, 'base64'),
+      name,
+      type : FileBoxType.Buffer,
     }
     return new FileBox(options)
   }
@@ -129,7 +129,7 @@ export class FileBox implements Pipeable {
   /**
    * dataURL: `data:image/png;base64,${base64Text}`,
    */
-  public static fromDataURL(
+  public static fromDataURL (
     dataUrl : string,
     name    : string,
   ): FileBox {
@@ -139,7 +139,7 @@ export class FileBox implements Pipeable {
     )
   }
 
-  public static version() {
+  public static version () {
     return VERSION
   }
 
@@ -150,8 +150,10 @@ export class FileBox implements Pipeable {
    */
   // not readonly: need be update from the remote url(possible)
   public boxType      : FileBoxType
-  public lastModified : number
-  public size         : number
+
+  // huan 20190604: it seems that lastMdified & size both not used at all?
+  // public lastModified : number
+  // public size         : number
 
   public mimeType? : string    // 'text/plain'
   public name      : string
@@ -182,7 +184,7 @@ export class FileBox implements Pipeable {
 
   private readonly headers?: http.OutgoingHttpHeaders
 
-  constructor(
+  constructor (
     fileOrOptions: string | FileBoxOptions,
   ) {
     let options: FileBoxOptions
@@ -192,9 +194,9 @@ export class FileBox implements Pipeable {
        * Default to Local File
        */
       options = {
-        type: FileBoxType.File,
         name: fileOrOptions,
         path: nodePath.resolve(fileOrOptions),
+        type: FileBoxType.File,
       }
     } else {
       options = fileOrOptions
@@ -245,11 +247,11 @@ export class FileBox implements Pipeable {
 
   }
 
-  public version() {
+  public version () {
     return VERSION
   }
 
-  public toString() {
+  public toString () {
     return [
       'FileBox#',
       FileBoxType[this.boxType],
@@ -259,11 +261,11 @@ export class FileBox implements Pipeable {
     ].join('')
   }
 
-  public toJSON(): string {
+  public toJSON (): string {
     throw new Error('WIP')
   }
 
-  public async ready(): Promise<void> {
+  public async ready (): Promise<void> {
     if (this.boxType === FileBoxType.Url) {
       await this.syncRemoteName()
     }
@@ -272,7 +274,7 @@ export class FileBox implements Pipeable {
   /**
    * @todo use http.get/gets instead of Request
    */
-  public async syncRemoteName(): Promise<void> {
+  public async syncRemoteName (): Promise<void> {
     /**
      * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
      *  > Content-Disposition: attachment; filename="cool.html"
@@ -299,16 +301,16 @@ export class FileBox implements Pipeable {
     this.mimeType = headers['content-type'] || mime.getType(this.name) || undefined
   }
 
-  public pipe<T extends NodeJS.WritableStream>(
+  public pipe<T extends NodeJS.WritableStream> (
     destination: T,
   ): T {
     this.toStream().then(
       stream => stream.pipe(destination),
-    )
+    ).catch(e => destination.emit('error', e))
     return destination
   }
 
-  public async toStream(): Promise<NodeJS.ReadableStream> {
+  public async toStream (): Promise<NodeJS.ReadableStream> {
     let stream: NodeJS.ReadableStream
 
     switch (this.boxType) {
@@ -341,13 +343,13 @@ export class FileBox implements Pipeable {
   /**
    * https://stackoverflow.com/a/16044400/1123955
    */
-  private transformBufferToStream(): NodeJS.ReadableStream {
+  private transformBufferToStream (): NodeJS.ReadableStream {
     const bufferStream = new PassThrough()
     bufferStream.end(this.buffer)
     return bufferStream
   }
 
-  private transformFileToStream(): NodeJS.ReadableStream {
+  private transformFileToStream (): NodeJS.ReadableStream {
     const filePath = this.localPath
     if (!filePath) {
       throw new Error('no url(path)')
@@ -355,11 +357,12 @@ export class FileBox implements Pipeable {
     return fs.createReadStream(filePath)
   }
 
-  private async transformUrlToStream(): Promise<NodeJS.ReadableStream> {
+  private async transformUrlToStream (): Promise<NodeJS.ReadableStream> {
     return new Promise<NodeJS.ReadableStream>((resolve, reject) => {
       if (this.remoteUrl) {
         httpStream(this.remoteUrl, this.headers)
         .then(resolve)
+        .catch(reject)
       } else {
         reject(new Error('no url'))
       }
@@ -371,7 +374,7 @@ export class FileBox implements Pipeable {
    *
    * @param filePath save file
    */
-  public async toFile(
+  public async toFile (
     filePath?: string,
     overwrite = false,
   ): Promise<void> {
@@ -382,7 +385,7 @@ export class FileBox implements Pipeable {
     }
     const fullFilePath = nodePath.resolve(filePath || this.name)
 
-    const exist = await new Promise<boolean>(resolve => fs.exists(fullFilePath, resolve))
+    const exist = fs.existsSync(fullFilePath)
 
     if (exist && !overwrite) {
       throw new Error(`FileBox.toFile(${fullFilePath}): file exist. use FileBox.toFile(${fullFilePath}, true) to force overwrite.`)
@@ -398,7 +401,7 @@ export class FileBox implements Pipeable {
     })
   }
 
-  public async toBase64(): Promise<string> {
+  public async toBase64 (): Promise<string> {
     const buffer = await this.toBuffer()
     return buffer.toString('base64')
   }
@@ -406,7 +409,7 @@ export class FileBox implements Pipeable {
   /**
    * dataUrl: `data:image/png;base64,${base64Text}',
    */
-  public async toDataURL(): Promise<string> {
+  public async toDataURL (): Promise<string> {
     const base64Text = await this.toBase64()
 
     if (!this.mimeType) {
@@ -423,7 +426,7 @@ export class FileBox implements Pipeable {
     return dataUrl
   }
 
-  public async toBuffer(): Promise<Buffer> {
+  public async toBuffer (): Promise<Buffer> {
     if (this.boxType === FileBoxType.Buffer) {
       if (!this.buffer) {
         throw new Error('no buffer!')

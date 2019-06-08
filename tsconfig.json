@@ -1,41 +1,20 @@
 {
+  "extends": "@chatie/tsconfig",
   "compilerOptions": {
-    "target": "es6"
-    , "module": "commonjs"
-    , "outDir": "dist"
-
-    , "experimentalDecorators": true
-    , "emitDecoratorMetadata": true
-    , "declaration": true
-    , "sourceMap": true
-    , "traceResolution": false
-
-    , "noEmitOnError": true
-    , "noUnusedLocals": true
-    , "noImplicitReturns": true
-    , "noFallthroughCasesInSwitch": true
-    , "noImplicitAny": true
-    , "noUnusedParameters": true
-    , "noImplicitThis": true
-    , "strictNullChecks": true
-
-    , "noLib": false
-    , "skipLibCheck": true
-    , "lib": [
-        "esnext"
-      , "dom"
-    ]
-  }
-  , "exclude": [
-      "node_modules/"
-    , "dist/"
-    , "tests/fixtures/"
-  ]
-  , "include": [
-       "bin/*.ts"
-     , "examples/**/*.ts"
-     , "scripts/**/*.ts"
-     , "src/**/*.ts"
-     , "tests/**/*.spec.ts"
-  ]
+    "outDir": "dist",
+  },
+  "exclude": [
+    "node_modules/",
+    "dist/",
+    "tests/fixtures/",
+  ],
+  "include": [
+    "app/**/*.ts",
+    "bin/*.ts",
+    "bot/**/*.ts",
+    "examples/**/*.ts",
+    "scripts/**/*.ts",
+    "src/**/*.ts",
+    "tests/**/*.spec.ts",
+  ],
 }

@@ -1,35 +1,36 @@
 #!/usr/bin/env ts-node
 
-import * as assert from 'assert'
+import assert from 'assert'
 
 import 'reflect-metadata'
 
 // tslint:disable:no-shadowed-variable
-import * as test  from 'blue-tape'
+import test from 'blue-tape'
 // import * as sinon from 'sinon'
 import { FileBox } from './file-box'
 
 const requiredMetadataKey = Symbol('required')
 
 const tstest = {
-  methodFixture() {
-    return function (
+  methodFixture () {
+    return (
       ..._: any[]
       // target      : Object,
       // propertyKey : string,
       // descriptor  : PropertyDescriptor,
-    ) {
+    ) => {
       console.log('@fixture()')
     }
   },
-  classFixture() {
-    return function (constructor: Function) {
+  // tslint:disable:ban-types
+  classFixture () {
+    return (constructor: Function) => {
       console.log(constructor.name)
       console.log(constructor.prototype.name)
     }
   },
-  parameterFixture() {
-    return function (target: Object, propertyKey: string | symbol, parameterIndex: number) {
+  parameterFixture () {
+    return (target: object, propertyKey: string | symbol, parameterIndex: number) => {
       console.log(propertyKey)
       const existingRequiredParameters: number[] = Reflect.getOwnMetadata(requiredMetadataKey, target, propertyKey) || []
       existingRequiredParameters.push(parameterIndex)
@@ -47,20 +48,22 @@ test('File smoke testing', async t => {
 export class FixtureFileBox {
 
   @tstest.methodFixture()
-  public static localFileFixutre() {
+  public static localFileFixutre () {
     return {
-      name: 'test.txt',
-      type: 'plain/text',
-      size: '1',
       content: 'T',
+      name: 'test.txt',
+      size: '1',
+      type: 'plain/text',
     }
   }
 
 }
 
+// tslint:disable:max-classes-per-file
+
 export class TestFileBox {
 
-  public static testFileCreateLocal(
+  public static testFileCreateLocal (
     @tstest.parameterFixture() localFileFixture: any,
   ) {
     const file = FileBox.fromFile(localFileFixture)
@@ -158,8 +161,8 @@ test('metadata', async t => {
   // }
 
   const EXPECTED_METADATA = {
-    metaname: EXPECTED_NAME,
     metaage: EXPECTED_AGE,
+    metaname: EXPECTED_NAME,
     metaobj: {
       mol: EXPECTED_MOL,
     },

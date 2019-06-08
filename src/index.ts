@@ -1,12 +1,11 @@
-import {
-  FileBox,
-}               from './file-box'
-import {
+export {
   FileBoxType,
 }               from './file-box.type'
+export {
+  VERSION,
+}               from './config'
 
 export {
   FileBox,
-  FileBoxType,
-}
-export default FileBox
+  FileBox as default,
+}                       from './file-box'
