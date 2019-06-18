@@ -1,6 +1,6 @@
 {
   "name": "file-box",
-  "version": "0.8.22",
+  "version": "0.9.3",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "main": "dist/src/index.js",
   "typings": "dist/src/index.d.ts",
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zixia/file-box.git"
+    "url": "git+https://github.com/huan/file-box.git"
   },
   "keywords": [
     "file",
@@ -33,23 +33,27 @@
   "author": "Huan LI <zixia@zixia.net>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/zixia/file-box/issues"
+    "url": "https://github.com/huan/file-box/issues"
   },
-  "homepage": "https://github.com/zixia/file-box#readme",
+  "homepage": "https://github.com/huan/file-box#readme",
   "devDependencies": {
+    "@chatie/tsconfig": "^0.6.1",
     "@types/blue-tape": "^0.1.31",
-    "@types/isomorphic-fetch": "0.0.34",
+    "@types/isomorphic-fetch": "0.0.35",
     "@types/mime": "^2.0.0",
-    "@types/node": "^10.0.8",
-    "@types/semver": "^5.5.0",
+    "@types/semver": "^6.0.0",
+    "@types/node": "^12.0.4",
+    "@wwwouter/tslint-contrib": "^1.0.0",
     "blue-tape": "^1.0.0",
     "git-scripts": "^0.2.1",
+    "read-pkg-up": "^6.0.0",
     "reflect-metadata": "^0.1.12",
-    "semver": "^5.5.0",
-    "shx": "^0.2.2",
-    "ts-node": "^6.0.3",
-    "tslint": "^5.10.0",
-    "typescript": "^2.8.3"
+    "semver": "^6.0.0",
+    "shx": "^0.3.2",
+    "ts-node": "^8.0.3",
+    "tslint": "^5.17.0",
+    "tslint-config-standard": "^8.0.1",
+    "typescript": "^3.5.1"
   },
   "dependencies": {
     "mime": "^2.3.1"

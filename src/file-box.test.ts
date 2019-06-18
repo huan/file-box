@@ -1,35 +1,36 @@
 #!/usr/bin/env ts-node
 
-import * as assert from 'assert'
+import assert from 'assert'
 
 import 'reflect-metadata'
 
 // tslint:disable:no-shadowed-variable
-import * as test  from 'blue-tape'
+import test from 'blue-tape'
 // import * as sinon from 'sinon'
 import { FileBox } from './file-box'
 
 const requiredMetadataKey = Symbol('required')
 
 const tstest = {
-  methodFixture() {
-    return function (
+  methodFixture () {
+    return (
       ..._: any[]
       // target      : Object,
       // propertyKey : string,
       // descriptor  : PropertyDescriptor,
-    ) {
+    ) => {
       console.log('@fixture()')
     }
   },
-  classFixture() {
-    return function (constructor: Function) {
+  // tslint:disable:ban-types
+  classFixture () {
+    return (constructor: Function) => {
       console.log(constructor.name)
       console.log(constructor.prototype.name)
     }
   },
-  parameterFixture() {
-    return function (target: Object, propertyKey: string | symbol, parameterIndex: number) {
+  parameterFixture () {
+    return (target: object, propertyKey: string | symbol, parameterIndex: number) => {
       console.log(propertyKey)
       const existingRequiredParameters: number[] = Reflect.getOwnMetadata(requiredMetadataKey, target, propertyKey) || []
       existingRequiredParameters.push(parameterIndex)
@@ -47,20 +48,22 @@ test('File smoke testing', async t => {
 export class FixtureFileBox {
 
   @tstest.methodFixture()
-  public static localFileFixutre() {
+  public static localFileFixutre () {
     return {
-      name: 'test.txt',
-      type: 'plain/text',
-      size: '1',
       content: 'T',
+      name: 'test.txt',
+      size: '1',
+      type: 'plain/text',
     }
   }
 
 }
 
+// tslint:disable:max-classes-per-file
+
 export class TestFileBox {
 
-  public static testFileCreateLocal(
+  public static testFileCreateLocal (
     @tstest.parameterFixture() localFileFixture: any,
   ) {
     const file = FileBox.fromFile(localFileFixture)
@@ -140,4 +143,55 @@ test('toBuffer()', async t => {
   const buffer = await fileBox.toBuffer()
 
   t.equal(buffer.toString(), EXPECT_STRING, 'should get the toBuffer() result')
+})
+
+test('metadata', async t => {
+  const FILE_PATH     = 'tests/fixtures/hello.txt'
+
+  const EXPECTED_NAME = 'myname'
+  const EXPECTED_AGE  = 'myage'
+  const EXPECTED_MOL  = 42
+
+  // interface MetadataType {
+  //   metaname : string,
+  //   metaage  : number,
+  //   metaobj: {
+  //     mol: number,
+  //   }
+  // }
+
+  const EXPECTED_METADATA = {
+    metaage: EXPECTED_AGE,
+    metaname: EXPECTED_NAME,
+    metaobj: {
+      mol: EXPECTED_MOL,
+    },
+  }
+
+  const fileBox = FileBox.fromFile(FILE_PATH)
+
+  t.deepEqual(fileBox.metadata, {}, 'should get a empty {} if not set')
+
+  t.doesNotThrow(
+    () => {
+      fileBox.metadata = EXPECTED_METADATA
+    },
+    'should not throw for set metadata for the first time',
+  )
+
+  t.throws(
+    () => {
+      fileBox.metadata = EXPECTED_METADATA
+    },
+    'should throw for set metadata again',
+  )
+
+  t.throws(
+    () => {
+      fileBox.metadata.mol = EXPECTED_MOL
+    },
+    'should throw for change value of a property on metadata',
+  )
+
+  t.deepEqual(fileBox.metadata, EXPECTED_METADATA, 'should get the metadata')
 })

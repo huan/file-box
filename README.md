@@ -1,12 +1,13 @@
 # FILEBOX
 
 [![NPM Version](https://badge.fury.io/js/file-box.svg)](https://badge.fury.io/js/file-box)
-[![Build Status](https://api.travis-ci.com/zixia/file-box.svg?branch=master)](https://travis-ci.com/zixia/file-box)
+[![Build Status](https://api.travis-ci.com/huan/file-box.svg?branch=master)](https://travis-ci.com/huan/file-box)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
+[![Greenkeeper badge](https://badges.greenkeeper.io/huan/file-box.svg)](https://greenkeeper.io/)
 
 FileBox is a virtual container for packing a file data into it for future read, and easily transport between servers with the least payload, no mater than where it is (local path, remote url, or cloud storage).
 
-![File Box](https://zixia.github.io/file-box/images/file-box-logo.jpg)
+![File Box](https://huan.github.io/file-box/images/file-box-logo.jpg)
 
 Currently the FileBox supports almost all kinds of the data input/output methods/formats:
 
@@ -35,7 +36,7 @@ import { FileBox } from 'file-box'
  * 1. Save URL to File
  */
 const fileBox1 = FileBox.fromUrl(
-  'https://zixia.github.io/file-box/images/file-box-logo.jpg',
+  'https://huan.github.io/file-box/images/file-box-logo.jpg',
   'logo.jpg',
 )
 fileBox1.toFile('/tmp/file-box-logo.jpg')
@@ -43,7 +44,7 @@ fileBox1.toFile('/tmp/file-box-logo.jpg')
 /**
  * 2. Convert Buffer to Stream
  */
-import * as fs from 'fs'
+import fs from 'fs'
 const fileBox2 = FileBox.fromBuffer(
   Buffer.from('world'),
   'hello.txt',
@@ -78,7 +79,7 @@ Alais: `fromRemote()`
 
 ```ts
 const fileBox = FileBox.fromUrl(
-  'https://zixia.github.io/file-box/images/file-box-logo.jpg',
+  'https://huan.github.io/file-box/images/file-box-logo.jpg',
   'logo.jpg',
 )
 ```
@@ -133,7 +134,7 @@ if `name` specified with a full path, then will use the speficied file name inst
 
 ```ts
 const fileBox = FileBox.fromRemote(
-  'https://zixia.github.io/file-box/images/file-box-logo.jpg',
+  'https://huan.github.io/file-box/images/file-box-logo.jpg',
 )
 await fileBox.toFile('/tmp/logo.jpg')
 ```
@@ -144,7 +145,7 @@ Pipe to a writable stream.
 
 ```ts
 const fileBox = FileBox.fromRemote(
-  'https://zixia.github.io/file-box/images/file-box-logo.jpg',
+  'https://huan.github.io/file-box/images/file-box-logo.jpg',
 )
 const writableStream = fs.createWritable('/tmp/logo.jpg')
 fileBox.pipe(writableStream)
@@ -156,7 +157,7 @@ Get the base64 data of file.
 
 ```ts
 const fileBox = FileBox.fromRemote(
-  'https://zixia.github.io/file-box/images/file-box-logo.jpg',
+  'https://huan.github.io/file-box/images/file-box-logo.jpg',
 )
 const base64Text = await fileBox.toBase64()
 console.log(base64Text) // Output: the base64 encoded data of the file
@@ -170,7 +171,7 @@ Get the `JSON.stringify`-ed text.
 
 ```ts
 const fileBox = FileBox.fromRemote(
-  'https://zixia.github.io/file-box/images/file-box-logo.jpg',
+  'https://huan.github.io/file-box/images/file-box-logo.jpg',
 )
 const jsonText1 = fileBox.toJSON()
 const jsonText2 = JSON.stringify(fileBox)
@@ -210,26 +211,43 @@ File name of the file in the box
 
 ```ts
 const fileBox = FileBox.fromRemote(
-  'https://zixia.github.io/file-box/images/file-box-logo.jpg',
+  'https://huan.github.io/file-box/images/file-box-logo.jpg',
 )
 console.log(fileBox.name) // Output: file-box-logo.jpg
 ```
 
-#### 3.2 `version(): string`
+#### 3.2 `metadata: Metadata { [key: string]: any } `
+
+Metadata for the file in the box. This value can only be assigned once, and will be immutable afterwards, all following assign or modify actions on `metadata` will throw errors
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://zixia.github.io/file-box/images/file-box-logo.jpg',
+)
+fileBox.metadata = {
+  author      : 'zixia',
+  githubRepo  : 'https://github.com/zixia/file-box',
+}
+
+console.log(fileBox.metadata)       // Output: { author: 'zixia', githubRepo: 'https://github.com/zixia/file-box' }
+fileBox.metadata.author = 'Thanos'  // Will throw exception 
+```
+
+#### 3.3 `version(): string`
 
 Version of the FileBox
 
-#### 3.3 `toJSON(): string`
+#### 3.4 `toJSON(): string`
 
 Serialize FileBox metadata to JSON.
 
 **To be implemented.**
 
-#### 3.4 `ready(): Promise<void>`
+#### 3.5 `ready(): Promise<void>`
 
 Update the necessary internal data and make everything ready for use.
 
-#### 3.5 `syncRemoteName(): Promise<void>`
+#### 3.6 `syncRemoteName(): Promise<void>`
 
 Sync the filename with the HTTP Response Header
 
@@ -286,10 +304,15 @@ HTTP Header Example:
 
 ## CHANGE LOG
 
-### v0.8 (master) (Jun 2018)
+### v0.9 (master) (Jun 2019)
+
+1. Start using @chatie/tsconfig
+
+### v0.8 (Jun 2018)
 
 1. Add two new factory methods: `fromBase64()`, `fromDataURL()`
 1. Add `toBuffer()`, `toBase64()` and `toDataURL()` to get the Buffer and BASE64 encoded file data
+1. Add `metadata` property to store additional informations. ([#3](https://github.com/huan/file-box/issues/3))
 
 ### v0.4 (May 2018)
 

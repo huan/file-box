@@ -1,8 +1,8 @@
-import * as http    from 'http'
-import * as https   from 'https'
-import * as nodeUrl from 'url'
+import http    from 'http'
+import https   from 'https'
+import nodeUrl from 'url'
 
-export function dataUrlToBase64(dataUrl: string): string {
+export function dataUrlToBase64 (dataUrl: string): string {
   const dataList = dataUrl.split(',')
   return dataList[dataList.length - 1]
 }
@@ -13,7 +13,7 @@ export function dataUrlToBase64(dataUrl: string): string {
  *
  * @credit https://stackoverflow.com/a/43632171/1123955
  */
-export async function httpHeadHeader(url: string): Promise<http.IncomingHttpHeaders> {
+export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHeaders> {
 
   let REDIRECT_TTL = 7
 
@@ -37,14 +37,12 @@ export async function httpHeadHeader(url: string): Promise<http.IncomingHttpHead
     url = res.headers.location
   }
 
-  async function _headHeader(destUrl: string): Promise<http.IncomingMessage> {
+  async function _headHeader (destUrl: string): Promise<http.IncomingMessage> {
     const parsedUrl = nodeUrl.parse(destUrl)
     const options = {
-      protocol : parsedUrl.protocol,
-      hostname : parsedUrl.hostname,
+      ...parsedUrl,
       method   : 'HEAD',
       // method   : 'GET',
-      path     : parsedUrl.path,
     }
 
     let request: typeof http.request
@@ -65,7 +63,7 @@ export async function httpHeadHeader(url: string): Promise<http.IncomingHttpHead
   }
 }
 
-export function httpHeaderToFileName(
+export function httpHeaderToFileName (
   headers: http.IncomingHttpHeaders,
 ): null | string {
   const contentDisposition = headers['content-disposition']
@@ -84,7 +82,7 @@ export function httpHeaderToFileName(
   return null
 }
 
-export async function httpStream(
+export async function httpStream (
   url     : string,
   headers : http.OutgoingHttpHeaders = {},
 ): Promise<http.IncomingMessage> {
@@ -116,7 +114,7 @@ export async function httpStream(
   return res
 }
 
-export async function streamToBuffer(
+export async function streamToBuffer (
   stream: NodeJS.ReadableStream,
 ): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {

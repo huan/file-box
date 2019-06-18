@@ -1,12 +1,12 @@
 #!/usr/bin/env ts-node
 
 // tslint:disable:no-shadowed-variable
-import * as test  from 'blue-tape'
+import test from 'blue-tape'
 
 import {
   dataUrlToBase64,
-  httpHeadHeader,
   httpHeaderToFileName,
+  httpHeadHeader,
   httpStream,
   streamToBuffer,
 }                         from './misc'
@@ -27,7 +27,7 @@ test('dataUrl to base64', async t => {
 })
 
 test('httpHeadHeader', async t => {
-  const URL = 'https://github.com/zixia/file-box/archive/v0.6.tar.gz'
+  const URL = 'https://github.com/huan/file-box/archive/v0.6.tar.gz'
 
   const EXPECTED_HEADERS_KEY   = 'content-disposition'
   const EXPECTED_HEADERS_VALUE = 'attachment; filename=file-box-0.6.tar.gz'
