@@ -361,8 +361,8 @@ export class FileBox implements Pipeable {
     return new Promise<NodeJS.ReadableStream>((resolve, reject) => {
       if (this.remoteUrl) {
         httpStream(this.remoteUrl, this.headers)
-        .then(resolve)
-        .catch(reject)
+          .then(resolve)
+          .catch(reject)
       } else {
         reject(new Error('no url'))
       }
@@ -394,8 +394,8 @@ export class FileBox implements Pipeable {
     const writeStream = fs.createWriteStream(fullFilePath)
     await new Promise((resolve, reject) => {
       writeStream
-        .once('close'   , resolve)
-        .once('error' , reject)
+        .once('close', resolve)
+        .once('error', reject)
 
       this.pipe(writeStream)
     })

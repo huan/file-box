@@ -1,11 +1,12 @@
 #!/usr/bin/env ts-node
 
+/* eslint @typescript-eslint/no-unused-vars:off */
+
 import assert from 'assert'
 
 import 'reflect-metadata'
 
-// tslint:disable:no-shadowed-variable
-import test from 'blue-tape'
+import test from 'tstest'
 // import * as sinon from 'sinon'
 import { FileBox } from './file-box'
 
@@ -19,19 +20,19 @@ const tstest = {
       // propertyKey : string,
       // descriptor  : PropertyDescriptor,
     ) => {
-      console.log('@fixture()')
+      console.info('@fixture()')
     }
   },
   // tslint:disable:ban-types
   classFixture () {
     return (constructor: Function) => {
-      console.log(constructor.name)
-      console.log(constructor.prototype.name)
+      console.info(constructor.name)
+      console.info(constructor.prototype.name)
     }
   },
   parameterFixture () {
     return (target: object, propertyKey: string | symbol, parameterIndex: number) => {
-      console.log(propertyKey)
+      console.info(propertyKey)
       const existingRequiredParameters: number[] = Reflect.getOwnMetadata(requiredMetadataKey, target, propertyKey) || []
       existingRequiredParameters.push(parameterIndex)
       Reflect.defineMetadata(requiredMetadataKey, existingRequiredParameters, target, propertyKey)

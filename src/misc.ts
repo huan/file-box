@@ -38,7 +38,7 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
   }
 
   async function _headHeader (destUrl: string): Promise<http.IncomingMessage> {
-    const parsedUrl = nodeUrl.parse(destUrl)
+    const parsedUrl = new nodeUrl.URL(destUrl)
     const options = {
       ...parsedUrl,
       method   : 'HEAD',
@@ -87,7 +87,7 @@ export async function httpStream (
   headers : http.OutgoingHttpHeaders = {},
 ): Promise<http.IncomingMessage> {
 
-  const parsedUrl = nodeUrl.parse(url)
+  const parsedUrl = new nodeUrl.URL(url)
   const protocol  = parsedUrl.protocol
 
   let options: http.RequestOptions
