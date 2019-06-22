@@ -19,7 +19,7 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
 
   while (true) {
     if (REDIRECT_TTL-- <= 0) {
-      throw new Error('ttl expired! too many 302 redirections.')
+      throw new Error(`ttl expired! too many(>${REDIRECT_TTL}) 302 redirections.`)
     }
 
     const res = await _headHeader(url)
@@ -38,7 +38,7 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
   }
 
   async function _headHeader (destUrl: string): Promise<http.IncomingMessage> {
-    const parsedUrl = new nodeUrl.URL(destUrl)
+    const parsedUrl = nodeUrl.parse(destUrl)
     const options = {
       ...parsedUrl,
       method   : 'HEAD',
@@ -87,18 +87,25 @@ export async function httpStream (
   headers : http.OutgoingHttpHeaders = {},
 ): Promise<http.IncomingMessage> {
 
-  const parsedUrl = new nodeUrl.URL(url)
+  /* eslint node/no-deprecated-api: off */
+  // FIXME:
+  const parsedUrl = nodeUrl.parse(url)
+
   const protocol  = parsedUrl.protocol
 
   let options: http.RequestOptions
 
   let get: typeof https.get
 
-  if (protocol === 'https:') {
+  if (!protocol) {
+    throw new Error('protocol is empty')
+  }
+
+  if (protocol.match(/^https:/i)) {
     get           = https.get
     options       = parsedUrl
     options.agent = https.globalAgent
-  } else if (protocol === 'http:') {
+  } else if (protocol.match(/^http:/i)) {
     get           = http.get
     options       = parsedUrl
     options.agent = http.globalAgent
@@ -106,9 +113,10 @@ export async function httpStream (
     throw new Error('protocol unknown: ' + protocol)
   }
 
-  options.headers = Object.assign(options.headers || {}, {
+  options.headers = {
+    ...options.headers,
     ...headers,
-  })
+  }
 
   const res = await new Promise<http.IncomingMessage>(resolve => get(options, resolve))
   return res
