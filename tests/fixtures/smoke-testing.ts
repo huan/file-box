@@ -1,4 +1,4 @@
-import {
+import FileBoxDefault, {
   FileBox,
   VERSION,
 }             from 'file-box'
@@ -8,5 +8,7 @@ if (VERSION as any === '0.0.0') {
 }
 
 const box = FileBox.fromFile(__filename)
-
 console.log(`FileBox v${box.version()} smoke testing passed!`)
+
+const boxDefault = FileBoxDefault.fromFile(__filename)
+console.log(`FileBoxDefault v${boxDefault.version()} smoke testing passed!`)
