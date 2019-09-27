@@ -44,7 +44,7 @@
     "@chatie/tsconfig": "^0.6.1",
     "@types/isomorphic-fetch": "0.0.35",
     "@types/mime": "^2.0.0",
-    "read-pkg-up": "^6.0.0",
+    "read-pkg-up": "^7.0.0",
     "reflect-metadata": "^0.1.12",
     "shx": "^0.3.2",
     "tstest": "^0.4.2"
