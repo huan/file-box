@@ -118,8 +118,8 @@ test('syncRemoteName()', async t => {
 })
 
 test('toDataURL()', async t => {
-  const FILE_PATH         = 'tests/fixtures/hello.bin'
-  const EXPECTED_DATA_URL = 'data:application/octet-stream;base64,d29ybGQK'
+  const FILE_PATH         = 'tests/fixtures/data.bin'
+  const EXPECTED_DATA_URL = 'data:application/octet-stream;base64,dGVzdA=='
 
   const fileBox = FileBox.fromFile(FILE_PATH)
 
@@ -129,16 +129,16 @@ test('toDataURL()', async t => {
 })
 
 test('toString()', async t => {
-  const FILE_PATH     = 'tests/fixtures/hello.bin'
-  const EXPECT_STRING = 'FileBox#File<hello.bin>'
+  const FILE_PATH     = 'tests/fixtures/data.bin'
+  const EXPECT_STRING = 'FileBox#File<data.bin>'
 
   const fileBox = FileBox.fromFile(FILE_PATH)
   t.equal(fileBox.toString(), EXPECT_STRING, 'should get the toString() result')
 })
 
 test('toBuffer()', async t => {
-  const FILE_PATH     = 'tests/fixtures/hello.bin'
-  const EXPECT_STRING = 'world\n'
+  const FILE_PATH     = 'tests/fixtures/data.bin'
+  const EXPECT_STRING = 'test'
 
   const fileBox = FileBox.fromFile(FILE_PATH)
   const buffer = await fileBox.toBuffer()
@@ -147,7 +147,7 @@ test('toBuffer()', async t => {
 })
 
 test('metadata', async t => {
-  const FILE_PATH     = 'tests/fixtures/hello.bin'
+  const FILE_PATH     = 'tests/fixtures/data.bin'
 
   const EXPECTED_NAME = 'myname'
   const EXPECTED_AGE  = 'myage'
