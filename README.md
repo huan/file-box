@@ -19,6 +19,7 @@ Currently the FileBox supports almost all kinds of the data input/output methods
 | Stream | `fromStream()` | `toStream()` | JavaScript Stream |
 | Base64 | `fromBase64()` | `toBase64()` | Base64 data |
 | DataURL | `fromDataURL()` | `toDataURL()` | DataURL data |
+| QRCode | `fromQRCode()` | `toQRCode()` | QR Code |
 | JSON | `fromJSON()`(TBW) | `toJSON()`(TBW) | Serialize/Deserialize FileBox |
 
 ## EXAMPLES
@@ -124,6 +125,15 @@ WIP: **Not Implement Yet**
 const restoredFileBox = FileBox.fromJSON(jsonText)
 ```
 
+#### 1.8 `FileBox.fromQRCode(qrCodeValue: string)`
+
+Get a FileBox instance that represent a QR Code value.
+
+```ts
+const fileBox = FileBox.fromQRCode('https://github.com')
+fileBox.toFile('qrcode.png')
+```
+
 ### 2. Get File out from Box
 
 ### 2.1 `toFile(name?: string): Promise<void>`
@@ -201,6 +211,17 @@ Get the Buffer of the file.
 const fileBox = FileBox.fromFile('tests/fixtures/hello.txt')
 const buffer = await fileBox.toBuffer()
 console.log(buffer.toString()) // Output: world
+```
+
+#### 2.7 `toQRCode(): Promise<string>`
+
+Decode the QR Code value from the file.
+
+```ts
+const fileBox = FileBox.fromFile('qrcode.jpg')
+const qrCodeValue = await fileBox.toQRCode()
+console.log(`QR Code decoded value is: "${qrCodeValue}"`)
+// Output: QR Code decoded value is: "https://github.com"
 ```
 
 ### 3. Misc
@@ -304,8 +325,11 @@ HTTP Header Example:
 
 ## CHANGE LOG
 
-### v0.9 (master) (Jun 2019)
+### master
 
+### v0.10 (Feb 2020)
+
+1. Add support to QR Code: `FileBox.fromQRCode()` and `FileBox.toQRCode()`
 1. Start using @chatie/tsconfig
 
 ### v0.8 (Jun 2018)

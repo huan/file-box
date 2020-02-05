@@ -31,6 +31,10 @@ import {
   httpStream,
   streamToBuffer,
 }                         from './misc'
+import {
+  bufferToQrValue,
+  qrValueToStream,
+}                         from './qrcode'
 
 export interface Metadata {
   [key: string]: any,
@@ -65,7 +69,7 @@ export class FileBox implements Pipeable {
       type : FileBoxType.Url,
       url,
     }
-    return new FileBox(options)
+    return new this(options)
   }
 
   /**
@@ -87,7 +91,7 @@ export class FileBox implements Pipeable {
       type : FileBoxType.File,
     }
 
-    return new FileBox(options)
+    return new this(options)
   }
 
   public static fromStream (
@@ -99,7 +103,7 @@ export class FileBox implements Pipeable {
       stream,
       type: FileBoxType.Stream,
     }
-    return new FileBox(options)
+    return new this(options)
   }
 
   public static fromBuffer (
@@ -111,9 +115,14 @@ export class FileBox implements Pipeable {
       name,
       type : FileBoxType.Buffer,
     }
-    return new FileBox(options)
+    return new this(options)
   }
 
+  /**
+   *
+   * @param base64
+   * @param name the file name of the base64 data
+   */
   public static fromBase64 (
     base64: string,
     name:   string,
@@ -123,7 +132,7 @@ export class FileBox implements Pipeable {
       name,
       type : FileBoxType.Buffer,
     }
-    return new FileBox(options)
+    return new this(options)
   }
 
   /**
@@ -133,10 +142,25 @@ export class FileBox implements Pipeable {
     dataUrl : string,
     name    : string,
   ): FileBox {
-    return FileBox.fromBase64(
+    return this.fromBase64(
       dataUrlToBase64(dataUrl),
       name,
     )
+  }
+
+  /**
+   *
+   * @param qrCode the value of the QR Code. For example: `https://github.com`
+   */
+  public static fromQRCode (
+    qrCode: string,
+  ): FileBox {
+    const options: FileBoxOptions = {
+      qrCode,
+      name: 'qrcode.png',
+      type: FileBoxType.QRCode,
+    }
+    return new this(options)
   }
 
   public static version () {
@@ -158,7 +182,8 @@ export class FileBox implements Pipeable {
   public mimeType? : string    // 'text/plain'
   public name      : string
 
-  public _metadata?: Metadata
+  private _metadata?: Metadata
+
   public get metadata (): Metadata {
     if (this._metadata) {
       return this._metadata
@@ -181,6 +206,7 @@ export class FileBox implements Pipeable {
   private readonly remoteUrl? : string
   private readonly localPath? : string
   private readonly stream?    : NodeJS.ReadableStream
+  private readonly qrCode?    : string
 
   private readonly headers?: http.OutgoingHttpHeaders
 
@@ -241,6 +267,13 @@ export class FileBox implements Pipeable {
         this.stream = options.stream
         break
 
+      case FileBoxType.QRCode:
+        if (!options.qrCode) {
+          throw new Error('no QR Code')
+        }
+        this.qrCode = options.qrCode
+        break
+
       default:
         throw new Error('unknown type')
     }
@@ -249,20 +282,6 @@ export class FileBox implements Pipeable {
 
   public version () {
     return VERSION
-  }
-
-  public toString () {
-    return [
-      'FileBox#',
-      FileBoxType[this.boxType],
-      '<',
-      this.name,
-      '>',
-    ].join('')
-  }
-
-  public toJSON (): string {
-    throw new Error('WIP')
   }
 
   public async ready (): Promise<void> {
@@ -274,7 +293,7 @@ export class FileBox implements Pipeable {
   /**
    * @todo use http.get/gets instead of Request
    */
-  public async syncRemoteName (): Promise<void> {
+  protected async syncRemoteName (): Promise<void> {
     /**
      * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
      *  > Content-Disposition: attachment; filename="cool.html"
@@ -301,13 +320,23 @@ export class FileBox implements Pipeable {
     this.mimeType = headers['content-type'] || mime.getType(this.name) || undefined
   }
 
-  public pipe<T extends NodeJS.WritableStream> (
-    destination: T,
-  ): T {
-    this.toStream().then(
-      stream => stream.pipe(destination),
-    ).catch(e => destination.emit('error', e))
-    return destination
+  /**
+   *
+   * toXXX methods
+   *
+   */
+  public toString () {
+    return [
+      'FileBox#',
+      FileBoxType[this.boxType],
+      '<',
+      this.name,
+      '>',
+    ].join('')
+  }
+
+  public toJSON (): string {
+    throw new Error('WIP')
   }
 
   public async toStream (): Promise<NodeJS.ReadableStream> {
@@ -331,6 +360,13 @@ export class FileBox implements Pipeable {
           throw new Error('no stream')
         }
         stream = this.stream
+        break
+
+      case FileBoxType.QRCode:
+        if (!this.qrCode) {
+          throw new Error('no QR Code')
+        }
+        stream = await this.transformQRCodeToStream()
         break
 
       default:
@@ -367,6 +403,16 @@ export class FileBox implements Pipeable {
         reject(new Error('no url'))
       }
     })
+  }
+
+  private async transformQRCodeToStream (): Promise<NodeJS.ReadableStream> {
+    const qrValue = this.qrCode
+    if (!qrValue) {
+      throw new Error('no QR Code Value found')
+    }
+
+    const stream = qrValueToStream(qrValue)
+    return stream
   }
 
   /**
@@ -439,6 +485,35 @@ export class FileBox implements Pipeable {
 
     const buffer: Buffer = await streamToBuffer(stream)
     return buffer
+  }
+
+  public async toQRCode (): Promise<string> {
+    if (this.boxType === FileBoxType.QRCode) {
+      if (!this.qrCode) {
+        throw new Error('no QR Code!')
+      }
+      return this.qrCode
+    }
+
+    const buf = await this.toBuffer()
+    const qrValue = await bufferToQrValue(buf)
+
+    return qrValue
+  }
+
+  /**
+   *
+   * toXXX methods END
+   *
+   */
+
+  public pipe<T extends NodeJS.WritableStream> (
+    destination: T,
+  ): T {
+    this.toStream().then(
+      stream => stream.pipe(destination),
+    ).catch(e => destination.emit('error', e))
+    return destination
   }
 
 }

@@ -14,6 +14,7 @@ export enum FileBoxType {
   File,
   Stream,
   Url,
+  QRCode,
 }
 
 /**
@@ -50,10 +51,15 @@ export interface FileBoxOptionsStream {
   type   : FileBoxType.Stream
   stream : NodeJS.ReadableStream
 }
+export interface FileBoxOptionsQRCode {
+  type: FileBoxType.QRCode,
+  qrCode: string,
+}
 
 export type FileBoxOptions = FileBoxOptionsBase & (
     FileBoxOptionsBuffer
   | FileBoxOptionsFile
   | FileBoxOptionsStream
   | FileBoxOptionsUrl
+  | FileBoxOptionsQRCode
 )
