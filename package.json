@@ -16,7 +16,7 @@
     "test": "npm run lint && npm run test:unit",
     "test:unit": "blue-tape -r ts-node/register \"src/**/*.test.ts\" \"tests/**/*.test.ts\"",
     "test:pack": "bash -x scripts/npm-pack-testing.sh",
-    "lint:es": "eslint --ignore-pattern fixtures/ 'src/**/*.ts' 'tests/**/*.ts'"
+    "lint:es": "eslint --ignore-pattern fixtures/ \"src/**/*.ts\" \"tests/**/*.ts\""
   },
   "repository": {
     "type": "git",
