@@ -367,10 +367,10 @@ HTTP Header Example:
 
 ### v0.12 (Feb 2020)
 
-Add support to `JSON.stringify()`:
+Add support to `JSON.stringify()` ([#25](https://github.com/huan/file-box/issues/25)):
 
-1. `FileBox.fromJSON()` - Deserialization
-1. `fileBox.toJSON()` - Serialization
+1. `FileBox.fromJSON()` - Static method for deserialization
+1. `fileBox.toJSON()` - Instance method for serialization
 
 ### v0.10 (Jan 2020)
 
