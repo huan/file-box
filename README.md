@@ -1,4 +1,4 @@
-# FILEBOX
+# file-box
 
 [![NPM Version](https://badge.fury.io/js/file-box.svg)](https://badge.fury.io/js/file-box)
 [![Build Status](https://api.travis-ci.com/huan/file-box.svg?branch=master)](https://travis-ci.com/huan/file-box)
@@ -19,10 +19,10 @@ Currently the FileBox supports almost all kinds of the data input/output methods
 | Stream | `fromStream()` | `toStream()` | JavaScript Stream |
 | Base64 | `fromBase64()` | `toBase64()` | Base64 data |
 | DataURL | `fromDataURL()` | `toDataURL()` | DataURL data |
-| QRCode | `fromQRCode()` | `toQRCode()` | QR Code |
-| JSON | `fromJSON()`(TBW) | `toJSON()`(TBW) | Serialize/Deserialize FileBox |
+| QRCode | `fromQRCode()` | `toQRCode()` | QR Code Image Decode/Encode |
+| JSON | `fromJSON()` | `toJSON()` | Serialize/Deserialize FileBox |
 
-## EXAMPLES
+## Examples
 
 The following example demos:
 
@@ -62,7 +62,7 @@ fileBox3.toDataURL()
 // Output: data:text/plain;base64,d29ybGQK
 ```
 
-## API REFERENCE
+## API Reference
 
 ### 1. Load File in to Box
 
@@ -118,8 +118,6 @@ fileBox.toFile()
 #### 1.7 `FileBox.fromJSON()`
 
 Restore a `FileBox.toJSON()` text string back to a FileBox instance.
-
-WIP: **Not Implement Yet**
 
 ```ts
 const restoredFileBox = FileBox.fromJSON(jsonText)
@@ -224,6 +222,46 @@ console.log(`QR Code decoded value is: "${qrCodeValue}"`)
 // Output: QR Code decoded value is: "https://github.com"
 ```
 
+#### 2.8 `toJSON(): string`
+
+Encode a FileBox instance to JSON string so that we can transfer the FileBox on the wire.
+
+```ts
+const fileBox = FileBox.fromBase64('RmlsZUJveEJhc2U2NAo=')
+
+const jsonText = JSON.stringify(fileBox)
+// the above code equals to the following line of code:
+// const jsonText = fileBox.toJSON()
+
+// we will get the serialized data for this FileBox:
+console.log(jsonText)
+// Output: {"name":"qrcode.png","metadata":{},"boxType":1,"base64":"RmlsZUJveEJhc2U2NAo="}
+
+// restore our fleBox:
+// const newFileBox = FileBox.fromJSON(jsonText)
+```
+
+##### Limitation
+
+Because we want to enable the `JSON.stringify(fileBox)`, which will call `fileBox.toJSON()`, so the `toJSON()` can not be `async`, which means we can only support limited FileBoxType(s):
+
+1. FileBoxType.Base64
+1. FileBoxType.Url
+1. FileBoxType.QRCode
+
+For other types like `FileBoxType.Flie`, `FileBoxType.Buffer`, `FileBoxType.Stream`, etc, we need to transform them to `FileBoxType.Base64` before we call `toJSON`:
+
+```ts
+const fileBoxLazy = FileBox.fromFile('./test.txt')
+const base64 = await fileBoxLazy.toBase64()
+
+const fileBox = FleBox.fromBase64(base64, 'test.txt')
+// fileBox will be serializable becasue it do not need async operations
+
+const jsonText = JSON.stringify(fileBox)
+console.log(jsonText)
+```
+
 ### 3. Misc
 
 #### 3.1 `name`
@@ -275,7 +313,7 @@ Sync the filename with the HTTP Response Header
 HTTP Header Example:
 > Content-Disposition: attachment; filename="filename.ext"
 
-## FEATURES
+## Features
 
 1. Present A File by Abstracting It's Meta Information that supports Reading & toJSON() API.
 1. Follow DOM File/BLOB Interface
@@ -323,11 +361,18 @@ HTTP Header Example:
 └──────┴──────────────┴──────┴─────┘
 ```
 
-## CHANGE LOG
+## History
 
 ### master
 
-### v0.10 (Feb 2020)
+### v0.12 (Feb 2020)
+
+Add support to `JSON.stringify()`:
+
+1. `FileBox.fromJSON()` - Deserialization
+1. `fileBox.toJSON()` - Serialization
+
+### v0.10 (Jan 2020)
 
 1. Add support to QR Code: `FileBox.fromQRCode()` and `FileBox.toQRCode()`
 1. Start using @chatie/tsconfig
@@ -346,7 +391,7 @@ HTTP Header Example:
 
 Initial version.
 
-## SEE ALSO
+## See Also
 
 * [File API - W3C Working Draft, 26 October 2017](https://www.w3.org/TR/FileAPI/)
 * [MIME Sniffing - Living Standard — Last Updated 20 April 2018](https://mimesniff.spec.whatwg.org/#parsable-mime-type)
@@ -357,19 +402,17 @@ Initial version.
 * [A simple HTTP Request & Response Service.](https://httpbin.org)
 * [Hurl.it — Make HTTP Requests](https://www.hurl.it)
 
-## THANKS
+## Thanks
 
 This module is inspired by https://github.com/gulpjs/vinyl and https://github.com/DefinitelyTyped/DefinitelyTyped/pull/12368 when I need a virtual File module for my [Chatie](https://github.com/Chatie) project.
 
-## AUTHOR
+## Author
 
-[Huan LI](http://linkedin.com/in/zixia) \<zixia@zixia.net\>
+[Huan LI](https://github.com/huan) ([李卓桓](http://linkedin.com/in/zixia)) zixia@zixia.net
 
-<a href="https://stackexchange.com/users/265499">
-  <img src="https://stackexchange.com/users/flair/265499.png" width="208" height="58" alt="profile for zixia on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for zixia on Stack Exchange, a network of free, community-driven Q&amp;A sites">
-</a>
+[![Profile of Huan LI (李卓桓) on StackOverflow](https://stackexchange.com/users/flair/265499.png)](https://stackexchange.com/users/265499)
 
-## COPYRIGHT & LICENSE
+## Copyright & License
 
 * Docs released under Creative Commons
 * Code released under the Apache-2.0 License

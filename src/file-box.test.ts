@@ -97,6 +97,16 @@ test('toBase64()', async t => {
   t.equal(text, BASE64_DECODED, 'should get the text right')
 })
 
+test('fromBuffer() & toBase64()', async t => {
+  const BASE64_ENCODED = 'RmlsZUJveEJhc2U2NAo='
+
+  const buffer = Buffer.from(BASE64_ENCODED, 'base64')
+  const fileBox = FileBox.fromBuffer(buffer, 'test.txt')
+  const base64 = await fileBox.toBase64()
+
+  t.equal(base64, BASE64_ENCODED, 'should get base64 back from buffer')
+})
+
 test('syncRemoteName()', async t => {
   const URL = 'http://httpbin.org/response-headers?Content-Disposition=attachment;%20filename%3d%22test.txt%22&filename=test.txt'
 
@@ -237,4 +247,30 @@ test('toQRCode()', async t => {
   const qrCodeValue = await fileBox.toQRCode()
 
   t.equal(qrCodeValue, EXPECTED_QRCODE_TEXT, 'should decode qrcode image base64 to qr code value')
+})
+
+test('toJSON()', async t => {
+  // const BASE64_DECODED = 'FileBoxBase64\n'
+  const BASE64_ENCODED = 'RmlsZUJveEJhc2U2NAo='
+  const BASE64_FILENAME = 'test.txt'
+  const EXPECTED_JSON_TEXT = '{"name":"test.txt","metadata":{},"boxType":1,"base64":"RmlsZUJveEJhc2U2NAo="}'
+
+  const fileBox = FileBox.fromBase64(BASE64_ENCODED, BASE64_FILENAME)
+  const jsonText = JSON.stringify(fileBox)
+
+  t.equal(jsonText, EXPECTED_JSON_TEXT, 'should get expected json text')
+
+  const newFileBox = FileBox.fromJSON(jsonText)
+  const newBase64 = await newFileBox.toBase64()
+
+  t.equal(newBase64, BASE64_ENCODED, 'should get base64 back')
+})
+
+test('toJSON() for not supported type', async t => {
+  const BASE64_ENCODED = 'RmlsZUJveEJhc2U2NAo='
+
+  const buffer = Buffer.from(BASE64_ENCODED, 'base64')
+  const fileBox = FileBox.fromBuffer(buffer, 'test.txt')
+
+  t.throws(() => JSON.stringify(fileBox), 'should throw for buffer type of FileBox')
 })
