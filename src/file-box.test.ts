@@ -13,6 +13,12 @@ import { FileBox } from './file-box'
 const requiredMetadataKey = Symbol('required')
 
 const tstest = {
+  classFixture () {
+    return (constructor: Function) => {
+      console.info(constructor.name)
+      console.info(constructor.prototype.name)
+    }
+  },
   methodFixture () {
     return (
       ..._: any[]
@@ -21,13 +27,6 @@ const tstest = {
       // descriptor  : PropertyDescriptor,
     ) => {
       console.info('@fixture()')
-    }
-  },
-  // tslint:disable:ban-types
-  classFixture () {
-    return (constructor: Function) => {
-      console.info(constructor.name)
-      console.info(constructor.prototype.name)
     }
   },
   parameterFixture () {

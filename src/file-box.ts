@@ -159,8 +159,8 @@ export class FileBox implements Pipeable {
     qrCode: string,
   ): FileBox {
     const options: FileBoxOptions = {
-      qrCode,
       name: 'qrcode.png',
+      qrCode,
       type: FileBoxType.QRCode,
     }
     return new this(options)
@@ -376,8 +376,8 @@ export class FileBox implements Pipeable {
 
   public toJSON (): FileBoxJsonObject {
     const objCommon: FileBoxJsonObjectCommon = {
-      name     : this.name,
       metadata : this.metadata,
+      name     : this.name,
     }
 
     let obj: FileBoxJsonObject
@@ -389,8 +389,8 @@ export class FileBox implements Pipeable {
         }
         const objUrl: FileBoxJsonObjectUrl = {
           boxType   : FileBoxType.Url,
+          headers   : this.headers,
           remoteUrl : this.remoteUrl,
-          headers  : this.headers,
         }
         obj = {
           ...objCommon,
@@ -417,8 +417,8 @@ export class FileBox implements Pipeable {
           throw new Error('no base64 data')
         }
         const objBase64: FileBoxJsonObjectBase64 = {
-          boxType : FileBoxType.Base64,
           base64  : this.base64,
+          boxType : FileBoxType.Base64,
         }
         obj = {
           ...objCommon,
