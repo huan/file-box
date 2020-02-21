@@ -260,7 +260,7 @@ test('toJSON()', async t => {
   // const BASE64_DECODED = 'FileBoxBase64\n'
   const BASE64_ENCODED = 'RmlsZUJveEJhc2U2NAo='
   const BASE64_FILENAME = 'test.txt'
-  const EXPECTED_JSON_TEXT = '{"name":"test.txt","metadata":{},"boxType":1,"base64":"RmlsZUJveEJhc2U2NAo="}'
+  const EXPECTED_JSON_TEXT = '{"metadata":{},"name":"test.txt","base64":"RmlsZUJveEJhc2U2NAo=","boxType":1}'
 
   const fileBox = FileBox.fromBase64(BASE64_ENCODED, BASE64_FILENAME)
   const jsonText = JSON.stringify(fileBox)
