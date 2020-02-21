@@ -9,6 +9,7 @@
 import fs        from 'fs'
 import http      from 'http'
 import nodePath  from 'path'
+import nodeUrl   from 'url'
 
 import mime  from 'mime'
 
@@ -63,8 +64,8 @@ export class FileBox implements Pipeable {
     headers? : http.OutgoingHttpHeaders,
   ): FileBox {
     if (!name) {
-      const parsedUrl = nodePath.parse(url)
-      name = parsedUrl.base
+      const parsedUrl = new nodeUrl.URL(url)
+      name = parsedUrl.pathname
     }
     const options: FileBoxOptions = {
       headers,
@@ -256,24 +257,9 @@ export class FileBox implements Pipeable {
 
   private readonly headers?: http.OutgoingHttpHeaders
 
-  constructor (
-    fileOrOptions: string | FileBoxOptions,
+  private constructor (
+    options: FileBoxOptions,
   ) {
-    let options: FileBoxOptions
-
-    if (typeof fileOrOptions === 'string') {
-      /**
-       * Default to Local File
-       */
-      options = {
-        name: fileOrOptions,
-        path: nodePath.resolve(fileOrOptions),
-        type: FileBoxType.File,
-      }
-    } else {
-      options = fileOrOptions
-    }
-
     // Only keep `basename` in this.name
     this.name    = nodePath.basename(options.name)
     this.boxType = options.type

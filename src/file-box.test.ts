@@ -110,8 +110,8 @@ test('fromBuffer() & toBase64()', async t => {
 test('syncRemoteName()', async t => {
   const URL = 'http://httpbin.org/response-headers?Content-Disposition=attachment;%20filename%3d%22test.txt%22&filename=test.txt'
 
-  const EXPECTED_NAME_FROM_URL    = 'response-headers?Content-Disposition=attachment;%20filename%3d%22test.txt%22&filename=test.txt'
-  const EXPECTED_TYPE_FROM_URL    = 'text/plain'
+  const EXPECTED_NAME_FROM_URL    = 'response-headers'
+  const EXPECTED_TYPE_FROM_URL    = undefined
 
   const EXPECTED_NAME_FROM_HEADER = 'test.txt'
   const EXPECTED_TYPE_FROM_HEADER = 'application/json'
@@ -125,6 +125,14 @@ test('syncRemoteName()', async t => {
 
   t.equal(fileBox.name, EXPECTED_NAME_FROM_HEADER, 'should get the name from remote header')
   t.equal(fileBox.mimeType, EXPECTED_TYPE_FROM_HEADER, 'should get the mime type from remote http header')
+})
+
+test('fromURL() deal with url with querystring', async t => {
+  const URL = 'https://zixia.net/a.jpg?name=value&t=1324'
+  const EXPECTED_NAME = 'a.jpg'
+
+  const fileBox = FileBox.fromUrl(URL)
+  t.equal(fileBox.name, EXPECTED_NAME, 'should get basename from url with querystring')
 })
 
 test('toDataURL()', async t => {
