@@ -323,6 +323,10 @@ export class FileBox implements Pipeable {
     return VERSION
   }
 
+  public type (): FileBoxType {
+    return this.boxType
+  }
+
   public async ready (): Promise<void> {
     if (this.boxType === FileBoxType.Url) {
       await this.syncRemoteName()

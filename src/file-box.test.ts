@@ -9,6 +9,7 @@ import 'reflect-metadata'
 import { test } from 'tstest'
 // import * as sinon from 'sinon'
 import { FileBox } from './file-box'
+import { FileBoxType } from './file-box.type'
 
 const requiredMetadataKey = Symbol('required')
 
@@ -279,5 +280,6 @@ test('toJSON() for not supported type', async t => {
   const buffer = Buffer.from(BASE64_ENCODED, 'base64')
   const fileBox = FileBox.fromBuffer(buffer, 'test.txt')
 
+  t.equal(fileBox.type(), FileBoxType.Buffer, 'should get type() as Buffer')
   t.throws(() => JSON.stringify(fileBox), 'should throw for buffer type of FileBox')
 })

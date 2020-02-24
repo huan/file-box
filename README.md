@@ -313,6 +313,25 @@ Sync the filename with the HTTP Response Header
 HTTP Header Example:
 > Content-Disposition: attachment; filename="filename.ext"
 
+#### 3.7 `type(): FileBoxType`
+
+Return the type of the current FileBox instance.
+
+The currently supported types are defined at [file-box-type.ts](https://github.com/huan/file-box/blob/master/src/file-box.type.ts#L15) as the following demostrated:
+
+```ts
+enum FileBoxType {
+  Unknown = 0,
+  Base64  = 1,
+  Url     = 2,
+  QRCode  = 3,
+  Buffer  = 4,
+  File    = 5,
+  Stream  = 6,
+}
+
+```
+
 ## Features
 
 1. Present A File by Abstracting It's Meta Information that supports Reading & toJSON() API.
@@ -364,6 +383,8 @@ HTTP Header Example:
 ## History
 
 ### master
+
+1. Add `fileBox.type()` to return the `FileBoxType` of a FileBox.
 
 ### v0.12 (Feb 2020)
 
