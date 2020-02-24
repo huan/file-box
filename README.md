@@ -384,7 +384,7 @@ enum FileBoxType {
 
 ### master
 
-1. Add `fileBox.type()` to return the `FileBoxType` of a FileBox. ([wechaty/wechaty#1918](https://github.com/wechaty/wechaty/issues/1918))
+1. Add `fileBox.type()` to return the `FileBoxType` of a FileBox. ([wechaty/wechaty#1918](https://github.com/wechaty/wechaty/issues/1918#issuecomment-590146993))
 
 ### v0.12 (Feb 2020)
 
