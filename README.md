@@ -288,8 +288,8 @@ fileBox.metadata = {
   githubRepo  : 'https://github.com/zixia/file-box',
 }
 
-console.log(fileBox.metadata)       // Output: { author: 'zixia', githubRepo: 'https://github.com/zixia/file-box' }
-fileBox.metadata.author = 'Thanos'  // Will throw exception 
+console.log(fileBox.metadata)       // Output: { author: 'huan', githubRepo: 'https://github.com/huan/file-box' }
+fileBox.metadata.author = 'Thanos'  // Will throw exception
 ```
 
 #### 3.3 `version(): string`
