@@ -4,7 +4,6 @@
 [![Build Status](https://api.travis-ci.com/huan/file-box.svg?branch=master)](https://travis-ci.com/huan/file-box)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 
-
 FileBox is a virtual container for packing a file data into it for future read, and easily transport between servers with the least payload, no mater than where it is (local path, remote url, or cloud storage).
 
 ![File Box](https://huan.github.io/file-box/images/file-box-logo.jpg)
@@ -275,17 +274,17 @@ const fileBox = FileBox.fromRemote(
 console.log(fileBox.name) // Output: file-box-logo.jpg
 ```
 
-#### 3.2 `metadata: Metadata { [key: string]: any } `
+#### 3.2 `metadata: Metadata { [key: string]: any }`
 
 Metadata for the file in the box. This value can only be assigned once, and will be immutable afterwards, all following assign or modify actions on `metadata` will throw errors
 
 ```ts
 const fileBox = FileBox.fromRemote(
-  'https://zixia.github.io/file-box/images/file-box-logo.jpg',
+  'https://huan.github.io/file-box/images/file-box-logo.jpg',
 )
 fileBox.metadata = {
-  author      : 'zixia',
-  githubRepo  : 'https://github.com/zixia/file-box',
+  author      : 'huan',
+  githubRepo  : 'https://github.com/huan/file-box',
 }
 
 console.log(fileBox.metadata)       // Output: { author: 'huan', githubRepo: 'https://github.com/huan/file-box' }
@@ -437,4 +436,4 @@ This module is inspired by https://github.com/gulpjs/vinyl and https://github.co
 
 * Docs released under Creative Commons
 * Code released under the Apache-2.0 License
-* Code & Docs © 2018 Huan LI \<zixia@zixia.net\>
+* Code & Docs © 2018-now Huan LI \<zixia@zixia.net\>
