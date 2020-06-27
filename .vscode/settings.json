@@ -70,7 +70,10 @@
     "typescript",
   ],
   "cSpell.words": [
-    "Pipeable"
+    "Pipeable",
+    "Serializable",
+    "asciiart",
+    "deserialization"
   ],
 
 }

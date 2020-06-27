@@ -1,7 +1,7 @@
 # file-box
 
 [![NPM Version](https://badge.fury.io/js/file-box.svg)](https://badge.fury.io/js/file-box)
-[![Build Status](https://api.travis-ci.com/huan/file-box.svg?branch=master)](https://travis-ci.com/huan/file-box)
+[![NPM](https://github.com/huan/file-box/workflows/NPM/badge.svg)](https://github.com/huan/file-box/actions?query=workflow%3ANPM)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 
 FileBox is a virtual container for packing a file data into it for future read, and easily transport between servers with the least payload, no mater than where it is (local path, remote url, or cloud storage).
@@ -75,7 +75,7 @@ const fileBox = FileBox.fromLocal('/tmp/test.txt')
 
 #### 1.2 `fromUrl(url: string, name?: string, headers?: http.OutgoingHttpHeaders): FileBox`
 
-Alais: `fromRemote()`
+Alias: `fromRemote()`
 
 ```ts
 const fileBox = FileBox.fromUrl(
@@ -84,7 +84,7 @@ const fileBox = FileBox.fromUrl(
 )
 ```
 
-#### 1.3 `fromStream(stream: NoddeJS.ReadableStream, name: string): FileBox`
+#### 1.3 `fromStream(stream: Readable, name: string): FileBox`
 
 ```ts
 const fileBox = FileBox.fromStream(res, '/tmp/download.zip')
@@ -248,14 +248,14 @@ Because we want to enable the `JSON.stringify(fileBox)`, which will call `fileBo
 1. FileBoxType.Url
 1. FileBoxType.QRCode
 
-For other types like `FileBoxType.Flie`, `FileBoxType.Buffer`, `FileBoxType.Stream`, etc, we need to transform them to `FileBoxType.Base64` before we call `toJSON`:
+For other types like `FileBoxType.File`, `FileBoxType.Buffer`, `FileBoxType.Stream`, etc, we need to transform them to `FileBoxType.Base64` before we call `toJSON`:
 
 ```ts
 const fileBoxLazy = FileBox.fromFile('./test.txt')
 const base64 = await fileBoxLazy.toBase64()
 
 const fileBox = FleBox.fromBase64(base64, 'test.txt')
-// fileBox will be serializable becasue it do not need async operations
+// fileBox will be serializable because it do not need async operations
 
 const jsonText = JSON.stringify(fileBox)
 console.log(jsonText)
@@ -288,7 +288,7 @@ fileBox.metadata = {
 }
 
 console.log(fileBox.metadata)       // Output: { author: 'huan', githubRepo: 'https://github.com/huan/file-box' }
-fileBox.metadata.author = 'Thanos'  // Will throw exception
+fileBox.metadata.author = 'Tank'  // Will throw exception
 ```
 
 #### 3.3 `version(): string`
@@ -316,7 +316,7 @@ HTTP Header Example:
 
 Return the type of the current FileBox instance.
 
-The currently supported types are defined at [file-box-type.ts](https://github.com/huan/file-box/blob/master/src/file-box.type.ts#L15) as the following demostrated:
+The currently supported types are defined at [file-box-type.ts](https://github.com/huan/file-box/blob/master/src/file-box.type.ts#L15) as the following demonstrated:
 
 ```ts
 enum FileBoxType {
@@ -384,6 +384,7 @@ enum FileBoxType {
 ### master
 
 1. Add `fileBox.type()` to return the `FileBoxType` of a FileBox. ([wechaty/wechaty#1918](https://github.com/wechaty/wechaty/issues/1918#issuecomment-590146993))
+1. Change `Readable` to `stream.Readable` for better compatibility.
 
 ### v0.12 (Feb 2020)
 
@@ -401,7 +402,7 @@ Add support to `JSON.stringify()` ([#25](https://github.com/huan/file-box/issues
 
 1. Add two new factory methods: `fromBase64()`, `fromDataURL()`
 1. Add `toBuffer()`, `toBase64()` and `toDataURL()` to get the Buffer and BASE64 encoded file data
-1. Add `metadata` property to store additional informations. ([#3](https://github.com/huan/file-box/issues/3))
+1. Add `metadata` property to store additional information. ([#3](https://github.com/huan/file-box/issues/3))
 
 ### v0.4 (May 2018)
 
@@ -424,11 +425,11 @@ Initial version.
 
 ## Thanks
 
-This module is inspired by https://github.com/gulpjs/vinyl and https://github.com/DefinitelyTyped/DefinitelyTyped/pull/12368 when I need a virtual File module for my [Chatie](https://github.com/Chatie) project.
+This module is inspired by <https://github.com/gulpjs/vinyl> and <https://github.com/DefinitelyTyped/DefinitelyTyped/pull/12368> when I need a virtual File module for my [Chatie](https://github.com/Chatie) project.
 
 ## Author
 
-[Huan LI](https://github.com/huan) ([李卓桓](http://linkedin.com/in/zixia)) zixia@zixia.net
+[Huan LI](https://github.com/huan) ([李卓桓](http://linkedin.com/in/zixia)), Microsoft AI MVP, zixia@zixia.net
 
 [![Profile of Huan LI (李卓桓) on StackOverflow](https://stackexchange.com/users/flair/265499.png)](https://stackexchange.com/users/265499)
 
@@ -436,4 +437,4 @@ This module is inspired by https://github.com/gulpjs/vinyl and https://github.co
 
 * Docs released under Creative Commons
 * Code released under the Apache-2.0 License
-* Code & Docs © 2018-now Huan LI \<zixia@zixia.net\>
+* Code & Docs © 2018 Huan LI \<zixia@zixia.net\>
