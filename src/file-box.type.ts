@@ -63,7 +63,7 @@ interface FileBoxOptionsBuffer {
 }
 interface FileBoxOptionsStream {
   type   : FileBoxType.Stream
-  stream : NodeJS.ReadableStream
+  stream : Readable
 }
 interface FileBoxOptionsQRCode {
   type   : FileBoxType.QRCode,

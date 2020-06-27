@@ -15,21 +15,22 @@ import mime  from 'mime'
 
 import {
   PassThrough,
+  Readable,
 }                     from 'stream'
 
 import {
   VERSION,
 }                         from './config'
 import {
+  FileBoxJsonObject,
+  FileBoxJsonObjectBase64,
+  FileBoxJsonObjectCommon,
+  FileBoxJsonObjectQRCode,
+  FileBoxJsonObjectUrl,
   FileBoxOptions,
   FileBoxType,
-  FileBoxJsonObject,
   Metadata,
   Pipeable,
-  FileBoxJsonObjectCommon,
-  FileBoxJsonObjectUrl,
-  FileBoxJsonObjectQRCode,
-  FileBoxJsonObjectBase64,
 }                         from './file-box.type'
 import {
   dataUrlToBase64,
@@ -99,7 +100,7 @@ export class FileBox implements Pipeable {
   }
 
   public static fromStream (
-    stream: NodeJS.ReadableStream,
+    stream: Readable,
     name:   string,
   ): FileBox {
     const options: FileBoxOptions = {
@@ -253,7 +254,7 @@ export class FileBox implements Pipeable {
 
   private readonly buffer?    : Buffer
   private readonly localPath? : string
-  private readonly stream?    : NodeJS.ReadableStream
+  private readonly stream?    : Readable
 
   private readonly headers?: http.OutgoingHttpHeaders
 
@@ -437,8 +438,8 @@ export class FileBox implements Pipeable {
     return obj
   }
 
-  public async toStream (): Promise<NodeJS.ReadableStream> {
-    let stream: NodeJS.ReadableStream
+  public async toStream (): Promise<Readable> {
+    let stream: Readable
 
     switch (this.boxType) {
       case FileBoxType.Buffer:
@@ -484,13 +485,13 @@ export class FileBox implements Pipeable {
   /**
    * https://stackoverflow.com/a/16044400/1123955
    */
-  private transformBufferToStream (buffer?: Buffer): NodeJS.ReadableStream {
+  private transformBufferToStream (buffer?: Buffer): Readable {
     const bufferStream = new PassThrough()
     bufferStream.end(buffer || this.buffer)
     return bufferStream
   }
 
-  private transformBase64ToStream (): NodeJS.ReadableStream {
+  private transformBase64ToStream (): Readable {
     if (!this.base64) {
       throw new Error('no base64 data')
     }
@@ -498,15 +499,15 @@ export class FileBox implements Pipeable {
     return this.transformBufferToStream(buffer)
   }
 
-  private transformFileToStream (): NodeJS.ReadableStream {
+  private transformFileToStream (): Readable {
     if (!this.localPath) {
       throw new Error('no url(path)')
     }
     return fs.createReadStream(this.localPath)
   }
 
-  private async transformUrlToStream (): Promise<NodeJS.ReadableStream> {
-    return new Promise<NodeJS.ReadableStream>((resolve, reject) => {
+  private async transformUrlToStream (): Promise<Readable> {
+    return new Promise<Readable>((resolve, reject) => {
       if (this.remoteUrl) {
         httpStream(this.remoteUrl, this.headers)
           .then(resolve)
@@ -517,7 +518,7 @@ export class FileBox implements Pipeable {
     })
   }
 
-  private async transformQRCodeToStream (): Promise<NodeJS.ReadableStream> {
+  private async transformQRCodeToStream (): Promise<Readable> {
     if (!this.qrCode) {
       throw new Error('no QR Code Value found')
     }
