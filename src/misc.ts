@@ -19,7 +19,7 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
 
   while (true) {
     if (REDIRECT_TTL-- <= 0) {
-      throw new Error(`ttl expired! too many(>${REDIRECT_TTL}) 302 redirections.`)
+      throw new Error(`ttl expired! too many(>${REDIRECT_TTL}) 302 redirection.`)
     }
 
     const res = await _headHeader(url)
