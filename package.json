@@ -38,7 +38,7 @@
   },
   "homepage": "https://github.com/huan/file-box#readme",
   "devDependencies": {
-    "@chatie/eslint-config": "^0.8.1",
+    "@chatie/eslint-config": "^0.12.1",
     "@chatie/git-scripts": "^0.6.2",
     "@chatie/semver": "^0.4.7",
     "@chatie/tsconfig": "^0.10.1",
@@ -53,7 +53,7 @@
     "tstest": "^0.4.2"
   },
   "dependencies": {
-    "jimp": "^0.13.0",
+    "jimp": "^0.14.0",
     "jsqr": "^1.2.0",
     "mime": "^2.3.1",
     "qrcode": "^1.4.4"
