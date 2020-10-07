@@ -118,7 +118,11 @@ export async function httpStream (
     ...headers,
   }
 
-  const res = await new Promise<http.IncomingMessage>(resolve => get(options, resolve))
+  const res = await new Promise<http.IncomingMessage>((resolve, reject) => {
+    get(options, resolve)
+      .on('error', reject)
+      .end()
+  })
   return res
 }
 
