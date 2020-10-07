@@ -236,6 +236,7 @@ export class FileBox implements Pipeable {
     }
     return EMPTY_META_DATA
   }
+
   public set metadata (data: Metadata) {
     if (this._metadata) {
       throw new Error('metadata can not be modified after set')
@@ -388,7 +389,7 @@ export class FileBox implements Pipeable {
     let obj: FileBoxJsonObject
 
     switch (this.boxType) {
-      case FileBoxType.Url:
+      case FileBoxType.Url: {
         if (!this.remoteUrl) {
           throw new Error('no url')
         }
@@ -402,8 +403,9 @@ export class FileBox implements Pipeable {
           ...objUrl,
         }
         break
+      }
 
-      case FileBoxType.QRCode:
+      case FileBoxType.QRCode: {
         if (!this.qrCode) {
           throw new Error('no qr code')
         }
@@ -416,8 +418,9 @@ export class FileBox implements Pipeable {
           ...objQRCode,
         }
         break
+      }
 
-      case FileBoxType.Base64:
+      case FileBoxType.Base64: {
         if (!this.base64) {
           throw new Error('no base64 data')
         }
@@ -430,6 +433,7 @@ export class FileBox implements Pipeable {
           ...objBase64,
         }
         break
+      }
 
       default:
         throw new Error('FileBox.toJSON() can only work on limited FileBoxType(s). See: <https://github.com/huan/file-box/issues/25>')
