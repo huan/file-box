@@ -45,7 +45,7 @@ test('qrValueToStream()', async t => {
   const stream = await qrValueToStream(QRCODE_VALUE)
 
   const chunks = [] as Buffer[]
-  for await (let chunk of stream) {
+  for await (const chunk of stream) {
     chunks.push(chunk as Buffer)
   }
   const buf = Buffer.concat(chunks)
