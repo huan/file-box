@@ -43,6 +43,7 @@ import {
   bufferToQrValue,
   qrValueToStream,
 }                         from './qrcode'
+import { chunkerTransformStream } from './pure-functions/chunker-transform-stream'
 
 const EMPTY_META_DATA = Object.freeze({})
 
@@ -492,7 +493,12 @@ export class FileBox implements Pipeable {
   private transformBufferToStream (buffer?: Buffer): Readable {
     const bufferStream = new PassThrough()
     bufferStream.end(buffer || this.buffer)
-    return bufferStream
+
+    /**
+     * Use small `chunks` with `toStream()` #44
+     * https://github.com/huan/file-box/issues/44
+     */
+    return bufferStream.pipe(chunkerTransformStream())
   }
 
   private transformBase64ToStream (): Readable {
