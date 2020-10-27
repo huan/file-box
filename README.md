@@ -383,8 +383,11 @@ enum FileBoxType {
 
 ### master
 
+### v0.14 (Oct 2020)
+
 1. Add `fileBox.type()` to return the `FileBoxType` of a FileBox. ([wechaty/wechaty#1918](https://github.com/wechaty/wechaty/issues/1918#issuecomment-590146993))
 1. Change `Readable` to `stream.Readable` for better compatibility. (Jun 27, 2020)
+1. Add `chunkerTransformStream` to `toStream` ([#44](https://github.com/huan/file-box/issues/44))
 
 ### v0.12 (Feb 2020)
 
