@@ -254,7 +254,7 @@ For other types like `FileBoxType.File`, `FileBoxType.Buffer`, `FileBoxType.Stre
 const fileBoxLazy = FileBox.fromFile('./test.txt')
 const base64 = await fileBoxLazy.toBase64()
 
-const fileBox = FleBox.fromBase64(base64, 'test.txt')
+const fileBox = FileBox.fromBase64(base64, 'test.txt')
 // fileBox will be serializable because it do not need async operations
 
 const jsonText = JSON.stringify(fileBox)
