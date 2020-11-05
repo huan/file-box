@@ -638,9 +638,10 @@ export class FileBox implements Pipeable {
   public pipe<T extends NodeJS.WritableStream> (
     destination: T,
   ): T {
-    this.toStream().then(
-      stream => stream.pipe(destination),
-    ).catch(e => destination.emit('error', e))
+    this.toStream().then(stream => {
+      stream.on('error', e => destination.emit('error', e))
+      return stream.pipe(destination)
+    }).catch(e => destination.emit('error', e))
     return destination
   }
 
