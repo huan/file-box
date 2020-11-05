@@ -640,7 +640,7 @@ export class FileBox implements Pipeable {
   ): T {
     this.toStream().then(stream => {
       stream.on('error', e => destination.emit('error', e))
-      stream.pipe(destination)
+      return stream.pipe(destination)
     }).catch(e => destination.emit('error', e))
     return destination
   }
