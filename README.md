@@ -383,8 +383,6 @@ enum FileBoxType {
 
 ### v0.16 master
 
-1. Change `private constructor()` to `public constructor()` so that our typing system can get to know the class type.
-
 ### v0.14 (Oct 2020)
 
 1. Add `fileBox.type()` to return the `FileBoxType` of a FileBox. ([wechaty/wechaty#1918](https://github.com/wechaty/wechaty/issues/1918#issuecomment-590146993))
