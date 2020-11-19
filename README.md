@@ -381,7 +381,9 @@ enum FileBoxType {
 
 ## History
 
-### master
+### v0.16 master
+
+1. Change `private constructor()` to `public constructor()` so that our typing system can get to know the class type.
 
 ### v0.14 (Oct 2020)
 

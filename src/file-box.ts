@@ -260,7 +260,7 @@ export class FileBox implements Pipeable {
 
   private readonly headers?: http.OutgoingHttpHeaders
 
-  private constructor (
+  constructor (
     options: FileBoxOptions,
   ) {
     // Only keep `basename` in this.name
