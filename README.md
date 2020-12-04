@@ -383,6 +383,8 @@ enum FileBoxType {
 
 ### v0.16 master
 
+1. Throw error when consume a stream twice to prevent data lost. ([#50](https://github.com/huan/file-box/issues/50))
+
 ### v0.14 (Oct 2020)
 
 1. Add `fileBox.type()` to return the `FileBoxType` of a FileBox. ([wechaty/wechaty#1918](https://github.com/wechaty/wechaty/issues/1918#issuecomment-590146993))
