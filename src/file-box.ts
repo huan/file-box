@@ -463,6 +463,10 @@ export class FileBox implements Pipeable {
         if (!this.stream) {
           throw new Error('no stream')
         }
+        if (this.stream.destroyed) {
+          throw new Error('The stream has already been consumed once, and now it was destroyed. See: https://github.com/huan/file-box/issues/50')
+        }
+
         stream = this.stream
         break
 

@@ -3,6 +3,7 @@
 /* eslint @typescript-eslint/no-unused-vars:off */
 
 import assert from 'assert'
+import fs from 'fs'
 
 import 'reflect-metadata'
 
@@ -49,7 +50,7 @@ test('File smoke testing', async t => {
 export class FixtureFileBox {
 
   @tstest.methodFixture()
-  public static localFileFixutre () {
+  public static localFileFixture () {
     return {
       content: 'T',
       name: 'test.txt',
@@ -282,4 +283,23 @@ test('toJSON() for not supported type', async t => {
 
   t.equal(fileBox.type(), FileBoxType.Buffer, 'should get type() as Buffer')
   t.throws(() => JSON.stringify(fileBox), 'should throw for buffer type of FileBox')
+})
+
+/**
+ * Issue #50: Stream can not be consumed twice
+ *  https://github.com/huan/file-box/issues/50
+ */
+test('toStream() twice for a stream', async t => {
+  const stream = fs.createReadStream(__filename)
+  const box    = FileBox.fromStream(stream, __filename)
+
+  // consume it
+  await box.toBase64()
+
+  try {
+    await box.toBuffer()
+    t.fail('stream should be able to be consumed twice')
+  } catch (e) {
+    t.pass('should fail when stream source be consumed twice')
+  }
 })
