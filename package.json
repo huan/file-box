@@ -1,6 +1,6 @@
 {
   "name": "file-box",
-  "version": "0.16.5",
+  "version": "0.16.6",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "main": "dist/src/mod.js",
   "typings": "dist/src/mod.d.ts",
