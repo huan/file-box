@@ -11,12 +11,12 @@ import http      from 'http'
 import nodePath  from 'path'
 import nodeUrl   from 'url'
 
+import mime  from 'mime'
+
 import {
   PassThrough,
   Readable,
 }                     from 'stream'
-
-import { mime }            from './mime-ext'
 
 import {
   VERSION,
