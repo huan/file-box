@@ -2,8 +2,12 @@
   "name": "file-box",
   "version": "0.16.4",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
-  "main": "dist/src/index.js",
-  "typings": "dist/src/index.d.ts",
+  "type": "module",
+  "exports": "./dist/src/index.js",
+  "typings": "./dist/src/index.d.ts",
+  "engines": {
+    "node": ">=12"
+  },
   "directories": {
     "doc": "docs"
   },
