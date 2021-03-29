@@ -46,7 +46,7 @@
     "@types/mime": "^2.0.3",
     "@types/qrcode": "^1.4.0",
     "pkg-jq": "^0.2.11",
-    "read-pkg-up": "^7.0.1",
+    "read-pkg-up": "^8.0.0",
     "reflect-metadata": "^0.1.13",
     "shx": "^0.3.3",
     "tstest": "^0.4.10"
