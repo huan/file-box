@@ -164,6 +164,21 @@ test('toBuffer()', async t => {
   t.equal(buffer.toString(), EXPECT_STRING, 'should get the toBuffer() result')
 })
 
+test('toFile() with long name', async t => {
+  const IMAGE_URL      = 'https://s3.cn-north-1.amazonaws.com.cn/xiaoju-material/public/5ffd393fc503f00039101dae_1620978346435_%E7%94%B5%E6%B1%A0%E5%9E%8B%E5%8F%B7%09%E8%BF%9B%E8%B4%A7%E4%BB%B7%E6%A0%BC%09%E5%8E%9F%E5%94%AE%E5%90%8E%E8%A1%A5%E6%AC%BE%E4%BB%B7%E6%A0%BC%09%E7%8E%B0%E5%85%AC%E5%8F%B8%E6%89%BF%E6%8B%85%E4%B8%80%E5%8D%8A%E7%9A%84%E4%BB%B7%E6%A0%BC%0AZD-20-100%09420%09270%09135%0AZD-Q85-D23L%09360%09270%09135%0AZD-H6-L3%09420%09315%09157.5%0A%E6%80%BB%E8%AE%A1%EF%BC%9A%091200%09855%09427.5%0A'
+  const EXPECT_ERR_MSG = 'ENAMETOOLONG: name too long'
+
+  let flag = false
+  try {
+    const fileBox = FileBox.fromUrl(IMAGE_URL)
+    await fileBox.toFile()
+  } catch (error) {
+    flag = error.message.includes(EXPECT_ERR_MSG)
+  }
+
+  t.equal(flag, true, 'should catch toFile() error: ENAMETOOLONG: name too long')
+})
+
 test('metadata', async t => {
   const FILE_PATH     = 'tests/fixtures/data.bin'
 
