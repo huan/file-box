@@ -61,6 +61,10 @@ fileBox3.toDataURL()
 // Output: data:text/plain;base64,d29ybGQK
 ```
 
+## Known Issues
+
+1. TypeError [ERR_UNESCAPED_CHARACTERS]: Request path contains unescaped characters [#56](https://github.com/huan/file-box/issues/56)
+
 ## API Reference
 
 ### 1. Load File in to Box
