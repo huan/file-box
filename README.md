@@ -381,6 +381,10 @@ enum FileBoxType {
 
 ## History
 
+### master v0.17
+
+1. Suppert ES Module. ([#54](https://github.com/huan/file-box/issues/54))
+
 ### v0.16 master
 
 1. Throw error when consume a stream twice to prevent data lost. ([#50](https://github.com/huan/file-box/issues/50))
