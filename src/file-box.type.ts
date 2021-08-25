@@ -1,10 +1,12 @@
 import http      from 'http'
 import {
   Readable,
+  Writable,
 }                from 'stream'
 
 export interface Pipeable {
-  pipe: typeof Readable.prototype.pipe,
+  // pipe: typeof Readable.prototype.pipe,
+  pipe<T extends Writable>(destination: T, options?: { end?: boolean; }): T;
 }
 
 /**
@@ -83,6 +85,10 @@ export type FileBoxOptions = FileBoxOptionsCommon & (
   | FileBoxOptionsBase64
 )
 
+export interface Metadata {
+  [key: string]: any,
+}
+
 export interface FileBoxJsonObjectCommon {
   name     : string,
   metadata : Metadata,
@@ -110,7 +116,3 @@ export type FileBoxJsonObject =  FileBoxJsonObjectCommon
                                   | FileBoxJsonObjectUrl
                                   | FileBoxJsonObjectQRCode
                                 )
-
-export interface Metadata {
-  [key: string]: any,
-}

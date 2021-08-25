@@ -16,11 +16,12 @@ import mime  from 'mime'
 import {
   PassThrough,
   Readable,
+  Writable,
 }                     from 'stream'
 
 import {
   VERSION,
-}                         from './config'
+}                         from './config.js'
 import {
   FileBoxJsonObject,
   FileBoxJsonObjectBase64,
@@ -31,19 +32,19 @@ import {
   FileBoxType,
   Metadata,
   Pipeable,
-}                         from './file-box.type'
+}                         from './file-box.type.js'
 import {
   dataUrlToBase64,
   httpHeaderToFileName,
   httpHeadHeader,
   httpStream,
   streamToBuffer,
-}                         from './misc'
+}                         from './misc.js'
 import {
   bufferToQrValue,
   qrValueToStream,
-}                         from './qrcode'
-import { chunkerTransformStream } from './pure-functions/chunker-transform-stream'
+}                         from './qrcode.js'
+import { chunkerTransformStream } from './pure-functions/chunker-transform-stream.js'
 
 const EMPTY_META_DATA = Object.freeze({})
 
@@ -639,7 +640,7 @@ export class FileBox implements Pipeable {
    *
    */
 
-  public pipe<T extends NodeJS.WritableStream> (
+  public pipe<T extends Writable> (
     destination: T,
   ): T {
     this.toStream().then(stream => {
