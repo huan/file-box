@@ -67,6 +67,10 @@
     "mime": "^2.5.2",
     "qrcode": "^1.4.4"
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "publishConfig": {
     "access": "public",
     "tag": "next"
