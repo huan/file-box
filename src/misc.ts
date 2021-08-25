@@ -1,6 +1,7 @@
 import http    from 'http'
 import https   from 'https'
 import nodeUrl from 'url'
+import stream   from 'stream'
 
 export function dataUrlToBase64 (dataUrl: string): string {
   const dataList = dataUrl.split(',')
@@ -127,7 +128,7 @@ export async function httpStream (
 }
 
 export async function streamToBuffer (
-  stream: NodeJS.ReadableStream,
+  stream: stream.Readable,
 ): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {
     const bufferList: Buffer[] = []

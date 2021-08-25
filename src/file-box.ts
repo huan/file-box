@@ -16,6 +16,7 @@ import mime  from 'mime'
 import {
   PassThrough,
   Readable,
+  Writable,
 }                     from 'stream'
 
 import {
@@ -639,7 +640,7 @@ export class FileBox implements Pipeable {
    *
    */
 
-  public pipe<T extends NodeJS.WritableStream> (
+  public pipe<T extends Writable> (
     destination: T,
   ): T {
     this.toStream().then(stream => {
