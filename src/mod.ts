@@ -1,16 +1,11 @@
-import {
+export {
   FileBoxType,
-}               from './file-box.type.js'
-import {
+}               from './file-box.type'
+export {
   VERSION,
-}               from './config.js'
-import {
-  FileBox,
-}               from './file-box.js'
+}               from './config'
 
 export {
   FileBox,
-  FileBoxType,
-  VERSION,
-}
-export default FileBox
+  FileBox as default,
+}                       from './file-box'
