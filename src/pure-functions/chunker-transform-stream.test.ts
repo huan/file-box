@@ -9,7 +9,7 @@ import {
   Readable,
 }                     from 'stream'
 
-import { chunkerTransformStream } from './chunker-transform-stream'
+import { chunkerTransformStream } from './chunker-transform-stream.js'
 
 test('chunkerTransformStream()', async t => {
   const DATA_LIST = [

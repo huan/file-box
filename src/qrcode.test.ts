@@ -5,7 +5,7 @@ import { test } from 'tstest'
 import {
   bufferToQrValue,
   qrValueToStream,
-}                     from './qrcode'
+}                     from './qrcode.js'
 
 test('imageBase64ToQrCode()', async t => {
   const QRCODE_IMAGE_BASE64 = [
