@@ -2,8 +2,6 @@
   "name": "file-box",
   "version": "0.17.7",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
-  "main": "./dist/cjs/src/mod.js",
-  "typings": "./dist/esm/src/mod.d.ts",
   "type": "module",
   "exports": {
     ".": {
@@ -11,15 +9,17 @@
       "require": "./dist/cjs/src/mod.js"
     }
   },
+  "typings": "./dist/esm/src/mod.d.ts",
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "directories": {
     "doc": "docs"
   },
   "scripts": {
     "clean": "shx rm -fr dist/*",
-    "dist": "npm run clean && tsc && tsc -p tsconfig.cjs.json && (cd dist/cjs; npm init -y > /dev/null)",
+    "dist": "npm run clean && tsc && tsc -p tsconfig.cjs.json && npm run fixup",
+    "fixup": "echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
     "lint": "npm run lint:es && npm run lint:ts",
     "lint:ts": "tsc --noEmit",
     "test": "npm run lint && npm run test:unit",
