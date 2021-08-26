@@ -1,15 +1,14 @@
-#!/usr/bin/env ts-node
-
-/* eslint @typescript-eslint/no-unused-vars:off */
+#!/usr/bin/env node --loader ts-node/esm
 
 import assert from 'assert'
+import { PassThrough } from 'stream'
 
 import 'reflect-metadata'
 
 import { test } from 'tstest'
 // import * as sinon from 'sinon'
-import { FileBox } from './file-box'
-import { FileBoxType } from './file-box.type'
+import { FileBox } from './file-box.js'
+import { FileBoxType } from './file-box.type.js'
 
 const requiredMetadataKey = Symbol('required')
 
@@ -49,7 +48,7 @@ test('File smoke testing', async t => {
 export class FixtureFileBox {
 
   @tstest.methodFixture()
-  public static localFileFixutre () {
+  public static localFileFixture () {
     return {
       content: 'T',
       name: 'test.txt',
@@ -162,6 +161,25 @@ test('toBuffer()', async t => {
   const buffer = await fileBox.toBuffer()
 
   t.equal(buffer.toString(), EXPECT_STRING, 'should get the toBuffer() result')
+})
+
+/**
+ * Huan(202106): we keep this unit test for trying to figure out which operation system can support this long file name.
+ *  See: https://github.com/huan/file-box/issues/58
+ */
+test('toFile() with long name', async t => {
+  const IMAGE_URL      = 'https://s3.cn-north-1.amazonaws.com.cn/xiaoju-material/public/5ffd393fc503f00039101dae_1620978346435_%E7%94%B5%E6%B1%A0%E5%9E%8B%E5%8F%B7%09%E8%BF%9B%E8%B4%A7%E4%BB%B7%E6%A0%BC%09%E5%8E%9F%E5%94%AE%E5%90%8E%E8%A1%A5%E6%AC%BE%E4%BB%B7%E6%A0%BC%09%E7%8E%B0%E5%85%AC%E5%8F%B8%E6%89%BF%E6%8B%85%E4%B8%80%E5%8D%8A%E7%9A%84%E4%BB%B7%E6%A0%BC%0AZD-20-100%09420%09270%09135%0AZD-Q85-D23L%09360%09270%09135%0AZD-H6-L3%09420%09315%09157.5%0A%E6%80%BB%E8%AE%A1%EF%BC%9A%091200%09855%09427.5%0A'
+  const EXPECT_ERR_MSG = 'ENAMETOOLONG: name too long'
+
+  let flag = false
+  try {
+    const fileBox = FileBox.fromUrl(IMAGE_URL)
+    await fileBox.toFile()
+  } catch (error) {
+    flag = error.message.includes(EXPECT_ERR_MSG)
+  }
+
+  t.equal(flag, true, 'should catch toFile() error: ENAMETOOLONG: name too long')
 })
 
 test('metadata', async t => {
@@ -282,4 +300,25 @@ test('toJSON() for not supported type', async t => {
 
   t.equal(fileBox.type(), FileBoxType.Buffer, 'should get type() as Buffer')
   t.throws(() => JSON.stringify(fileBox), 'should throw for buffer type of FileBox')
+})
+
+/**
+ * Issue #50: Stream can not be consumed twice
+ *  https://github.com/huan/file-box/issues/50
+ */
+test('toStream() twice for a stream', async t => {
+  const stream = new PassThrough()
+  const box    = FileBox.fromStream(stream, 'hello.dat')
+
+  stream.end('hello, world!')
+
+  // consume it
+  await box.toBase64()
+
+  try {
+    await box.toBuffer()
+    t.fail('stream should be able to be consumed twice')
+  } catch (e) {
+    t.pass('should fail when stream source be consumed twice')
+  }
 })

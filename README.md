@@ -61,6 +61,10 @@ fileBox3.toDataURL()
 // Output: data:text/plain;base64,d29ybGQK
 ```
 
+## Known Issues
+
+1. TypeError [ERR_UNESCAPED_CHARACTERS]: Request path contains unescaped characters [#56](https://github.com/huan/file-box/issues/56)
+
 ## API Reference
 
 ### 1. Load File in to Box
@@ -381,7 +385,13 @@ enum FileBoxType {
 
 ## History
 
+### master v0.17
+
+1. Suppert ES Module. ([#54](https://github.com/huan/file-box/issues/54))
+
 ### v0.16 master
+
+1. Throw error when consume a stream twice to prevent data lost. ([#50](https://github.com/huan/file-box/issues/50))
 
 ### v0.14 (Oct 2020)
 

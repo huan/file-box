@@ -9,7 +9,7 @@ import {
   httpHeadHeader,
   httpStream,
   streamToBuffer,
-}                         from './misc'
+}                         from './misc.js'
 
 test('dataUrl to base64', async t => {
   const base64 = [
