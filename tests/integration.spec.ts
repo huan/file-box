@@ -4,7 +4,7 @@ import { test }  from 'tstest'
 
 import { FileBox } from '../src/mod.js'
 
-test('.amr mime support', async (t) => {
+test('.amr mime support', async t => {
   const FILE_NAME = 'test.amr'
   const EXPECTED_MIME = 'audio/amr'
 
