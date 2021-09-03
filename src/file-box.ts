@@ -464,8 +464,15 @@ export class FileBox implements Pipeable {
         if (!this.stream) {
           throw new Error('no stream')
         }
-        if (this.stream.destroyed) {
-          throw new Error('The stream has already been consumed once, and now it was destroyed. See: https://github.com/huan/file-box/issues/50')
+
+        /**
+          * Huan(202109): the stream.destroyed will not be `true`
+          *   when we have read all the data
+          *   after we change some code.
+          * The reason is unknown... so we change to check `readable`
+          */
+        if (!this.stream.readable) {
+          throw new Error('The stream is not readable. Maybe has already been consumed, and now it was drained. See: https://github.com/huan/file-box/issues/50')
         }
 
         stream = this.stream
@@ -564,6 +571,18 @@ export class FileBox implements Pipeable {
     }
 
     const writeStream = fs.createWriteStream(fullFilePath)
+
+    /**
+      * Huan(202109): make sure the file can be opened for writting
+      *   before we pipe the stream to it
+      */
+    await new Promise((resolve, reject) => writeStream
+      .once('open', resolve)
+      .once('error', reject)
+    )
+    /**
+      * Start pipe
+      */
     await new Promise((resolve, reject) => {
       writeStream
         .once('close', resolve)
@@ -644,7 +663,11 @@ export class FileBox implements Pipeable {
     destination: T,
   ): T {
     this.toStream().then(stream => {
-      stream.on('error', e => destination.emit('error', e))
+      stream.on('error', e => {
+        console.info('error:', e)
+
+        destination.emit('error', e)
+      })
       return stream.pipe(destination)
     }).catch(e => destination.emit('error', e))
     return destination
