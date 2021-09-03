@@ -7,7 +7,7 @@
  *
  */
 import fs        from 'fs'
-import http      from 'http'
+import type http      from 'http'
 import nodePath  from 'path'
 import nodeUrl   from 'url'
 
