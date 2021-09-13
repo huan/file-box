@@ -51,7 +51,7 @@
     "@chatie/eslint-config": "^0.13.5",
     "@chatie/git-scripts": "^0.6.2",
     "@chatie/semver": "^0.4.7",
-    "@chatie/tsconfig": "^0.19.6",
+    "@chatie/tsconfig": "^0.20.2",
     "@types/isomorphic-fetch": "0.0.35",
     "@types/mime": "^2.0.3",
     "@types/qrcode": "^1.4.1",
