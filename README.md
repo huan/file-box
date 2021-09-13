@@ -3,6 +3,7 @@
 [![NPM Version](https://badge.fury.io/js/file-box.svg)](https://badge.fury.io/js/file-box)
 [![NPM](https://github.com/huan/file-box/workflows/NPM/badge.svg)](https://github.com/huan/file-box/actions?query=workflow%3ANPM)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
+[![ES Modules](https://img.shields.io/badge/ES-Modules-brightgreen)](https://github.com/Chatie/tsconfig/issues/16)
 
 FileBox is a virtual container for packing a file data into it for future read, and easily transport between servers with the least payload, no mater than where it is (local path, remote url, or cloud storage).
 

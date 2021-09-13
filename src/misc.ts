@@ -1,11 +1,11 @@
 import http    from 'http'
 import https   from 'https'
 import nodeUrl from 'url'
-import stream   from 'stream'
+import type stream   from 'stream'
 
 export function dataUrlToBase64 (dataUrl: string): string {
   const dataList = dataUrl.split(',')
-  return dataList[dataList.length - 1]
+  return dataList[dataList.length - 1]!
 }
 
 /**

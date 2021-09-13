@@ -1,5 +1,5 @@
-import http      from 'http'
-import {
+import type http      from 'http'
+import type {
   Readable,
   Writable,
 }                from 'stream'

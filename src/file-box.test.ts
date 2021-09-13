@@ -1,4 +1,4 @@
-#!/usr/bin/env node --loader ts-node/esm
+#!/usr/bin/env -S node --no-warnings --loader ts-node/esm
 
 import assert from 'assert'
 import { PassThrough } from 'stream'
@@ -176,7 +176,7 @@ test('toFile() with long name', async t => {
     const fileBox = FileBox.fromUrl(IMAGE_URL)
     await fileBox.toFile()
   } catch (error) {
-    flag = error.message.includes(EXPECT_ERR_MSG)
+    flag = (error as Error).message.includes(EXPECT_ERR_MSG)
   }
 
   t.equal(flag, true, 'should catch toFile() error: ENAMETOOLONG: name too long')
@@ -207,7 +207,7 @@ test('metadata', async t => {
 
   const fileBox = FileBox.fromFile(FILE_PATH)
 
-  t.deepEqual(fileBox.metadata, {}, 'should get a empty {} if not set')
+  t.same(fileBox.metadata, {}, 'should get a empty {} if not set')
 
   t.doesNotThrow(
     () => {
@@ -225,12 +225,12 @@ test('metadata', async t => {
 
   t.throws(
     () => {
-      fileBox.metadata.mol = EXPECTED_MOL
+      fileBox.metadata['mol'] = EXPECTED_MOL
     },
     'should throw for change value of a property on metadata',
   )
 
-  t.deepEqual(fileBox.metadata, EXPECTED_METADATA, 'should get the metadata')
+  t.same(fileBox.metadata, EXPECTED_METADATA, 'should get the metadata')
 })
 
 test('fromQRCode()', async t => {
@@ -314,11 +314,12 @@ test('toStream() twice for a stream', async t => {
 
   // consume it
   await box.toBase64()
+  t.pass('should successful to read the stream for the first time')
 
   try {
     await box.toBuffer()
-    t.fail('stream should be able to be consumed twice')
+    t.fail('should throw when the file-box be consumed twice')
   } catch (e) {
-    t.pass('should fail when stream source be consumed twice')
+    t.pass('should throw when the file-box be consumed twice')
   }
 })
