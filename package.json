@@ -62,7 +62,7 @@
     "read-pkg-up": "^8.0.0",
     "reflect-metadata": "^0.1.13",
     "shx": "^0.3.3",
-    "tstest": "^0.5.16"
+    "tstest": "^0.7.2"
   },
   "dependencies": {
     "jimp": "^0.16.1",
