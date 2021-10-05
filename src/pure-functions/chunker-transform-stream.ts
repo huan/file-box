@@ -4,7 +4,7 @@
  */
 import stream from 'stream'
 
-const DEFAULT_CHUNK_SIZE = 256 * 1024 // 256KB
+const DEFAULT_CHUNK_SIZE = 64 * 1024 // 64KB
 
 function chunkerTransformStream (chunkSize = DEFAULT_CHUNK_SIZE) {
   let buffer = Buffer.from([])
