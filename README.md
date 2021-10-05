@@ -447,14 +447,17 @@ type UuidSaver = (stream: Readable) => Promise<string>
 
 ## History
 
-### master v0.19
+### master v0.21
 
 1. Suppert ES Module. ([#54](https://github.com/huan/file-box/issues/54))
 1. Add UUID boxType support: `FileBox.fromUuid()` and `FileBox.toUuid()`
+1. Add `size` property to return the size of the file. (`-1` means unknown)
 
 Breaking changes:
 
 1. `toJSON` format renamed `boxType` to `type`
+1. `type()` has been changed to `type`
+1. `version()` has been changed to `version`
 
 ### v0.16 master
 

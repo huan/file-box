@@ -50,7 +50,9 @@ import {
   bufferToQrValue,
   qrValueToStream,
 }                         from './qrcode.js'
-import { chunkerTransformStream } from './pure-functions/chunker-transform-stream.js'
+import {
+  chunkerTransformStream,
+}                         from './pure-functions/chunker-transform-stream.js'
 
 const EMPTY_META_DATA = Object.freeze({})
 
@@ -61,6 +63,7 @@ export class FileBox implements Pipeable {
    * Static Properties
    *
    */
+  static readonly version = VERSION
 
   /**
    * Alias for `FileBox.fromUrl()`
@@ -264,21 +267,49 @@ export class FileBox implements Pipeable {
     return fileBox
   }
 
-  static version () {
-    return VERSION
-  }
-
   /**
    *
    * Instance Properties
    *
    */
-  // not readonly: need be update from the remote url(possible)
-  boxType: FileBoxType
+  readonly version = VERSION
 
-  // huan 20190604: it seems that lastMdified & size both not used at all?
-  // public lastModified : number
-  // public size         : number
+  // not readonly: need be update from the remote url(possible)
+  readonly type: FileBoxType
+
+  get size (): number {
+    switch (this.type) {
+      case FileBoxType.Base64:
+        return this.base64
+          ? Buffer.byteLength(this.base64, 'base64')
+          : -1
+      case FileBoxType.Url:
+        return this.remoteUrl
+          ? this.remoteUrl.length
+          : -1
+      case FileBoxType.QRCode:
+        return this.qrCode
+          ? this.qrCode.length
+          : -1
+      case FileBoxType.Buffer:
+        return this.buffer
+          ? this.buffer.length
+          : -1
+      case FileBoxType.File:
+        return this.localPath
+          ? fs.statSync(this.localPath).size
+          : -1
+      case FileBoxType.Stream:
+        // We never know the size of a stream before consume it
+        return -1
+      case FileBoxType.Uuid:
+        return this.uuid
+          ? this.uuid.length
+          : -1
+      default:
+        throw new Error('unknown FileBoxType: ' + this.type)
+    }
+  }
 
   mimeType? : string    // 'text/plain'
   name      : string
@@ -322,8 +353,8 @@ export class FileBox implements Pipeable {
     options: FileBoxOptions,
   ) {
     // Only keep `basename` in this.name
-    this.name    = nodePath.basename(options.name)
-    this.boxType = options.type
+    this.name = nodePath.basename(options.name)
+    this.type = options.type
 
     this.mimeType = mime.getType(this.name) || undefined
 
@@ -387,16 +418,8 @@ export class FileBox implements Pipeable {
 
   }
 
-  version () {
-    return VERSION
-  }
-
-  type (): FileBoxType {
-    return this.boxType
-  }
-
   async ready (): Promise<void> {
-    if (this.boxType === FileBoxType.Url) {
+    if (this.type === FileBoxType.Url) {
       await this.syncRemoteName()
     }
   }
@@ -410,7 +433,7 @@ export class FileBox implements Pipeable {
      *  > Content-Disposition: attachment; filename="cool.html"
      */
 
-    if (this.boxType !== FileBoxType.Url) {
+    if (this.type !== FileBoxType.Url) {
       throw new Error('type is not Remote')
     }
     if (!this.remoteUrl) {
@@ -439,7 +462,7 @@ export class FileBox implements Pipeable {
   toString () {
     return [
       'FileBox#',
-      FileBoxType[this.boxType],
+      FileBoxType[this.type],
       '<',
       this.name,
       '>',
@@ -454,7 +477,7 @@ export class FileBox implements Pipeable {
 
     let obj: FileBoxJsonObject
 
-    switch (this.boxType) {
+    switch (this.type) {
       case FileBoxType.Url: {
         if (!this.remoteUrl) {
           throw new Error('no url')
@@ -517,7 +540,7 @@ export class FileBox implements Pipeable {
       }
 
       default:
-        void this.boxType
+        void this.type
         throw new Error('FileBox.toJSON() can only work on limited FileBoxType(s). See: <https://github.com/huan/file-box/issues/25>')
     }
 
@@ -527,7 +550,7 @@ export class FileBox implements Pipeable {
   async toStream (): Promise<Readable> {
     let stream: Readable
 
-    switch (this.boxType) {
+    switch (this.type) {
       case FileBoxType.Buffer:
         stream = this.transformBufferToStream()
         break
@@ -588,7 +611,7 @@ export class FileBox implements Pipeable {
       }
 
       default:
-        throw new Error('not supported FileBoxType: ' + FileBoxType[this.boxType])
+        throw new Error('not supported FileBoxType: ' + FileBoxType[this.type])
     }
 
     return stream
@@ -652,7 +675,7 @@ export class FileBox implements Pipeable {
     filePath?: string,
     overwrite = false,
   ): Promise<void> {
-    if (this.boxType === FileBoxType.Url) {
+    if (this.type === FileBoxType.Url) {
       if (!this.mimeType || !this.name) {
         await this.syncRemoteName()
       }
@@ -688,7 +711,7 @@ export class FileBox implements Pipeable {
   }
 
   async toBase64 (): Promise<string> {
-    if (this.boxType === FileBoxType.Base64) {
+    if (this.type === FileBoxType.Base64) {
       if (!this.base64) {
         throw new Error('no base64 data')
       }
@@ -720,7 +743,7 @@ export class FileBox implements Pipeable {
   }
 
   async toBuffer (): Promise<Buffer> {
-    if (this.boxType === FileBoxType.Buffer) {
+    if (this.type === FileBoxType.Buffer) {
       if (!this.buffer) {
         throw new Error('no buffer!')
       }
@@ -735,7 +758,7 @@ export class FileBox implements Pipeable {
   }
 
   async toQRCode (): Promise<string> {
-    if (this.boxType === FileBoxType.QRCode) {
+    if (this.type === FileBoxType.QRCode) {
       if (!this.qrCode) {
         throw new Error('no QR Code!')
       }
@@ -749,7 +772,7 @@ export class FileBox implements Pipeable {
   }
 
   async toUuid (): Promise<string> {
-    if (this.boxType === FileBoxType.Uuid) {
+    if (this.type === FileBoxType.Uuid) {
       if (!this.uuid) {
         throw new Error('no uuid found for a UUID type file box!')
       }
