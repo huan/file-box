@@ -18,20 +18,26 @@ import {
   Readable,
   Writable,
 }                     from 'stream'
+import {
+  instanceToClass,
+}                     from 'clone-class'
 
 import {
   VERSION,
 }                         from './config.js'
 import {
   FileBoxJsonObject,
-  FileBoxJsonObjectBase64,
-  FileBoxJsonObjectCommon,
-  FileBoxJsonObjectQRCode,
-  FileBoxJsonObjectUrl,
   FileBoxOptions,
+  FileBoxOptionsBase64,
+  FileBoxOptionsCommon,
+  FileBoxOptionsQRCode,
+  FileBoxOptionsUrl,
+  FileBoxOptionsUuid,
   FileBoxType,
   Metadata,
   Pipeable,
+  UuidLoader,
+  UuidSaver,
 }                         from './file-box.type.js'
 import {
   dataUrlToBase64,
@@ -61,7 +67,7 @@ export class FileBox implements Pipeable {
    *
    * @alias fromUrl()
    */
-  public static fromUrl (
+  static fromUrl (
     url      : string,
     name?    : string,
     headers? : http.OutgoingHttpHeaders,
@@ -85,7 +91,7 @@ export class FileBox implements Pipeable {
    * @alias fromFile
    */
 
-  public static fromFile (
+  static fromFile (
     path:   string,
     name?:  string,
   ): FileBox {
@@ -101,7 +107,7 @@ export class FileBox implements Pipeable {
     return new this(options)
   }
 
-  public static fromStream (
+  static fromStream (
     stream: Readable,
     name:   string,
   ): FileBox {
@@ -113,7 +119,7 @@ export class FileBox implements Pipeable {
     return new this(options)
   }
 
-  public static fromBuffer (
+  static fromBuffer (
     buffer: Buffer,
     name:   string,
   ): FileBox {
@@ -129,7 +135,7 @@ export class FileBox implements Pipeable {
    * @param base64
    * @param name the file name of the base64 data
    */
-  public static fromBase64 (
+  static fromBase64 (
     base64: string,
     name:   string,
   ): FileBox {
@@ -144,7 +150,7 @@ export class FileBox implements Pipeable {
   /**
    * dataURL: `data:image/png;base64,${base64Text}`,
    */
-  public static fromDataURL (
+  static fromDataURL (
     dataUrl : string,
     name    : string,
   ): FileBox {
@@ -158,7 +164,7 @@ export class FileBox implements Pipeable {
    *
    * @param qrCode the value of the QR Code. For example: `https://github.com`
    */
-  public static fromQRCode (
+  static fromQRCode (
     qrCode: string,
   ): FileBox {
     const options: FileBoxOptions = {
@@ -169,20 +175,57 @@ export class FileBox implements Pipeable {
     return new this(options)
   }
 
+  protected static uuidToStream?:    UuidLoader
+  protected static uuidFromStream?:  UuidSaver
+
+  /**
+   * @param uuid the UUID of the file. For example: `6f88b03c-1237-4f46-8db2-98ef23200551`
+   * @param name the name of the file. For example: `video.mp4`
+   */
+  static fromUuid (
+    uuid: string,
+    name: string,
+  ): FileBox {
+    const options: FileBoxOptions = {
+      name,
+      type: FileBoxType.Uuid,
+      uuid,
+    }
+    return new this(options)
+  }
+
+  static setUuidLoader (
+    loader: UuidLoader,
+  ): void {
+    if (Object.prototype.hasOwnProperty.call(this, 'uuidToStream')) {
+      throw new Error('this FileBox has been set loader before, can not set twice')
+    }
+    this.uuidToStream = loader
+  }
+
+  static setUuidSaver (
+    saver: UuidSaver,
+  ): void {
+    if (Object.prototype.hasOwnProperty.call(this, 'uuidFromStream')) {
+      throw new Error('this FileBox has been set saver before, can not set twice')
+    }
+    this.uuidFromStream = saver
+  }
+
   /**
    *
    * @static
    * @param {(FileBoxJsonObject | string)} obj
    * @returns {FileBox}
    */
-  public static fromJSON (obj: FileBoxJsonObject | string): FileBox {
+  static fromJSON (obj: FileBoxJsonObject | string): FileBox {
     if (typeof obj === 'string') {
       obj = JSON.parse(obj) as FileBoxJsonObject
     }
 
     let fileBox: FileBox
 
-    switch (obj.boxType) {
+    switch (obj.type) {
       case FileBoxType.Base64:
         fileBox = FileBox.fromBase64(
           obj.base64,
@@ -192,7 +235,7 @@ export class FileBox implements Pipeable {
 
       case FileBoxType.Url:
         fileBox = FileBox.fromUrl(
-          obj.remoteUrl,
+          obj.url,
           obj.name,
         )
         break
@@ -203,15 +246,25 @@ export class FileBox implements Pipeable {
         )
         break
 
+      case FileBoxType.Uuid:
+        fileBox = FileBox.fromUuid(
+          obj.uuid,
+          obj.name,
+        )
+        break
+
       default:
         throw new Error(`unknown filebox json object{type}: ${JSON.stringify(obj)}`)
     }
 
-    fileBox.metadata = obj.metadata
+    if (obj.metadata) {
+      fileBox.metadata = obj.metadata
+    }
+
     return fileBox
   }
 
-  public static version () {
+  static version () {
     return VERSION
   }
 
@@ -221,47 +274,51 @@ export class FileBox implements Pipeable {
    *
    */
   // not readonly: need be update from the remote url(possible)
-  public boxType: FileBoxType
+  boxType: FileBoxType
 
   // huan 20190604: it seems that lastMdified & size both not used at all?
   // public lastModified : number
   // public size         : number
 
-  public mimeType? : string    // 'text/plain'
-  public name      : string
+  mimeType? : string    // 'text/plain'
+  name      : string
 
-  private _metadata?: Metadata
+  #metadata?: Metadata
 
-  public get metadata (): Metadata {
-    if (this._metadata) {
-      return this._metadata
+  get metadata (): Metadata {
+    if (this.#metadata) {
+      return this.#metadata
     }
     return EMPTY_META_DATA
   }
 
-  public set metadata (data: Metadata) {
-    if (this._metadata) {
+  set metadata (data: Metadata) {
+    if (this.#metadata) {
       throw new Error('metadata can not be modified after set')
     }
-    this._metadata = { ...data }
-    Object.freeze(this._metadata)
+    this.#metadata = { ...data }
+    Object.freeze(this.#metadata)
   }
 
   /**
-   * Lazy load data:
+   * Lazy load data: (can be serialized to JSON)
    *  Do not read file to Buffer until there's a consumer.
    */
   private readonly base64?    : string
   private readonly remoteUrl? : string
   private readonly qrCode?    : string
+  private readonly uuid?      : string
 
+  /**
+   * Can not be serialized to JSON
+   */
   private readonly buffer?    : Buffer
   private readonly localPath? : string
   private readonly stream?    : Readable
 
   private readonly headers?: http.OutgoingHttpHeaders
 
-  private constructor (
+  protected constructor (
     options: FileBoxOptions,
   ) {
     // Only keep `basename` in this.name
@@ -317,21 +374,28 @@ export class FileBox implements Pipeable {
         this.base64 = options.base64
         break
 
+      case FileBoxType.Uuid:
+        if (!options.uuid) {
+          throw new Error('no UUID data')
+        }
+        this.uuid = options.uuid
+        break
+
       default:
         throw new Error(`unknown options(type): ${JSON.stringify(options)}`)
     }
 
   }
 
-  public version () {
+  version () {
     return VERSION
   }
 
-  public type (): FileBoxType {
+  type (): FileBoxType {
     return this.boxType
   }
 
-  public async ready (): Promise<void> {
+  async ready (): Promise<void> {
     if (this.boxType === FileBoxType.Url) {
       await this.syncRemoteName()
     }
@@ -372,7 +436,7 @@ export class FileBox implements Pipeable {
    * toXXX methods
    *
    */
-  public toString () {
+  toString () {
     return [
       'FileBox#',
       FileBoxType[this.boxType],
@@ -382,8 +446,8 @@ export class FileBox implements Pipeable {
     ].join('')
   }
 
-  public toJSON (): FileBoxJsonObject {
-    const objCommon: FileBoxJsonObjectCommon = {
+  toJSON (): FileBoxJsonObject {
+    const objCommon: FileBoxOptionsCommon = {
       metadata : this.metadata,
       name     : this.name,
     }
@@ -395,10 +459,10 @@ export class FileBox implements Pipeable {
         if (!this.remoteUrl) {
           throw new Error('no url')
         }
-        const objUrl: FileBoxJsonObjectUrl = {
-          boxType   : FileBoxType.Url,
-          headers   : this.headers,
-          remoteUrl : this.remoteUrl,
+        const objUrl: FileBoxOptionsUrl = {
+          headers : this.headers,
+          type    : FileBoxType.Url,
+          url     : this.remoteUrl,
         }
         obj = {
           ...objCommon,
@@ -411,9 +475,9 @@ export class FileBox implements Pipeable {
         if (!this.qrCode) {
           throw new Error('no qr code')
         }
-        const objQRCode: FileBoxJsonObjectQRCode = {
-          boxType : FileBoxType.QRCode,
+        const objQRCode: FileBoxOptionsQRCode = {
           qrCode : this.qrCode,
+          type   : FileBoxType.QRCode,
         }
         obj = {
           ...objCommon,
@@ -426,9 +490,9 @@ export class FileBox implements Pipeable {
         if (!this.base64) {
           throw new Error('no base64 data')
         }
-        const objBase64: FileBoxJsonObjectBase64 = {
-          base64  : this.base64,
-          boxType : FileBoxType.Base64,
+        const objBase64: FileBoxOptionsBase64 = {
+          base64 : this.base64,
+          type   : FileBoxType.Base64,
         }
         obj = {
           ...objCommon,
@@ -437,14 +501,30 @@ export class FileBox implements Pipeable {
         break
       }
 
+      case FileBoxType.Uuid: {
+        if (!this.uuid) {
+          throw new Error('no uuid data')
+        }
+        const objUuid: FileBoxOptionsUuid = {
+          type : FileBoxType.Uuid,
+          uuid : this.uuid,
+        }
+        obj = {
+          ...objCommon,
+          ...objUuid,
+        }
+        break
+      }
+
       default:
+        void this.boxType
         throw new Error('FileBox.toJSON() can only work on limited FileBoxType(s). See: <https://github.com/huan/file-box/issues/25>')
     }
 
     return obj
   }
 
-  public async toStream (): Promise<Readable> {
+  async toStream (): Promise<Readable> {
     let stream: Readable
 
     switch (this.boxType) {
@@ -469,7 +549,8 @@ export class FileBox implements Pipeable {
           * Huan(202109): the stream.destroyed will not be `true`
           *   when we have read all the data
           *   after we change some code.
-          * The reason is unknown... so we change to check `readable`
+          * The reason is unbase64 : this.base64,
+          type   : FileBoxType.Base64,known... so we change to check `readable`
           */
         if (!this.stream.readable) {
           throw new Error('The stream is not readable. Maybe has already been consumed, and now it was drained. See: https://github.com/huan/file-box/issues/50')
@@ -491,6 +572,20 @@ export class FileBox implements Pipeable {
         }
         stream = this.transformBase64ToStream()
         break
+
+      case FileBoxType.Uuid: {
+        if (!this.uuid) {
+          throw new Error('no uuid data')
+        }
+        const FileBoxKlass = instanceToClass(this, FileBox)
+
+        if (typeof FileBoxKlass.uuidToStream !== 'function') {
+          throw new Error('need to call FileBox.setUuidLoader() to set UUID loader first.')
+        }
+
+        stream = await FileBoxKlass.uuidToStream(this.uuid)
+        break
+      }
 
       default:
         throw new Error('not supported FileBoxType: ' + FileBoxType[this.boxType])
@@ -553,7 +648,7 @@ export class FileBox implements Pipeable {
    *
    * @param filePath save file
    */
-  public async toFile (
+  async toFile (
     filePath?: string,
     overwrite = false,
   ): Promise<void> {
@@ -592,7 +687,7 @@ export class FileBox implements Pipeable {
     })
   }
 
-  public async toBase64 (): Promise<string> {
+  async toBase64 (): Promise<string> {
     if (this.boxType === FileBoxType.Base64) {
       if (!this.base64) {
         throw new Error('no base64 data')
@@ -607,7 +702,7 @@ export class FileBox implements Pipeable {
   /**
    * dataUrl: `data:image/png;base64,${base64Text}',
    */
-  public async toDataURL (): Promise<string> {
+  async toDataURL (): Promise<string> {
     const base64Text = await this.toBase64()
 
     if (!this.mimeType) {
@@ -624,7 +719,7 @@ export class FileBox implements Pipeable {
     return dataUrl
   }
 
-  public async toBuffer (): Promise<Buffer> {
+  async toBuffer (): Promise<Buffer> {
     if (this.boxType === FileBoxType.Buffer) {
       if (!this.buffer) {
         throw new Error('no buffer!')
@@ -639,7 +734,7 @@ export class FileBox implements Pipeable {
     return buffer
   }
 
-  public async toQRCode (): Promise<string> {
+  async toQRCode (): Promise<string> {
     if (this.boxType === FileBoxType.QRCode) {
       if (!this.qrCode) {
         throw new Error('no QR Code!')
@@ -653,13 +748,33 @@ export class FileBox implements Pipeable {
     return qrValue
   }
 
+  async toUuid (): Promise<string> {
+    if (this.boxType === FileBoxType.Uuid) {
+      if (!this.uuid) {
+        throw new Error('no uuid found for a UUID type file box!')
+      }
+      return this.uuid
+    }
+
+    const FileBoxKlass = instanceToClass(this, FileBox)
+
+    if (typeof FileBoxKlass.uuidFromStream !== 'function') {
+      throw new Error('need to use FileBox.setUuidSaver() before dealing with UUID')
+    }
+
+    const stream = new PassThrough()
+    this.pipe(stream)
+
+    return FileBoxKlass.uuidFromStream(stream)
+  }
+
   /**
    *
    * toXXX methods END
    *
    */
 
-  public pipe<T extends Writable> (
+  pipe<T extends Writable> (
     destination: T,
   ): T {
     this.toStream().then(stream => {
