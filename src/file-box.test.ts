@@ -301,7 +301,7 @@ test('toJSON() for not supported type', async t => {
   const buffer = Buffer.from(BASE64_ENCODED, 'base64')
   const fileBox = FileBox.fromBuffer(buffer, 'test.txt')
 
-  t.equal(fileBox.type(), FileBoxType.Buffer, 'should get type() as Buffer')
+  t.equal(fileBox.type, FileBoxType.Buffer, 'should get type() as Buffer')
   t.throws(() => JSON.stringify(fileBox), 'should throw for buffer type of FileBox')
 })
 
