@@ -136,6 +136,12 @@ const fileBox = FileBox.fromQRCode('https://github.com')
 fileBox.toFile('qrcode.png')
 ```
 
+#### 1.9 `FileBox.fromUuid(uuid: string)`
+
+Load a FileBox from a UUID.
+
+See: `FileBox.setUuidLoader()`
+
 ### 2. Get File out from Box
 
 ### 2.1 `toFile(name?: string): Promise<void>`
@@ -226,7 +232,13 @@ console.log(`QR Code decoded value is: "${qrCodeValue}"`)
 // Output: QR Code decoded value is: "https://github.com"
 ```
 
-#### 2.8 `toJSON(): string`
+#### 2.8 `toUuid(): Promise<string>`
+
+Save the FileBox to a UUID file and return the UUID.
+
+See: `FileBox.setUuidSaver()`
+
+#### 2.9 `toJSON(): string`
 
 Encode a FileBox instance to JSON string so that we can transfer the FileBox on the wire.
 
@@ -332,8 +344,56 @@ enum FileBoxType {
   Buffer  = 4,
   File    = 5,
   Stream  = 6,
+  Uuid    = 7,
 }
+```
 
+#### 3.8 `FileBox.setUuidLoader(loader: UuidLoader): void`
+
+Required by static method `FileBox.fromUuid()`
+
+```ts
+class FileBoxUuid extends FileBox {}
+
+const loader: UuidLoader = async (uuid: string) => {
+  const stream = new PassThrough()
+  stream.end('hello, world!')
+  return stream
+})
+
+FileBoxUuid.setUuidLoader(loader)
+const fileBox = FileBoxUuid.fromUuid('12345678-1234-1234-1234-123456789012', 'test.txt')
+await fileBox.toFile('test.txt')
+```
+
+The `UuidLoader` is a function that takes a UUID and return a readable stream.
+
+```ts
+type UuidLoader = (uuid: string) => Readable
+```
+
+#### 3.9 `FileBox.setUuidSaver(saver: UuidSaver): void`
+
+Required by instance method `fileBox.toUuid()`
+
+```ts
+class FileBoxUuid extends FileBox {}
+
+const saver: UuidSaver = async (stream: Readable) => {
+  // save the stream and get uuid
+  return '12345678-1234-1234-1234-123456789012'
+})
+
+FileBoxUuid.setUuidSaver(saver)
+
+const fileBox = FileBoxUuid.fromFile('test.txt')
+const uuid = await fileBox.toUuid()
+```
+
+The `UuidSaver` is a function that takes a readable stream and return a UUID promise.
+
+```ts
+type UuidSaver = (stream: Readable) => Promise<string>
 ```
 
 ## Features
@@ -386,9 +446,14 @@ enum FileBoxType {
 
 ## History
 
-### master v0.17
+### master v0.19
 
 1. Suppert ES Module. ([#54](https://github.com/huan/file-box/issues/54))
+1. Add UUID boxType support: `FileBox.fromUuid()` and `FileBox.toUuid()`
+
+Breaking changes:
+
+1. `toJSON` format renamed `boxType` to `type`
 
 ### v0.16 master
 

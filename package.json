@@ -1,6 +1,6 @@
 {
   "name": "file-box",
-  "version": "0.17.12",
+  "version": "0.19.0",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "type": "module",
   "exports": {
@@ -11,7 +11,7 @@
   },
   "typings": "./dist/esm/src/mod.d.ts",
   "engines": {
-    "node": ">=14"
+    "node": ">=16"
   },
   "directories": {
     "doc": "docs"
@@ -62,9 +62,10 @@
     "read-pkg-up": "^8.0.0",
     "reflect-metadata": "^0.1.13",
     "shx": "^0.3.3",
-    "tstest": "^0.5.16"
+    "tstest": "^0.7.3"
   },
   "dependencies": {
+    "clone-class": "^0.6.20",
     "jimp": "^0.16.1",
     "jsqr": "^1.4.0",
     "mime": "^2.5.2",

@@ -1,7 +1,10 @@
 #!/usr/bin/env -S node --no-warnings --loader ts-node/esm
 
 import assert from 'assert'
-import { PassThrough } from 'stream'
+import {
+  PassThrough,
+  Readable,
+}             from 'stream'
 
 import 'reflect-metadata'
 
@@ -279,7 +282,7 @@ test('toJSON()', async t => {
   // const BASE64_DECODED = 'FileBoxBase64\n'
   const BASE64_ENCODED = 'RmlsZUJveEJhc2U2NAo='
   const BASE64_FILENAME = 'test.txt'
-  const EXPECTED_JSON_TEXT = '{"metadata":{},"name":"test.txt","base64":"RmlsZUJveEJhc2U2NAo=","boxType":1}'
+  const EXPECTED_JSON_TEXT = '{"metadata":{},"name":"test.txt","base64":"RmlsZUJveEJhc2U2NAo=","type":1}'
 
   const fileBox = FileBox.fromBase64(BASE64_ENCODED, BASE64_FILENAME)
   const jsonText = JSON.stringify(fileBox)
@@ -313,13 +316,62 @@ test('toStream() twice for a stream', async t => {
   stream.end('hello, world!')
 
   // consume it
-  await box.toBase64()
-  t.pass('should successful to read the stream for the first time')
+  await t.resolves(box.toBase64(), 'should successful to read the stream for the first time')
 
-  try {
-    await box.toBuffer()
-    t.fail('should throw when the file-box be consumed twice')
-  } catch (e) {
-    t.pass('should throw when the file-box be consumed twice')
-  }
+  // consume it twice
+  await t.rejects(box.toBuffer(), 'should throw when the file-box be consumed twice')
+})
+
+test('toUuid()', async t => {
+  const BASE64_ENCODED = 'RmlsZUJveEJhc2U2NAo='
+  const UUID = '12345678-1234-1234-1234-123456789012'
+
+  class FileBoxTest extends FileBox {}
+
+  const buffer = Buffer.from(BASE64_ENCODED, 'base64')
+  const fileBox = FileBoxTest.fromBuffer(buffer, 'test.txt')
+
+  await t.rejects(fileBox.toUuid(), 'should reject without `FileBox.setUuidSaver()` call`')
+
+  FileBoxTest.setUuidSaver(() => Promise.resolve(UUID))
+  t.equal(await fileBox.toUuid(), UUID, `should get UUID: ${UUID}`)
+})
+
+test('fromUuid()', async t => {
+  const UUID = '12345678-1234-1234-1234-123456789012'
+  const TEXT = 'hello, world!'
+
+  class FileBoxTest extends FileBox {}
+
+  const stream = new PassThrough()
+  stream.end(TEXT)
+
+  const uuidBox = FileBoxTest.fromUuid(UUID, 'test.txt')
+
+  await t.rejects(uuidBox.toBase64(), 'should reject without `FileBox.setUuidLoader()` call`')
+
+  FileBoxTest.setUuidLoader((_: string) => stream)
+  t.equal((await uuidBox.toBuffer()).toString(), TEXT, `should get BASE64: ${TEXT}`)
+})
+
+test('setUuidLoader()', async t => {
+  class FileBoxTest1 extends FileBox {}
+  class FileBoxTest2 extends FileBox {}
+
+  t.doesNotThrow(() => FileBoxTest1.setUuidLoader((_: string) => ({} as any)), 'should not throw for set loader for the first time')
+  t.throws(() => FileBoxTest1.setUuidLoader((_: string) => ({} as any)), 'should throw for set loader twice')
+
+  t.doesNotThrow(() => FileBoxTest2.setUuidLoader((_: string) => ({} as any)), 'should not throw for set loader for the first time')
+  t.throws(() => FileBoxTest2.setUuidLoader((_: string) => ({} as any)), 'should throw for set loader twice')
+})
+
+test('setUuidSaver()', async t => {
+  class FileBoxTest1 extends FileBox {}
+  class FileBoxTest2 extends FileBox {}
+
+  t.doesNotThrow(() => FileBoxTest1.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should not throw for set loader for the first time')
+  t.throws(() => FileBoxTest1.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should throw for set loader twice')
+
+  t.doesNotThrow(() => FileBoxTest2.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should not throw for set loader for the first time')
+  t.throws(() => FileBoxTest2.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should throw for set loader twice')
 })

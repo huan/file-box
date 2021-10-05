@@ -4,7 +4,7 @@ import type {
   Writable,
 }                from 'stream'
 
-export interface Pipeable {
+interface Pipeable {
   // pipe: typeof Readable.prototype.pipe,
   pipe<T extends Writable>(destination: T, options?: { end?: boolean; }): T;
 }
@@ -13,24 +13,35 @@ export interface Pipeable {
  * Huan(202002):
  *  We need to keep this enum number to be consistent
  *  because of toJSON & fromJSON need the same type number across versoins.
+ *  and gRPC maybe will use those numbers in the future as well.
  */
-export enum FileBoxType {
+enum FileBoxType {
   Unknown = 0,
 
   /**
-   * Serializable by toJSON()
+   * 1. toJSON() Serializable
+   *  - Base64
+   *  - Url
+   *  - QRCode
+   *  - UUID
+   *
+   * 2. toJSON() NOT Serializable: need to convert to FileBoxType.Base64 before call toJSON()
+   *  - Buffer
+   *  - Stream
+   *  - File
    */
   Base64  = 1,
   Url     = 2,
   QRCode  = 3,
 
-  /**
-   * Not serializable by toJSON()
-   * Need to convert to FileBoxType.Base64 before call toJSON()
-   */
   Buffer  = 4,
   File    = 5,
   Stream  = 6,
+  Uuid    = 7,
+}
+
+interface Metadata {
+  [key: string]: any,
 }
 
 /**
@@ -43,11 +54,16 @@ export enum FileBoxType {
  *
  */
 interface FileBoxOptionsCommon {
-    /**
-     * File base name: name + ext
-     *  like: "file.txt"
-     */
-    name: string
+  /**
+   * File base name: name + ext
+   *  like: "file.txt"
+   */
+  name: string
+
+  /**
+   * Can be only set once
+   */
+  metadata?: Metadata,
 }
 
 interface FileBoxOptionsFile {
@@ -75,44 +91,47 @@ interface FileBoxOptionsBase64 {
   type   : FileBoxType.Base64,
   base64 : string,
 }
+interface FileBoxOptionsUuid {
+  type : FileBoxType.Uuid
+  uuid : string,
+}
 
-export type FileBoxOptions = FileBoxOptionsCommon & (
-    FileBoxOptionsBuffer
+type FileBoxOptions = FileBoxOptionsCommon & (
+    never
+  | FileBoxOptionsBase64
+  | FileBoxOptionsBuffer
   | FileBoxOptionsFile
+  | FileBoxOptionsQRCode
   | FileBoxOptionsStream
   | FileBoxOptionsUrl
-  | FileBoxOptionsQRCode
-  | FileBoxOptionsBase64
+  | FileBoxOptionsUuid
 )
 
-export interface Metadata {
-  [key: string]: any,
-}
-
-export interface FileBoxJsonObjectCommon {
-  name     : string,
-  metadata : Metadata,
-}
-
-export interface FileBoxJsonObjectBase64 {
-  boxType : FileBoxType.Base64,
-  base64  : string,
-}
-
-export interface FileBoxJsonObjectUrl {
-  boxType   : FileBoxType.Url,
-  remoteUrl : string,
-  headers?  : http.OutgoingHttpHeaders
-}
-
-export interface FileBoxJsonObjectQRCode {
-  boxType : FileBoxType.QRCode,
-  qrCode : string,
-}
-
-export type FileBoxJsonObject =  FileBoxJsonObjectCommon
+type FileBoxJsonObject =  FileBoxOptionsCommon
                               & (
-                                    FileBoxJsonObjectBase64
-                                  | FileBoxJsonObjectUrl
-                                  | FileBoxJsonObjectQRCode
+                                    never
+                                  | FileBoxOptionsBase64
+                                  | FileBoxOptionsUrl
+                                  | FileBoxOptionsQRCode
+                                  | FileBoxOptionsUuid
                                 )
+
+type UuidLoader = (uuid: string)      => Readable
+type UuidSaver  = (stream: Readable)  => Promise<string>
+
+export type {
+  FileBoxJsonObject,
+  FileBoxOptions,
+  FileBoxOptionsBase64,
+  FileBoxOptionsCommon,
+  FileBoxOptionsQRCode,
+  FileBoxOptionsUrl,
+  FileBoxOptionsUuid,
+  Metadata,
+  Pipeable,
+  UuidSaver,
+  UuidLoader,
+}
+export {
+  FileBoxType,
+}
