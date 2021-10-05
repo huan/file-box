@@ -4,7 +4,7 @@ import {
 }             from 'file-box'
 
 async function main () {
-  const box = FileBox.fromUrl('https://raw.githubusercontent.com/huan/file-box/master/docs/images/file-box-logo.jpg')
+  const box = FileBox.fromUrl('https://raw.githubusercontent.com/huan/file-box/main/docs/images/file-box-logo.jpg')
 
   if (VERSION as any === '0.0.0') {
     throw new Error('version not set right before publish!')
