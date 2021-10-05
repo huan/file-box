@@ -350,7 +350,7 @@ test('fromUuid()', async t => {
 
   await t.rejects(uuidBox.toBase64(), 'should reject without `FileBox.setUuidLoader()` call`')
 
-  FileBoxTest.setUuidLoader((_: string) => stream)
+  FileBoxTest.setUuidLoader((_: string) => Promise.resolve(stream))
   t.equal((await uuidBox.toBuffer()).toString(), TEXT, `should get BASE64: ${TEXT}`)
 })
 

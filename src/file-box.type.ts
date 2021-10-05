@@ -116,7 +116,7 @@ type FileBoxJsonObject =  FileBoxOptionsCommon
                                   | FileBoxOptionsUuid
                                 )
 
-type UuidLoader = (uuid: string)      => Readable
+type UuidLoader = (uuid: string)      => Promise<Readable>
 type UuidSaver  = (stream: Readable)  => Promise<string>
 
 export type {
