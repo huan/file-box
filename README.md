@@ -20,6 +20,7 @@ Currently the FileBox supports almost all kinds of the data input/output methods
 | Base64 | `fromBase64()` | `toBase64()` | Base64 data |
 | DataURL | `fromDataURL()` | `toDataURL()` | DataURL data |
 | QRCode | `fromQRCode()` | `toQRCode()` | QR Code Image Decode/Encode |
+| UUID | `fromUuid()` | `toUuid()` | UUID by loader/saver helper functions |
 | JSON | `fromJSON()` | `toJSON()` | Serialize/Deserialize FileBox |
 
 ## Examples
