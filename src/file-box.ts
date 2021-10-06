@@ -277,6 +277,22 @@ export class FileBox implements Pipeable {
   // not readonly: need be update from the remote url(possible)
   readonly type: FileBoxType
 
+  /**
+   * The size of the fileBox payload.
+   *  Warning: it's not the size of the boxed file.
+   *
+   * For example:
+   *
+   * ```ts
+   * const fileBox = FileBox.fromUrl('http://example.com/image.png')
+   * console.log(fileBox.size)
+   * // > 20 <- this is the length of the URL string
+   *
+   * await fileBox.ready()
+   * console.log(fileBox.remoteSize)
+   * // > 102400 <- this is the size of the remote image.png
+   * ```
+   */
   get size (): number {
     switch (this.type) {
       case FileBoxType.Base64:
@@ -311,8 +327,9 @@ export class FileBox implements Pipeable {
     }
   }
 
-  mimeType? : string    // 'text/plain'
-  name      : string
+  mimeType?   : string  // 'text/plain'
+  name        : string
+  remoteSize? : number
 
   #metadata?: Metadata
 
@@ -420,14 +437,14 @@ export class FileBox implements Pipeable {
 
   async ready (): Promise<void> {
     if (this.type === FileBoxType.Url) {
-      await this.syncRemoteName()
+      await this.syncRemote()
     }
   }
 
   /**
    * @todo use http.get/gets instead of Request
    */
-  protected async syncRemoteName (): Promise<void> {
+  protected async syncRemote (): Promise<void> {
     /**
      * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
      *  > Content-Disposition: attachment; filename="cool.html"
@@ -441,17 +458,18 @@ export class FileBox implements Pipeable {
     }
 
     const headers = await httpHeadHeader(this.remoteUrl)
-    const filename = httpHeaderToFileName(headers)
 
+    const filename = httpHeaderToFileName(headers)
     if (filename) {
       this.name = filename
     }
 
     if (!this.name) {
-      throw new Error('no name')
+      throw new Error('NONAME')
     }
 
-    this.mimeType = headers['content-type'] || mime.getType(this.name) || undefined
+    this.mimeType   = headers['content-type'] || mime.getType(this.name) || undefined
+    this.remoteSize = Number(headers['content-length'] ?? -1)
   }
 
   /**
@@ -677,7 +695,7 @@ export class FileBox implements Pipeable {
   ): Promise<void> {
     if (this.type === FileBoxType.Url) {
       if (!this.mimeType || !this.name) {
-        await this.syncRemoteName()
+        await this.syncRemote()
       }
     }
     const fullFilePath = nodePath.resolve(filePath || this.name)

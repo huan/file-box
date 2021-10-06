@@ -317,8 +317,6 @@ Version of the FileBox
 
 Serialize FileBox metadata to JSON.
 
-**To be implemented.**
-
 #### 3.5 `ready(): Promise<void>`
 
 Update the necessary internal data and make everything ready for use.
@@ -330,7 +328,7 @@ Sync the filename with the HTTP Response Header
 HTTP Header Example:
 > Content-Disposition: attachment; filename="filename.ext"
 
-#### 3.7 `type(): FileBoxType`
+#### 3.7 `type: FileBoxType`
 
 Return the type of the current FileBox instance.
 
@@ -397,6 +395,33 @@ The `UuidSaver` is a function that takes a readable stream and return a UUID pro
 type UuidSaver = (stream: Readable) => Promise<string>
 ```
 
+#### 3.10 `size`
+
+The file box size in bytes. (`-1` means unknown)
+
+It is not the size of the target (boxed) file itself.
+
+For example:
+
+```ts
+const fileBox = FileBox.fromUrl('http://example.com/image.png')
+console.log(fileBox.size)
+// > 20 <- this is the length of the URL string
+```
+
+#### 3.11 `remoteSize`
+
+The remote file size in bytes. (`-1` or `undefined` means unknown)
+
+For example:
+
+```ts
+const fileBox = FileBox.fromUrl('http://example.com/image.png')
+await fileBox.ready()
+console.log(fileBox.remoteSize)
+// > 102400 <- this is the size of the remote image.png
+```
+
 ## Features
 
 1. Present A File by Abstracting It's Meta Information that supports Reading & toJSON() API.
@@ -452,6 +477,7 @@ type UuidSaver = (stream: Readable) => Promise<string>
 1. Suppert ES Module. ([#54](https://github.com/huan/file-box/issues/54))
 1. Add UUID boxType support: `FileBox.fromUuid()` and `FileBox.toUuid()`
 1. Add `size` property to return the size of the file. (`-1` means unknown)
+1. Add `remoteSize` property to present the remote size of the file (if applicable, `-1` means unknown)
 
 Breaking changes:
 

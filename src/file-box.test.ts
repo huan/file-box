@@ -109,24 +109,34 @@ test('fromBuffer() & toBase64()', async t => {
   t.equal(base64, BASE64_ENCODED, 'should get base64 back from buffer')
 })
 
-test('syncRemoteName()', async t => {
+test('syncRemote()', async t => {
+  class FileBoxTest extends FileBox {
+
+    static override fromUrl (...args: Parameters<typeof FileBox.fromUrl>): FileBoxTest { return super.fromUrl(...args) as any }
+    override syncRemote () { return super.syncRemote() }
+
+  }
+
   const URL = 'http://httpbin.org/response-headers?Content-Disposition=attachment;%20filename%3d%22test.txt%22&filename=test.txt'
 
   const EXPECTED_NAME_FROM_URL    = 'response-headers'
   const EXPECTED_TYPE_FROM_URL    = undefined
 
   const EXPECTED_NAME_FROM_HEADER = 'test.txt'
+  const EXPECTED_SIZE_FROM_HEADER = 159
   const EXPECTED_TYPE_FROM_HEADER = 'application/json'
 
-  const fileBox = FileBox.fromUrl(URL)
+  const fileBox = FileBoxTest.fromUrl(URL)
 
   t.equal(fileBox.name, EXPECTED_NAME_FROM_URL, 'should get the name from url')
   t.equal(fileBox.mimeType, EXPECTED_TYPE_FROM_URL, 'should get the mime type from url')
 
-  await (fileBox as any).syncRemoteName()
+  await fileBox.syncRemote()
 
-  t.equal(fileBox.name, EXPECTED_NAME_FROM_HEADER, 'should get the name from remote header')
-  t.equal(fileBox.mimeType, EXPECTED_TYPE_FROM_HEADER, 'should get the mime type from remote http header')
+  t.equal(fileBox.size,       URL.length,                 'should get the size from url length')
+  t.equal(fileBox.remoteSize, EXPECTED_SIZE_FROM_HEADER,  'should get the remoteSize from remote header')
+  t.equal(fileBox.name,       EXPECTED_NAME_FROM_HEADER,  'should get the name from remote header')
+  t.equal(fileBox.mimeType,   EXPECTED_TYPE_FROM_HEADER,  'should get the mime type from remote http header')
 })
 
 test('fromURL() deal with url with querystring', async t => {
