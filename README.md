@@ -368,7 +368,7 @@ await fileBox.toFile('test.txt')
 The `UuidLoader` is a function that takes a UUID and return a readable stream.
 
 ```ts
-type UuidLoader = (uuid: string) => Readable
+type UuidLoader = (this: FileBox, uuid: string) => Readable
 ```
 
 #### 3.9 `FileBox.setUuidSaver(saver: UuidSaver): void`
@@ -392,7 +392,7 @@ const uuid = await fileBox.toUuid()
 The `UuidSaver` is a function that takes a readable stream and return a UUID promise.
 
 ```ts
-type UuidSaver = (stream: Readable) => Promise<string>
+type UuidSaver = (this: FileBox, stream: Readable) => Promise<string>
 ```
 
 #### 3.10 `size`

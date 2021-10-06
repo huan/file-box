@@ -1,8 +1,12 @@
-import type http      from 'http'
+import type http    from 'http'
 import type {
   Readable,
   Writable,
-}                from 'stream'
+}                   from 'stream'
+
+import type {
+  FileBox,
+}                 from './file-box.js'
 
 interface Pipeable {
   // pipe: typeof Readable.prototype.pipe,
@@ -116,8 +120,8 @@ type FileBoxJsonObject =  FileBoxOptionsCommon
                                   | FileBoxOptionsUuid
                                 )
 
-type UuidLoader = (uuid: string)      => Promise<Readable>
-type UuidSaver  = (stream: Readable)  => Promise<string>
+type UuidLoader = (this: FileBox, uuid: string)      => Promise<Readable>
+type UuidSaver  = (this: FileBox, stream: Readable)  => Promise<string>
 
 export type {
   FileBoxJsonObject,

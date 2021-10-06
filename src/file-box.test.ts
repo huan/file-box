@@ -1,17 +1,19 @@
 #!/usr/bin/env -S node --no-warnings --loader ts-node/esm
 
-import assert from 'assert'
+import 'reflect-metadata'
+
+import assert   from 'assert'
 import {
   PassThrough,
   Readable,
-}             from 'stream'
+}               from 'stream'
+import {
+  test,
+  sinon,
+}               from 'tstest'
 
-import 'reflect-metadata'
-
-import { test } from 'tstest'
-// import * as sinon from 'sinon'
-import { FileBox } from './file-box.js'
-import { FileBoxType } from './file-box.type.js'
+import { FileBox }      from './file-box.js'
+import { FileBoxType }  from './file-box.type.js'
 
 const requiredMetadataKey = Symbol('required')
 
@@ -384,4 +386,26 @@ test('setUuidSaver()', async t => {
 
   t.doesNotThrow(() => FileBoxTest2.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should not throw for set loader for the first time')
   t.throws(() => FileBoxTest2.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should throw for set loader twice')
+})
+
+test('setUuidLoader() & setUuidSsaver() with `this`', async t => {
+  const sandbox = sinon.createSandbox()
+
+  const loader  = sandbox.stub()
+    .returns(await FileBox.fromQRCode('qr').toStream())
+  const saver   = sandbox.stub()
+    .returns('uuid')
+
+  class FileBoxTest extends FileBox {}
+
+  FileBoxTest.setUuidLoader(loader)
+  FileBoxTest.setUuidSaver(saver)
+
+  const fileBox = FileBoxTest.fromUuid('uuid', 'test.txt')
+  await fileBox.toBuffer()
+  t.equal(loader.thisValues[0], fileBox, 'should call loader with `this`')
+
+  const fileBox2 = FileBoxTest.fromBuffer(Buffer.from('test'), 'test.txt')
+  await fileBox2.toUuid()
+  t.equal(saver.thisValues[0], fileBox2, 'should call saver with `this`')
 })

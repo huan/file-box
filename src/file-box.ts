@@ -624,7 +624,7 @@ export class FileBox implements Pipeable {
           throw new Error('need to call FileBox.setUuidLoader() to set UUID loader first.')
         }
 
-        stream = await FileBoxKlass.uuidToStream(this.uuid)
+        stream = await FileBoxKlass.uuidToStream.call(this, this.uuid)
         break
       }
 
@@ -806,7 +806,7 @@ export class FileBox implements Pipeable {
     const stream = new PassThrough()
     this.pipe(stream)
 
-    return FileBoxKlass.uuidFromStream(stream)
+    return FileBoxKlass.uuidFromStream.call(this, stream)
   }
 
   /**
