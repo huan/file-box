@@ -1,6 +1,6 @@
-import uuidPkg  from 'uuid'
+import uuid  from 'uuid'
 
-const randomUuid = uuidPkg.v4
+const randomUuid = uuid.v4
 
 export {
   randomUuid,
