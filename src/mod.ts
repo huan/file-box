@@ -8,16 +8,20 @@ import {
   FileBox,
 }                       from './file-box.js'
 import type {
-  UuidSaver,
-  UuidLoader,
+  UuidRegister,
+  UuidResolver,
 }                       from './file-box.type.js'
+import {
+  UniformResourceNameRegistry,
+}                             from './urn-registry/uniform-resource-name-registry.js'
 
 export type {
-  UuidSaver,
-  UuidLoader,
+  UuidRegister,
+  UuidResolver,
 }
 export {
   FileBox,
   FileBoxType,
+  UniformResourceNameRegistry,
   VERSION,
 }

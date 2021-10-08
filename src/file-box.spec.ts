@@ -345,7 +345,7 @@ test('toUuid()', async t => {
 
   await t.rejects(fileBox.toUuid(), 'should reject without `FileBox.setUuidSaver()` call`')
 
-  FileBoxTest.setUuidSaver(() => Promise.resolve(UUID))
+  FileBoxTest.setUuidRegister(() => Promise.resolve(UUID))
   t.equal(await fileBox.toUuid(), UUID, `should get UUID: ${UUID}`)
 })
 
@@ -362,7 +362,7 @@ test('fromUuid()', async t => {
 
   await t.rejects(uuidBox.toBase64(), 'should reject without `FileBox.setUuidLoader()` call`')
 
-  FileBoxTest.setUuidLoader((_: string) => Promise.resolve(stream))
+  FileBoxTest.setUuidResolver((_: string) => Promise.resolve(stream))
   t.equal((await uuidBox.toBuffer()).toString(), TEXT, `should get BASE64: ${TEXT}`)
 })
 
@@ -370,22 +370,22 @@ test('setUuidLoader()', async t => {
   class FileBoxTest1 extends FileBox {}
   class FileBoxTest2 extends FileBox {}
 
-  t.doesNotThrow(() => FileBoxTest1.setUuidLoader((_: string) => ({} as any)), 'should not throw for set loader for the first time')
-  t.throws(() => FileBoxTest1.setUuidLoader((_: string) => ({} as any)), 'should throw for set loader twice')
+  t.doesNotThrow(() => FileBoxTest1.setUuidResolver((_: string) => ({} as any)), 'should not throw for set loader for the first time')
+  t.throws(() => FileBoxTest1.setUuidResolver((_: string) => ({} as any)), 'should throw for set loader twice')
 
-  t.doesNotThrow(() => FileBoxTest2.setUuidLoader((_: string) => ({} as any)), 'should not throw for set loader for the first time')
-  t.throws(() => FileBoxTest2.setUuidLoader((_: string) => ({} as any)), 'should throw for set loader twice')
+  t.doesNotThrow(() => FileBoxTest2.setUuidResolver((_: string) => ({} as any)), 'should not throw for set loader for the first time')
+  t.throws(() => FileBoxTest2.setUuidResolver((_: string) => ({} as any)), 'should throw for set loader twice')
 })
 
 test('setUuidSaver()', async t => {
   class FileBoxTest1 extends FileBox {}
   class FileBoxTest2 extends FileBox {}
 
-  t.doesNotThrow(() => FileBoxTest1.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should not throw for set loader for the first time')
-  t.throws(() => FileBoxTest1.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should throw for set loader twice')
+  t.doesNotThrow(() => FileBoxTest1.setUuidRegister((_: Readable) => Promise.resolve('uuid')), 'should not throw for set loader for the first time')
+  t.throws(() => FileBoxTest1.setUuidRegister((_: Readable) => Promise.resolve('uuid')), 'should throw for set loader twice')
 
-  t.doesNotThrow(() => FileBoxTest2.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should not throw for set loader for the first time')
-  t.throws(() => FileBoxTest2.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should throw for set loader twice')
+  t.doesNotThrow(() => FileBoxTest2.setUuidRegister((_: Readable) => Promise.resolve('uuid')), 'should not throw for set loader for the first time')
+  t.throws(() => FileBoxTest2.setUuidRegister((_: Readable) => Promise.resolve('uuid')), 'should throw for set loader twice')
 })
 
 test('setUuidLoader() & setUuidSsaver() with `this`', async t => {
@@ -398,8 +398,8 @@ test('setUuidLoader() & setUuidSsaver() with `this`', async t => {
 
   class FileBoxTest extends FileBox {}
 
-  FileBoxTest.setUuidLoader(loader)
-  FileBoxTest.setUuidSaver(saver)
+  FileBoxTest.setUuidResolver(loader)
+  FileBoxTest.setUuidRegister(saver)
 
   const fileBox = FileBoxTest.fromUuid('uuid', 'test.txt')
   await fileBox.toBuffer()

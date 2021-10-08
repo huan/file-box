@@ -6,4 +6,7 @@ module.exports = {
     '@chatie',
   ],
   rules,
+  "globals": {
+    "NodeJS": true
+  },
 }

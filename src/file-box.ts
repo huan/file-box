@@ -36,8 +36,8 @@ import {
   FileBoxType,
   Metadata,
   Pipeable,
-  UuidLoader,
-  UuidSaver,
+  UuidResolver,
+  UuidRegister,
 }                         from './file-box.type.js'
 import {
   dataUrlToBase64,
@@ -51,8 +51,8 @@ import {
   qrValueToStream,
 }                         from './qrcode.js'
 import {
-  chunkerTransformStream,
-}                         from './pure-functions/chunker-transform-stream.js'
+  sizedChunkTransformer,
+}                         from './pure-functions/sized-chunk-transformer.js'
 
 const EMPTY_META_DATA = Object.freeze({})
 
@@ -112,10 +112,10 @@ export class FileBox implements Pipeable {
 
   static fromStream (
     stream: Readable,
-    name:   string,
+    name?:  string,
   ): FileBox {
     const options: FileBoxOptions = {
-      name,
+      name: name || 'stream.dat',
       stream,
       type: FileBoxType.Stream,
     }
@@ -124,11 +124,11 @@ export class FileBox implements Pipeable {
 
   static fromBuffer (
     buffer: Buffer,
-    name:   string,
+    name?:   string,
   ): FileBox {
     const options: FileBoxOptions = {
       buffer,
-      name,
+      name: name || 'buffer.dat',
       type : FileBoxType.Buffer,
     }
     return new this(options)
@@ -140,11 +140,11 @@ export class FileBox implements Pipeable {
    */
   static fromBase64 (
     base64: string,
-    name:   string,
+    name?:   string,
   ): FileBox {
     const options: FileBoxOptions = {
       base64,
-      name,
+      name: name || 'base64.dat',
       type : FileBoxType.Base64,
     }
     return new this(options)
@@ -155,11 +155,11 @@ export class FileBox implements Pipeable {
    */
   static fromDataURL (
     dataUrl : string,
-    name    : string,
+    name?    : string,
   ): FileBox {
     return this.fromBase64(
       dataUrlToBase64(dataUrl),
-      name,
+      name || 'data-url.dat',
     )
   }
 
@@ -178,8 +178,8 @@ export class FileBox implements Pipeable {
     return new this(options)
   }
 
-  protected static uuidToStream?:    UuidLoader
-  protected static uuidFromStream?:  UuidSaver
+  protected static uuidToStream?:    UuidResolver
+  protected static uuidFromStream?:  UuidRegister
 
   /**
    * @param uuid the UUID of the file. For example: `6f88b03c-1237-4f46-8db2-98ef23200551`
@@ -187,32 +187,32 @@ export class FileBox implements Pipeable {
    */
   static fromUuid (
     uuid: string,
-    name: string,
+    name?: string,
   ): FileBox {
     const options: FileBoxOptions = {
-      name,
+      name: name || `${uuid}.dat`,
       type: FileBoxType.Uuid,
       uuid,
     }
     return new this(options)
   }
 
-  static setUuidLoader (
-    loader: UuidLoader,
+  static setUuidResolver (
+    resolver: UuidResolver,
   ): void {
     if (Object.prototype.hasOwnProperty.call(this, 'uuidToStream')) {
-      throw new Error('this FileBox has been set loader before, can not set twice')
+      throw new Error('this FileBox has been set resolver before, can not set twice')
     }
-    this.uuidToStream = loader
+    this.uuidToStream = resolver
   }
 
-  static setUuidSaver (
-    saver: UuidSaver,
+  static setUuidRegister (
+    register: UuidRegister,
   ): void {
     if (Object.prototype.hasOwnProperty.call(this, 'uuidFromStream')) {
-      throw new Error('this FileBox has been set saver before, can not set twice')
+      throw new Error('this FileBox has been set register before, can not set twice')
     }
-    this.uuidFromStream = saver
+    this.uuidFromStream = register
   }
 
   /**
@@ -646,7 +646,7 @@ export class FileBox implements Pipeable {
      * Use small `chunks` with `toStream()` #44
      * https://github.com/huan/file-box/issues/44
      */
-    return bufferStream.pipe(chunkerTransformStream())
+    return bufferStream.pipe(sizedChunkTransformer())
   }
 
   private transformBase64ToStream (): Readable {

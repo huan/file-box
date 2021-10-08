@@ -120,8 +120,8 @@ type FileBoxJsonObject =  FileBoxOptionsCommon
                                   | FileBoxOptionsUuid
                                 )
 
-type UuidLoader = (this: FileBox, uuid: string)      => Promise<Readable>
-type UuidSaver  = (this: FileBox, stream: Readable)  => Promise<string>
+type UuidResolver = (this: FileBox, uuid: string)      => Promise<Readable>
+type UuidRegister = (this: FileBox, stream: Readable)  => Promise<string>
 
 export type {
   FileBoxJsonObject,
@@ -133,8 +133,8 @@ export type {
   FileBoxOptionsUuid,
   Metadata,
   Pipeable,
-  UuidSaver,
-  UuidLoader,
+  UuidRegister,
+  UuidResolver,
 }
 export {
   FileBoxType,

@@ -9,7 +9,7 @@ import {
   Readable,
 }                     from 'stream'
 
-import { chunkerTransformStream } from './chunker-transform-stream.js'
+import { sizedChunkTransformer } from './sized-chunk-transformer.js'
 
 test('chunkerTransformStream()', async t => {
   const DATA_LIST = [
@@ -38,13 +38,13 @@ test('chunkerTransformStream()', async t => {
   t.equal(dataList0.length, 1, 'should get 1 chunks')
   t.equal(dataList0[0].toString(), DATA, 'should get data')
 
-  const newStream1 = createStream().pipe(chunkerTransformStream(2))
+  const newStream1 = createStream().pipe(sizedChunkTransformer(2))
   const dataList1 = await getDataList(newStream1)
 
   t.equal(dataList1.length, 1, 'should get 1 chunks')
   t.equal(dataList1[0].toString(), DATA, 'should get data')
 
-  const newStream2 = createStream().pipe(chunkerTransformStream(1))
+  const newStream2 = createStream().pipe(sizedChunkTransformer(1))
   const dataList2 = await getDataList(newStream2)
 
   t.equal(dataList2.length, 2, 'should get 2 chunks')
