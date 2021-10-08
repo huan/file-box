@@ -47,7 +47,7 @@ import {
  */
 const DEFAULT_UUID_EXPIRE_MINUTES = 30
 
-interface UuidFileManagerOptions {
+interface UniformResourceNameRegistryOptions {
   expireMilliseconds? : number,
   storeDir?           : string,
 }
@@ -59,13 +59,23 @@ class UniformResourceNameRegistry {
     Function
   >()
 
-  protected storeDir      : string
-  protected uuidTimerMap : Map<string, ReturnType<typeof setTimeout>>
+  /**
+   * The directory that store all UUID files
+   */
+  protected storeDir: string
+
+  /**
+   * The timer of delete expired UUID files:
+   *  - key: the instance of the UniformResourceNameRegistry
+   *    (there might be multiple instances for different storeDir / namespaces)
+   *  - value: the timer (return by setTimeout)
+   */
+  protected uuidTimerMap: Map<string, ReturnType<typeof setTimeout>>
 
   protected expireMilliseconds: number
 
   constructor (
-    options: UuidFileManagerOptions = {},
+    options: UniformResourceNameRegistryOptions = {},
   ) {
     log.verbose('UniformResourceNameRegistry', 'constructor("%s")', JSON.stringify(options))
 
@@ -248,7 +258,7 @@ class UniformResourceNameRegistry {
     }
 
     /**
-     * Clean up all the timers
+     * Clear all the timers
      */
     const timerList = this.uuidTimerMap.values()
     for (const timer of timerList) {
