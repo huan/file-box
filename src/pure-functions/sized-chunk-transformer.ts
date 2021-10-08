@@ -4,7 +4,11 @@
  */
 import stream from 'stream'
 
-const DEFAULT_CHUNK_BYTE = 64 * 1024 // 64KB
+/**
+ * TCP streaming workload tuning
+ *  https://www.ibm.com/docs/en/aix/7.2?topic=tuning-tcp-streaming-workload
+ */
+const DEFAULT_CHUNK_BYTE = 256 * 1024 // 256 KB
 
 /**
  * @param chunkByte The size of the chunks to be created
