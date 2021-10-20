@@ -164,7 +164,11 @@ class UniformResourceNameRegistry {
     /**
      * Remove the file after read
      */
-    stream.on('end', () => this.delete(uuid))
+    stream.on('end', () => {
+      (
+        async () => this.delete(uuid)
+      )().catch(console.error)
+    })
 
     await new Promise<void>((resolve, reject) => {
       stream.on('ready', resolve)
@@ -204,7 +208,11 @@ class UniformResourceNameRegistry {
     log.verbose('UniformResourceNameRegistry', 'addTimer(%s)', uuid)
 
     const timer = setTimeout(
-      () => this.delete(uuid),
+      () => {
+        (
+          async () => this.delete(uuid)
+        )().catch(console.error)
+      },
       this.expireMilliseconds,
     )
     this.uuidTimerMap.set(uuid, timer)

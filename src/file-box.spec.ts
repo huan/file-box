@@ -429,3 +429,37 @@ test('setUuidLoader() & setUuidSsaver() with `this`', async t => {
   await fileBox2.toUuid()
   t.equal(saver.thisValues[0], fileBox2, 'should call saver with `this`')
 })
+
+test('FileBox.validInterface()', async t => {
+  const fileBox = FileBox.fromQRCode('test')
+  /**
+   * 2 OK
+   */
+  t.ok(FileBox.validInstance(fileBox), 'should satisfy instance validation for a FileBox instance')
+  t.ok(FileBox.validInterface(fileBox), 'should satisfy interface validation for a FileBox instance')
+
+  const copy = {} as any
+  Object.getOwnPropertyNames(
+    Object.getPrototypeOf(fileBox),
+  ).forEach(prop => {
+    copy[prop] = fileBox[prop as keyof FileBox]
+  })
+
+  function NOT_FILE_BOX_CONSTRUCTOR () {}
+  const target = {
+    ...copy,
+    constructor: NOT_FILE_BOX_CONSTRUCTOR,
+  }
+
+  /**
+   * 1 OK, 1 NG
+   */
+  t.notOk(FileBox.validInstance(target), 'should not pass instance validation instance test')
+  t.ok(FileBox.validInterface(target), 'should pass interface validation for an object with FileBox properties')
+
+  /**
+   * 2 NG
+   */
+  delete target.size
+  t.notOk(FileBox.validInterface(target), 'should not be a valid interface if it lack any property')
+})

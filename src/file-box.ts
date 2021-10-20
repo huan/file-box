@@ -17,10 +17,11 @@ import {
   PassThrough,
   Readable,
   Writable,
-}                     from 'stream'
+}                         from 'stream'
 import {
   instanceToClass,
-}                     from 'clone-class'
+  looseInstanceOfClass,
+}                         from 'clone-class'
 
 import {
   VERSION,
@@ -56,7 +57,7 @@ import {
 
 const EMPTY_META_DATA = Object.freeze({})
 
-export class FileBox implements Pipeable {
+class FileBox implements Pipeable {
 
   /**
    *
@@ -64,6 +65,29 @@ export class FileBox implements Pipeable {
    *
    */
   static readonly version = VERSION
+
+  /**
+   * Check if obj satisfy FileBox interface
+   */
+  // eslint-disable-next-line no-use-before-define
+  static validInterface (target: any): target is FileBoxInterface {
+    if (this.validInstance(target)) {
+      return true
+    }
+
+    const interfaceProperties = Object
+      .getOwnPropertyNames(this.prototype)
+
+    return interfaceProperties
+      .every(prop => prop in target)
+  }
+
+  /**
+   * loose check instance of FileBox
+   */
+  static validInstance (target: any): target is FileBox {
+    return looseInstanceOfClass(this)(target)
+  }
 
   /**
    * Alias for `FileBox.fromUrl()`
@@ -366,7 +390,7 @@ export class FileBox implements Pipeable {
 
   private readonly headers?: http.OutgoingHttpHeaders
 
-  protected constructor (
+  constructor (
     options: FileBoxOptions,
   ) {
     // Only keep `basename` in this.name
@@ -377,9 +401,6 @@ export class FileBox implements Pipeable {
 
     switch (options.type) {
       case FileBoxType.Buffer:
-        if (!options.buffer) {
-          throw new Error('no buffer')
-        }
         this.buffer = options.buffer
         break
 
@@ -402,9 +423,6 @@ export class FileBox implements Pipeable {
         break
 
       case FileBoxType.Stream:
-        if (!options.stream) {
-          throw new Error('no stream')
-        }
         this.stream = options.stream
         break
 
@@ -714,7 +732,7 @@ export class FileBox implements Pipeable {
       */
     await new Promise((resolve, reject) => writeStream
       .once('open', resolve)
-      .once('error', reject)
+      .once('error', reject),
     )
     /**
       * Start pipe
@@ -831,4 +849,11 @@ export class FileBox implements Pipeable {
 
 }
 
-export default FileBox
+interface FileBoxInterface extends FileBox {}
+
+export type {
+  FileBoxInterface,
+}
+export {
+  FileBox,
+}

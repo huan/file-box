@@ -472,13 +472,14 @@ console.log(fileBox.remoteSize)
 
 ## History
 
-### master v0.23
+### master v1.0 (Oct 20, 2021)
 
 1. Suppert ES Module. ([#54](https://github.com/huan/file-box/issues/54))
 1. Add UUID boxType support: `FileBox.fromUuid()` and `FileBox.toUuid()`
 1. Add `size` property to return the size of the file. (`-1` means unknown)
 1. Add `remoteSize` property to present the remote size of the file (if applicable, `-1` means unknown)
 1. Add `UniformResourceNameRegistry` class for providing a production-ready basic UUID management tool.
+1. Add `FileBoxInterface`, `FileBox.isInstance()`, and `FileBox.isInterface()`
 
 Breaking changes:
 
