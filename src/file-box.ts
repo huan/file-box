@@ -10,9 +10,7 @@ import fs        from 'fs'
 import type http      from 'http'
 import nodePath  from 'path'
 import nodeUrl   from 'url'
-
-import mime  from 'mime'
-
+import mime      from 'mime'
 import {
   PassThrough,
   Readable,
@@ -21,6 +19,7 @@ import {
 import {
   instanceToClass,
   looseInstanceOfClass,
+  interfaceOfClass,
 }                         from 'clone-class'
 
 import {
@@ -57,6 +56,10 @@ import {
 
 const EMPTY_META_DATA = Object.freeze({})
 
+// eslint-disable-next-line no-use-before-define
+let interfaceOfFileBox      = (_: any): _ is FileBoxInterface => false
+let looseInstanceOfFileBox  = (_: any): _ is FileBox          => false
+
 class FileBox implements Pipeable {
 
   /**
@@ -71,22 +74,14 @@ class FileBox implements Pipeable {
    */
   // eslint-disable-next-line no-use-before-define
   static validInterface (target: any): target is FileBoxInterface {
-    if (this.validInstance(target)) {
-      return true
-    }
-
-    const interfaceProperties = Object
-      .getOwnPropertyNames(this.prototype)
-
-    return interfaceProperties
-      .every(prop => prop in target)
+    return interfaceOfFileBox(target)
   }
 
   /**
    * loose check instance of FileBox
    */
   static validInstance (target: any): target is FileBox {
-    return looseInstanceOfClass(this)(target)
+    return looseInstanceOfFileBox(target)
   }
 
   /**
@@ -850,6 +845,13 @@ class FileBox implements Pipeable {
 }
 
 interface FileBoxInterface extends FileBox {}
+
+/**
+ * Huan(202110): lazy initialize `interfaceOfClass(FileBox)`
+ *  because we only can reference a class after its declaration
+ */
+interfaceOfFileBox      = interfaceOfClass(FileBox)<FileBoxInterface>()
+looseInstanceOfFileBox  = looseInstanceOfClass(FileBox)
 
 export type {
   FileBoxInterface,

@@ -63,7 +63,7 @@
   },
   "dependencies": {
     "brolog": "^1.12.4",
-    "clone-class": "^0.9.19",
+    "clone-class": "^0.10.5",
     "jimp": "^0.16.1",
     "jsqr": "^1.4.0",
     "mime": "^2.5.2",
