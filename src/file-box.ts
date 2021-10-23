@@ -1,11 +1,11 @@
 /**
- *
  * File Box
  * https://github.com/huan/file-box
  *
  * 2018 Huan LI <zixia@zixia.net>
- *
  */
+/* eslint no-use-before-define: off */
+
 import fs        from 'fs'
 import type http      from 'http'
 import nodePath  from 'path'
@@ -56,7 +56,6 @@ import {
 
 const EMPTY_META_DATA = Object.freeze({})
 
-// eslint-disable-next-line no-use-before-define
 let interfaceOfFileBox      = (_: any): _ is FileBoxInterface => false
 let looseInstanceOfFileBox  = (_: any): _ is FileBox          => false
 
@@ -72,7 +71,13 @@ class FileBox implements Pipeable {
   /**
    * Check if obj satisfy FileBox interface
    */
-  // eslint-disable-next-line no-use-before-define
+  static valid (target: any): target is FileBoxInterface {
+    return this.validInstance(target) || this.validInterface(target)
+  }
+
+  /**
+   * Check if obj satisfy FileBox interface
+   */
   static validInterface (target: any): target is FileBoxInterface {
     return interfaceOfFileBox(target)
   }

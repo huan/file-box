@@ -437,6 +437,7 @@ test('FileBox.validInterface()', async t => {
    */
   t.ok(FileBox.validInstance(fileBox), 'should satisfy instance validation for a FileBox instance')
   t.ok(FileBox.validInterface(fileBox), 'should satisfy interface validation for a FileBox instance')
+  t.ok(FileBox.valid(fileBox), 'should satisfy interface validation')
 
   const copy = {} as any
   Object.getOwnPropertyNames(
@@ -456,10 +457,12 @@ test('FileBox.validInterface()', async t => {
    */
   t.notOk(FileBox.validInstance(target), 'should not pass instance validation instance test')
   t.ok(FileBox.validInterface(target), 'should pass interface validation for an object with FileBox properties')
+  t.ok(FileBox.valid(target), 'should satisfy interface validation')
 
   /**
    * 2 NG
    */
   delete target.size
   t.notOk(FileBox.validInterface(target), 'should not be a valid interface if it lack any property')
+  t.notOk(FileBox.valid(target), 'should not satisfy interface validation')
 })
