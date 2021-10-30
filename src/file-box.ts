@@ -36,8 +36,8 @@ import {
   FileBoxType,
   Metadata,
   Pipeable,
-  UuidResolver,
-  UuidRegister,
+  UuidLoader,
+  UuidSaver,
 }                         from './file-box.type.js'
 import {
   dataUrlToBase64,
@@ -205,8 +205,8 @@ class FileBox implements Pipeable, FileBoxInterface {
     return new this(options)
   }
 
-  protected static uuidToStream?:    UuidResolver
-  protected static uuidFromStream?:  UuidRegister
+  protected static uuidToStream?:    UuidLoader
+  protected static uuidFromStream?:  UuidSaver
 
   /**
    * @param uuid the UUID of the file. For example: `6f88b03c-1237-4f46-8db2-98ef23200551`
@@ -224,22 +224,37 @@ class FileBox implements Pipeable, FileBoxInterface {
     return new this(options)
   }
 
-  static setUuidResolver (
-    resolver: UuidResolver,
+  /**
+   * @deprecated use `setUuidLoader()` instead
+   */
+  static setUuidResolver (loader: any) {
+    console.error('FileBox.sxetUuidResolver() is deprecated. Use `setUuidLoader()` instead.\n', new Error().stack)
+    return this.setUuidLoader(loader)
+  }
+
+  static setUuidLoader (
+    loader: UuidLoader,
   ): void {
     if (Object.prototype.hasOwnProperty.call(this, 'uuidToStream')) {
       throw new Error('this FileBox has been set resolver before, can not set twice')
     }
-    this.uuidToStream = resolver
+    this.uuidToStream = loader
   }
 
-  static setUuidRegister (
-    register: UuidRegister,
+  /**
+   * @deprecated use `setUuidSaver()` instead
+   */
+  static setUuidRegister () {
+    console.error('FileBox.setUuidRegister() is deprecated. Use `setUuidSaver()` instead.\n', new Error().stack)
+  }
+
+  static setUuidSaver (
+    saver: UuidSaver,
   ): void {
     if (Object.prototype.hasOwnProperty.call(this, 'uuidFromStream')) {
       throw new Error('this FileBox has been set register before, can not set twice')
     }
-    this.uuidFromStream = register
+    this.uuidFromStream = saver
   }
 
   /**

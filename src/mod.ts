@@ -12,16 +12,16 @@ import type {
   FileBoxConstructor,
 }                       from './interface.js'
 import type {
-  UuidRegister,
-  UuidResolver,
+  UuidSaver,
+  UuidLoader,
 }                       from './file-box.type.js'
 import {
   UniformResourceNameRegistry,
 }                             from './urn-registry/uniform-resource-name-registry.js'
 
 export type {
-  UuidRegister,
-  UuidResolver,
+  UuidSaver,
+  UuidLoader,
   FileBoxInterface,
   FileBoxConstructor,
 }
