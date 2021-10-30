@@ -7,11 +7,11 @@ import type {
 }                       from 'clone-class'
 import type {
   FileBoxJsonObject,
-  // FileBoxType,
+  FileBoxType,
 }                       from './file-box.type'
 
 interface FileBoxInterface {
-  // type: FileBoxType
+  type: FileBoxType
   name: string
   size: number
 
