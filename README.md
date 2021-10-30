@@ -20,7 +20,7 @@ Currently the FileBox supports almost all kinds of the data input/output methods
 | Base64 | `fromBase64()` | `toBase64()` | Base64 data |
 | DataURL | `fromDataURL()` | `toDataURL()` | DataURL data |
 | QRCode | `fromQRCode()` | `toQRCode()` | QR Code Image Decode/Encode |
-| UUID | `fromUuid()` | `toUuid()` | UUID by resolver/register helper functions |
+| UUID | `fromUuid()` | `toUuid()` | UUID by loader/saver helper functions |
 | JSON | `fromJSON()` | `toJSON()` | Serialize/Deserialize FileBox |
 
 ## Examples
@@ -141,7 +141,7 @@ fileBox.toFile('qrcode.png')
 
 Load a FileBox from a UUID.
 
-See: `FileBox.setUuidResolver()`
+See: `FileBox.setUuidLoader()`
 
 ### 2. Get File out from Box
 
@@ -237,7 +237,7 @@ console.log(`QR Code decoded value is: "${qrCodeValue}"`)
 
 Save the FileBox to a UUID file and return the UUID.
 
-See: `FileBox.setUuidRegister()`
+See: `FileBox.setUuidSaver()`
 
 #### 2.9 `toJSON(): string`
 
@@ -347,52 +347,52 @@ enum FileBoxType {
 }
 ```
 
-#### 3.8 `FileBox.setUuidResolver(resolver: UuidResolver): void`
+#### 3.8 `FileBox.setUuidLoader(loader: UuidLoader): void`
 
 Required by static method `FileBox.fromUuid()`
 
 ```ts
 class FileBoxUuid extends FileBox {}
 
-const resolver: UuidResolver = async (uuid: string) => {
+const loader: UuidLoader = async (uuid: string) => {
   const stream = new PassThrough()
   stream.end('hello, world!')
   return stream
 })
 
-FileBoxUuid.setUuidResolver(resolver)
+FileBoxUuid.setUuidLoader(loader)
 const fileBox = FileBoxUuid.fromUuid('12345678-1234-1234-1234-123456789012', 'test.txt')
 await fileBox.toFile('test.txt')
 ```
 
-The `UuidResolver` is a function that takes a UUID and return a readable stream.
+The `UuidLoader` is a function that takes a UUID and return a readable stream.
 
 ```ts
-type UuidResolver = (this: FileBox, uuid: string) => Readable
+type UuidLoader = (this: FileBox, uuid: string) => Readable
 ```
 
-#### 3.9 `FileBox.setUuidRegister(register: UuidRegister): void`
+#### 3.9 `FileBox.setUuidSaver(saver: UuidSaver): void`
 
 Required by instance method `fileBox.toUuid()`
 
 ```ts
 class FileBoxUuid extends FileBox {}
 
-const register: UuidRegister = async (stream: Readable) => {
+const saver: UuidSaver = async (stream: Readable) => {
   // save the stream and get uuid
   return '12345678-1234-1234-1234-123456789012'
 })
 
-FileBoxUuid.setUuidRegister(register)
+FileBoxUuid.setUuidSaver(saver)
 
 const fileBox = FileBoxUuid.fromFile('test.txt')
 const uuid = await fileBox.toUuid()
 ```
 
-The `UuidRegister` is a function that takes a readable stream and return a UUID promise.
+The `UuidSaver` is a function that takes a readable stream and return a UUID promise.
 
 ```ts
-type UuidRegister = (this: FileBox, stream: Readable) => Promise<string>
+type UuidSaver = (this: FileBox, stream: Readable) => Promise<string>
 ```
 
 #### 3.10 `size`
