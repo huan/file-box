@@ -53,13 +53,16 @@ import {
 import {
   sizedChunkTransformer,
 }                         from './pure-functions/sized-chunk-transformer.js'
+import type {
+  FileBoxInterface,
+}                         from './interface.js'
 
 const EMPTY_META_DATA = Object.freeze({})
 
 let interfaceOfFileBox      = (_: any): _ is FileBoxInterface => false
 let looseInstanceOfFileBox  = (_: any): _ is FileBox          => false
 
-class FileBox implements Pipeable {
+class FileBox implements Pipeable, FileBoxInterface {
 
   /**
    *
@@ -849,8 +852,6 @@ class FileBox implements Pipeable {
 
 }
 
-interface FileBoxInterface extends FileBox {}
-
 /**
  * Huan(202110): lazy initialize `interfaceOfClass(FileBox)`
  *  because we only can reference a class after its declaration
@@ -858,9 +859,6 @@ interface FileBoxInterface extends FileBox {}
 interfaceOfFileBox      = interfaceOfClass(FileBox)<FileBoxInterface>()
 looseInstanceOfFileBox  = looseInstanceOfClass(FileBox)
 
-export type {
-  FileBoxInterface,
-}
 export {
   FileBox,
 }

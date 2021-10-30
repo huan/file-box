@@ -6,8 +6,11 @@ import {
 }                       from './config.js'
 import {
   FileBox,
-  FileBoxInterface,
 }                       from './file-box.js'
+import type {
+  FileBoxInterface,
+  FileBoxConstructor,
+}                       from './interface.js'
 import type {
   UuidRegister,
   UuidResolver,
@@ -20,6 +23,7 @@ export type {
   UuidRegister,
   UuidResolver,
   FileBoxInterface,
+  FileBoxConstructor,
 }
 export {
   FileBox,
