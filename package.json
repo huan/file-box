@@ -1,6 +1,6 @@
 {
   "name": "file-box",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "type": "module",
   "exports": {
