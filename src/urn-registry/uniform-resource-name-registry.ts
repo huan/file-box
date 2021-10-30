@@ -45,7 +45,8 @@ import {
 /**
  * A UUID will be only keep for a certain time.
  */
-const DEFAULT_UUID_EXPIRE_MINUTES = 30
+const DEFAULT_UUID_EXPIRE_MINUTES         = 30
+const DEFAULT_UUID_PURGE_INTERVAL_MINUTES = 1
 
 interface UniformResourceNameRegistryOptions {
   expireMilliseconds? : number,
@@ -54,7 +55,7 @@ interface UniformResourceNameRegistryOptions {
 
 class UniformResourceNameRegistry {
 
-  protected static removeProcessExitListenerMap = new WeakMap<
+  protected static processExitMap = new WeakMap<
     UniformResourceNameRegistry,
     Function
   >()
@@ -64,22 +65,25 @@ class UniformResourceNameRegistry {
    */
   protected storeDir: string
 
-  /**
-   * The timer of delete expired UUID files:
-   *  - key: the instance of the UniformResourceNameRegistry
-   *    (there might be multiple instances for different storeDir / namespaces)
-   *  - value: the timer (return by setTimeout)
-   */
-  protected uuidTimerMap: Map<string, ReturnType<typeof setTimeout>>
-
   protected expireMilliseconds: number
+
+  /**
+   * Key: expiretime
+   * Value: the array of UUID that will expires after the `expiretime` (Key)
+   */
+  protected uuidExpiringTable: Map<
+    number,
+    string[]
+  >
+
+  protected purgerTimer?: ReturnType<typeof setInterval>
 
   constructor (
     options: UniformResourceNameRegistryOptions = {},
   ) {
     log.verbose('UniformResourceNameRegistry', 'constructor("%s")', JSON.stringify(options))
 
-    this.uuidTimerMap = new Map()
+    this.uuidExpiringTable = new Map()
 
     this.expireMilliseconds = options.expireMilliseconds ?? (DEFAULT_UUID_EXPIRE_MINUTES * 60 * 1000 * 1000)
     this.storeDir = options.storeDir || path.join(
@@ -104,13 +108,38 @@ class UniformResourceNameRegistry {
       }
     }
 
-    await this.addProcessExitListener()
+    this.addProcessExitListener()
+
+    this.purgerTimer = setInterval(
+      () => this.purgeExpiredUuid(),
+      DEFAULT_UUID_PURGE_INTERVAL_MINUTES * 60 * 1000,
+    )
+  }
+
+  protected purgeExpiredUuid () {
+    log.verbose('UniformResourceNameRegistry', 'purgeExpiredUuid()')
+    const expireTimeList = [...this.uuidExpiringTable.keys()]
+      .sort((a, b) => Number(a) - Number(b))
+
+    for (const expireTime of expireTimeList) {
+      if (Date.now() < expireTime) {
+        // The earliest expire time is in the future
+        break
+      }
+
+      const uuidList = this.uuidExpiringTable.get(expireTime) || []
+      this.uuidExpiringTable.delete(expireTime)
+
+      for (const uuid of uuidList) {
+        this.purge(uuid).catch(console.error)
+      }
+    }
   }
 
   /**
    * Clean up by calling this.destroy() before process exit
    */
-  protected async addProcessExitListener () {
+  protected addProcessExitListener () {
     log.verbose('UniformResourceNameRegistry', 'addProcessExitListener()')
 
     const Klass = instanceToClass(this, UniformResourceNameRegistry)
@@ -118,57 +147,43 @@ class UniformResourceNameRegistry {
     /**
      * If we have already registered the listener, do nothing.
      */
-    if (Klass.removeProcessExitListenerMap.has(this)) {
+    if (Klass.processExitMap.has(this)) {
       return
     }
 
     const destroyCallback = () => this.destroy()
 
     process.addListener('exit', destroyCallback)
-    Klass.removeProcessExitListenerMap.set(
+    Klass.processExitMap.set(
       this,
       () => process.removeListener('exit', destroyCallback),
     )
   }
 
-  protected uuidFile (uuid: string): string {
+  protected uuidFileName (uuid: string): string {
     return path.join(
       this.storeDir,
-      uuid,
+      uuid + '.dat',
     )
+  }
+
+  /**
+   * @deprecated use `load()` instead
+   */
+  async resolve (uuid: string): Promise<Readable> {
+    log.warn('UniformResourceNameRegistry', 'resolve() is deprecated: use `load()` instead.\n%s', new Error().stack)
+    return this.load(uuid)
   }
 
   /**
    * `resolve()` can only be used once.
    *  after resolve(), the UUID will be not exist any more
    */
-  async resolve (uuid: string): Promise<Readable> {
-    log.verbose('UniformResourceNameRegistry', 'resolve(%s)', uuid)
+  async load (uuid: string): Promise<Readable> {
+    log.verbose('UniformResourceNameRegistry', 'load(%s)', uuid)
 
-    /**
-     * Check & remove UUID from timer map
-     */
-    if (!this.uuidTimerMap.has(uuid)) {
-      throw new Error('UniformResourceNameRegistry resolve(' + uuid + ') but not exist')
-    }
-
-    const timer = this.uuidTimerMap.get(uuid)
-    this.uuidTimerMap.delete(uuid)
-    if (timer) {
-      clearTimeout(timer)
-    }
-
-    const file    = this.uuidFile(uuid)
-    const stream  = fs.createReadStream(file)
-
-    /**
-     * Remove the file after read
-     */
-    stream.on('end', () => {
-      (
-        async () => this.delete(uuid)
-      )().catch(console.error)
-    })
+    const filename  = this.uuidFileName(uuid)
+    const stream    = fs.createReadStream(filename)
 
     await new Promise<void>((resolve, reject) => {
       stream.on('ready', resolve)
@@ -179,15 +194,23 @@ class UniformResourceNameRegistry {
   }
 
   /**
+   * @deprecated use `save()` instead
+   */
+  async register (stream: Readable): Promise<string> {
+    log.verbose('UniformResourceNameRegistry', 'register() deprecated: use save() instead.\n%s', new Error().stack)
+    return this.save(stream)
+  }
+
+  /**
    * Save the `Readable` stream and return a random UUID
    *  The UUID will be expired after MAX_KEEP_MINUTES
    */
-  async register (stream: Readable): Promise<string> {
-    log.verbose('UniformResourceNameRegistry', 'register(stream)')
+  async save (stream: Readable): Promise<string> {
+    log.verbose('UniformResourceNameRegistry', 'save(stream)')
 
     const uuid = randomUuid()
 
-    const fileStream = fs.createWriteStream(this.uuidFile(uuid))
+    const fileStream = fs.createWriteStream(this.uuidFileName(uuid))
     const future = new Promise<void>((resolve, reject) => {
       stream.on('end',        resolve)
       stream.on('error',      reject)
@@ -196,7 +219,7 @@ class UniformResourceNameRegistry {
     stream.pipe(fileStream)
     await future
 
-    this.addTimer(uuid)
+    this.addToExpiringTable(uuid)
 
     return uuid
   }
@@ -204,73 +227,58 @@ class UniformResourceNameRegistry {
   /**
    * Set a timer to execute delete callback after `expireMilliseconds`
    */
-  protected addTimer (uuid: string): void {
-    log.verbose('UniformResourceNameRegistry', 'addTimer(%s)', uuid)
+  protected addToExpiringTable (uuid: string): void {
+    log.verbose('UniformResourceNameRegistry', 'addToExpiringTable(%s)', uuid)
 
-    const timer = setTimeout(
-      () => {
-        (
-          async () => this.delete(uuid)
-        )().catch(console.error)
-      },
-      this.expireMilliseconds,
+    const expireTime         = Date.now() + this.expireMilliseconds
+    const expireTimeInterval = DEFAULT_UUID_PURGE_INTERVAL_MINUTES * 60 * 1000
+
+    // https://stackoverflow.com/a/22687090
+    const expireTimeNearestMinute = Math.ceil(expireTime / expireTimeInterval) * expireTimeInterval
+
+    const uuidList = this.uuidExpiringTable.get(expireTime) || []
+    uuidList.push(uuid)
+    this.uuidExpiringTable.set(expireTimeNearestMinute, uuidList)
+
+    log.silly('UniformResourceNameRegistry', 'addToExpiringTable() uuidList.length = %s, expireTime = %s',
+      uuidList.length,
+      expireTimeNearestMinute,
     )
-    this.uuidTimerMap.set(uuid, timer)
   }
 
-  protected async delete (uuid: string): Promise<void> {
-    log.verbose('UniformResourceNameRegistry', 'delete(%s)', uuid)
+  protected async purge (uuid: string): Promise<void> {
+    log.verbose('UniformResourceNameRegistry', 'purge(%s)', uuid)
 
-    /**
-     * 1. Clear the timer (if there's any)
-     */
-    const timer = this.uuidTimerMap.get(uuid)
-    if (timer) {
-      this.uuidTimerMap.delete(uuid)
-      clearTimeout(timer)
-    }
-
-    /**
-    * 2. Delete the file
-    */
-    const unlinkUuid = this.unlinkFactory(uuid)
-    await unlinkUuid()
-  }
-
-  protected unlinkFactory (uuid: string) {
-    log.verbose('UniformResourceNameRegistry', 'unlinkFactory(%s)', uuid)
-
-    const file = this.uuidFile(uuid)
-    return async () => {
-      try {
-        await fs.promises.unlink(file)
-        log.silly('UniformResourceNameRegistry', 'unlinkFactory() unlink(%s)', file)
-      } catch (e) {
-        log.warn('UniformResourceNameRegistry', 'unlinkFactory() unlink() rejection:', (e as Error).message)
-      }
+    const file = this.uuidFileName(uuid)
+    try {
+      await fs.promises.unlink(file)
+      log.silly('UniformResourceNameRegistry', 'purge() %s', file)
+    } catch (e) {
+      log.warn('UniformResourceNameRegistry', 'purge() rejection:', (e as Error).message)
     }
   }
 
   destroy () {
-    log.verbose('UniformResourceNameRegistry', 'destroy() %s UUIDs left', this.uuidTimerMap.size)
+    log.verbose('UniformResourceNameRegistry', 'destroy() %s UUIDs left',
+      [...this.uuidExpiringTable.values()].flat().length,
+    )
+
+    if (this.purgerTimer) {
+      log.verbose('UniformResourceNameRegistry', 'destroy() clearing purger timer ...')
+      clearInterval(this.purgerTimer)
+      this.purgerTimer = undefined
+    }
 
     const Klass = instanceToClass(this, UniformResourceNameRegistry)
 
     /**
      * Remove process exit listener
      */
-    if (Klass.removeProcessExitListenerMap.has(this)) {
-      const fn = Klass.removeProcessExitListenerMap.get(this)
-      Klass.removeProcessExitListenerMap.delete(this)
+    if (Klass.processExitMap.has(this)) {
+      log.verbose('UniformResourceNameRegistry', 'destroy() remove process `exit` listener ...')
+      const fn = Klass.processExitMap.get(this)
+      Klass.processExitMap.delete(this)
       fn && fn()
-    }
-
-    /**
-     * Clear all the timers
-     */
-    const timerList = this.uuidTimerMap.values()
-    for (const timer of timerList) {
-      clearTimeout(timer)
     }
 
     /**
