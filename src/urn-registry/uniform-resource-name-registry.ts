@@ -88,7 +88,8 @@ class UniformResourceNameRegistry {
     this.expireMilliseconds = options.expireMilliseconds ?? (DEFAULT_UUID_EXPIRE_MINUTES * 60 * 1000 * 1000)
     this.storeDir = options.storeDir || path.join(
       os.tmpdir(),
-      'file-box.urn-registry.' + String(process.pid),
+      'file-box',
+      'urn-registry.' + String(process.pid),
     )
   }
 
