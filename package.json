@@ -19,7 +19,7 @@
     "dist": "npm-run-all clean build dist:commonjs",
     "build": "tsc && tsc -p tsconfig.cjs.json",
     "dist:commonjs": "jq -n \"{ type: \\\"commonjs\\\" }\" > dist/cjs/package.json",
-    "lint": "npm-run-all lint:es run lint:ts",
+    "lint": "npm-run-all lint:es lint:ts",
     "lint:ts": "tsc --isolatedModules --noEmit",
     "test": "npm-run-all lint test:unit",
     "test:unit": "cross-env NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" tap \"src/**/*.spec.ts\" \"tests/*.spec.ts\"",
