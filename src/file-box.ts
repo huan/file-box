@@ -6,11 +6,12 @@
  */
 /* eslint no-use-before-define: off */
 
-import fs        from 'fs'
-import type http      from 'http'
-import nodePath  from 'path'
-import nodeUrl   from 'url'
-import mime      from 'mime'
+import * as FS        from 'fs'
+import type * as HTTP from 'http'
+import * as PATH      from 'path'
+import * as URL       from 'url'
+
+import mime           from 'mime'
 import {
   PassThrough,
   Readable,
@@ -100,10 +101,10 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromUrl (
     url      : string,
     name?    : string,
-    headers? : http.OutgoingHttpHeaders,
+    headers? : HTTP.OutgoingHttpHeaders,
   ): FileBox {
     if (!name) {
-      const parsedUrl = new nodeUrl.URL(url)
+      const parsedUrl = new URL.URL(url)
       name = parsedUrl.pathname
     }
     const options: FileBoxOptions = {
@@ -126,7 +127,7 @@ class FileBox implements Pipeable, FileBoxInterface {
     name?:  string,
   ): FileBox {
     if (!name) {
-      name = nodePath.parse(path).base
+      name = PATH.parse(path).base
     }
     const options: FileBoxOptions = {
       name,
@@ -355,7 +356,7 @@ class FileBox implements Pipeable, FileBoxInterface {
           : -1
       case FileBoxType.File:
         return this.localPath
-          ? fs.statSync(this.localPath).size
+          ? FS.statSync(this.localPath).size
           : -1
       case FileBoxType.Stream:
         // We never know the size of a stream before consume it
@@ -373,21 +374,21 @@ class FileBox implements Pipeable, FileBoxInterface {
   name        : string
   remoteSize? : number
 
-  #metadata?: Metadata
+  protected _metadata?: Metadata
 
   get metadata (): Metadata {
-    if (this.#metadata) {
-      return this.#metadata
+    if (this._metadata) {
+      return this._metadata
     }
     return EMPTY_META_DATA
   }
 
   set metadata (data: Metadata) {
-    if (this.#metadata) {
+    if (this._metadata) {
       throw new Error('metadata can not be modified after set')
     }
-    this.#metadata = { ...data }
-    Object.freeze(this.#metadata)
+    this._metadata = { ...data }
+    Object.freeze(this._metadata)
   }
 
   /**
@@ -406,13 +407,13 @@ class FileBox implements Pipeable, FileBoxInterface {
   private readonly localPath? : string
   private readonly stream?    : Readable
 
-  private readonly headers?: http.OutgoingHttpHeaders
+  private readonly headers?: HTTP.OutgoingHttpHeaders
 
   constructor (
     options: FileBoxOptions,
   ) {
     // Only keep `basename` in this.name
-    this.name = nodePath.basename(options.name)
+    this.name = PATH.basename(options.name)
     this.type = options.type
 
     this.mimeType = mime.getType(this.name) || undefined
@@ -697,7 +698,7 @@ class FileBox implements Pipeable, FileBoxInterface {
     if (!this.localPath) {
       throw new Error('no url(path)')
     }
-    return fs.createReadStream(this.localPath)
+    return FS.createReadStream(this.localPath)
   }
 
   private async transformUrlToStream (): Promise<Readable> {
@@ -734,15 +735,15 @@ class FileBox implements Pipeable, FileBoxInterface {
         await this.syncRemote()
       }
     }
-    const fullFilePath = nodePath.resolve(filePath || this.name)
+    const fullFilePath = PATH.resolve(filePath || this.name)
 
-    const exist = fs.existsSync(fullFilePath)
+    const exist = FS.existsSync(fullFilePath)
 
     if (exist && !overwrite) {
       throw new Error(`FileBox.toFile(${fullFilePath}): file exist. use FileBox.toFile(${fullFilePath}, true) to force overwrite.`)
     }
 
-    const writeStream = fs.createWriteStream(fullFilePath)
+    const writeStream = FS.createWriteStream(fullFilePath)
 
     /**
       * Huan(202109): make sure the file can be opened for writting
