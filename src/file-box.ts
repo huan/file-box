@@ -138,6 +138,9 @@ class FileBox implements Pipeable, FileBoxInterface {
     return new this(options)
   }
 
+  /**
+   * TODO: add `FileBoxStreamOptions` with `size` support (@huan, 202111)
+   */
   static fromStream (
     stream: Readable,
     name?:  string,
@@ -335,6 +338,9 @@ class FileBox implements Pipeable, FileBoxInterface {
    * console.log(fileBox.remoteSize)
    * // > 102400 <- this is the size of the remote image.png
    * ```
+   *
+   * TODO: make `size` a non-calc property and add it to JSON payload (@huan, 202111)
+   *
    */
   get size (): number {
     switch (this.type) {
