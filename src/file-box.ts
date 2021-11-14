@@ -59,6 +59,7 @@ import type {
 }                         from './interface.js'
 
 const EMPTY_META_DATA = Object.freeze({})
+const UNKNOWN_SIZE    = -1
 
 let interfaceOfFileBox      = (_: any): _ is FileBoxInterface => false
 let looseInstanceOfFileBox  = (_: any): _ is FileBox          => false
@@ -93,16 +94,47 @@ class FileBox implements Pipeable, FileBoxInterface {
     return looseInstanceOfFileBox(target)
   }
 
+  static fromUrl (
+    url      : string,
+    options? : {
+      headers? : HTTP.OutgoingHttpHeaders,
+      name?    : string,
+      size?    : number,
+    },
+  ): FileBox
+
   /**
-   * Alias for `FileBox.fromUrl()`
-   *
-   * @alias fromUrl()
+   * @deprecated use `fromUrl(url, options)` instead
    */
   static fromUrl (
     url      : string,
     name?    : string,
     headers? : HTTP.OutgoingHttpHeaders,
+  ): FileBox
+
+  /**
+   * fromUrl()
+   */
+  static fromUrl (
+    url            : string,
+    nameOrOptions? : string | {
+      headers? : HTTP.OutgoingHttpHeaders,
+      name?    : string,
+      size?    : number,
+    },
+    headers? : HTTP.OutgoingHttpHeaders,
   ): FileBox {
+    let name: undefined | string
+    let size: undefined | number
+
+    if (typeof nameOrOptions === 'object') {
+      headers = nameOrOptions.headers
+      name    = nameOrOptions.name
+      size    = nameOrOptions.size
+    } else {
+      name = nameOrOptions
+    }
+
     if (!name) {
       const parsedUrl = new URL.URL(url)
       name = parsedUrl.pathname
@@ -110,6 +142,7 @@ class FileBox implements Pipeable, FileBoxInterface {
     const options: FileBoxOptions = {
       headers,
       name,
+      size,
       type : FileBoxType.Url,
       url,
     }
@@ -212,16 +245,46 @@ class FileBox implements Pipeable, FileBoxInterface {
   protected static uuidToStream?:    UuidLoader
   protected static uuidFromStream?:  UuidSaver
 
+  static fromUuid (
+    uuid: string,
+    options?: {
+      name?: string,
+      size?: number,
+    },
+  ): FileBox
+
+  /**
+   * @deprecated use `fromUuid(name, options)` instead
+   */
+  static fromUuid (
+    uuid: string,
+    name?: string,
+  ): FileBox
+
   /**
    * @param uuid the UUID of the file. For example: `6f88b03c-1237-4f46-8db2-98ef23200551`
    * @param name the name of the file. For example: `video.mp4`
    */
   static fromUuid (
     uuid: string,
-    name?: string,
+    nameOrOptions?: string | {
+      name?: string,
+      size?: number,
+    },
   ): FileBox {
+    let name: undefined | string
+    let size: undefined | number
+
+    if (typeof nameOrOptions === 'object') {
+      name = nameOrOptions.name
+      size = nameOrOptions.size
+    } else {
+      name = nameOrOptions
+    }
+
     const options: FileBoxOptions = {
       name: name || `${uuid}.dat`,
+      size,
       type: FileBoxType.Uuid,
       uuid,
     }
@@ -283,10 +346,10 @@ class FileBox implements Pipeable, FileBoxInterface {
         break
 
       case FileBoxType.Url:
-        fileBox = FileBox.fromUrl(
-          obj.url,
-          obj.name,
-        )
+        fileBox = FileBox.fromUrl(obj.url, {
+          name: obj.name,
+          size: obj.size,
+        })
         break
 
       case FileBoxType.QRCode:
@@ -296,10 +359,10 @@ class FileBox implements Pipeable, FileBoxInterface {
         break
 
       case FileBoxType.Uuid:
-        fileBox = FileBox.fromUuid(
-          obj.uuid,
-          obj.name,
-        )
+        fileBox = FileBox.fromUuid(obj.uuid, {
+          name: obj.name,
+          size: obj.size,
+        })
         break
 
       default:
@@ -320,68 +383,64 @@ class FileBox implements Pipeable, FileBoxInterface {
    */
   readonly version = VERSION
 
-  // not readonly: need be update from the remote url(possible)
-  readonly type: FileBoxType
+  /**
+   * We are using a getter for `type` is because
+   *  getter name can be enumurated by the Object.hasOwnProperties()
+   *    but property name can not.
+   *
+   *  required by `validInterface()`
+   */
+  readonly _type: FileBoxType
+  get type () { return this._type }
 
   /**
-   * The size of the fileBox payload.
-   *  Warning: it's not the size of the boxed file.
+   * the Content-Length of the file
+   *  `SIZE_UNKNOWN(-1)` means unknown
    *
-   * For example:
-   *
+   * @example
    * ```ts
    * const fileBox = FileBox.fromUrl('http://example.com/image.png')
-   * console.log(fileBox.size)
-   * // > 20 <- this is the length of the URL string
-   *
    * await fileBox.ready()
-   * console.log(fileBox.remoteSize)
+   * console.log(fileBox.size)
    * // > 102400 <- this is the size of the remote image.png
    * ```
-   *
-   * TODO: make `size` a non-calc property and add it to JSON payload (@huan, 202111)
-   *
    */
+  _size?: number
   get size (): number {
-    switch (this.type) {
-      case FileBoxType.Base64:
-        return this.base64
-          ? Buffer.byteLength(this.base64, 'base64')
-          : -1
-      case FileBoxType.Url:
-        return this.remoteUrl
-          ? this.remoteUrl.length
-          : -1
-      case FileBoxType.QRCode:
-        return this.qrCode
-          ? this.qrCode.length
-          : -1
-      case FileBoxType.Buffer:
-        return this.buffer
-          ? this.buffer.length
-          : -1
-      case FileBoxType.File:
-        return this.localPath
-          ? FS.statSync(this.localPath).size
-          : -1
-      case FileBoxType.Stream:
-        // We never know the size of a stream before consume it
-        return -1
-      case FileBoxType.Uuid:
-        return this.uuid
-          ? this.uuid.length
-          : -1
-      default:
-        throw new Error('unknown FileBoxType: ' + this.type)
+    if (this._size) {
+      return this._size
     }
+    return UNKNOWN_SIZE
   }
 
-  mimeType?   : string  // 'text/plain'
-  name        : string
-  remoteSize? : number
+  /**
+   *
+
+  /**
+   * @deprecated: use `mediaType` instead. will be removed after Dec 31, 2022
+   */
+  mimeType = 'application/unknown'
+
+  /**
+   * (Internet) Media Type is the proper technical term of `MIME Type`
+   *  @see https://stackoverflow.com/a/9277778/1123955
+   *
+   * @example 'text/plain'
+   */
+  protected _mediaType?: string
+  get mediaType (): string {
+    if (this._mediaType) {
+      return this._mediaType
+    }
+    return 'application/unknown'
+  }
+
+  protected _name: string
+  get name (): string {
+    return this._name
+  }
 
   protected _metadata?: Metadata
-
   get metadata (): Metadata {
     if (this._metadata) {
       return this._metadata
@@ -419,21 +478,27 @@ class FileBox implements Pipeable, FileBoxInterface {
     options: FileBoxOptions,
   ) {
     // Only keep `basename` in this.name
-    this.name = PATH.basename(options.name)
-    this.type = options.type
+    this._name = PATH.basename(options.name)
+    this._type = options.type
 
-    this.mimeType = mime.getType(this.name) || undefined
+    /**
+     * Unknown file type MIME: `'application/unknown'`
+     *  @see https://stackoverflow.com/a/6080707/1123955
+     */
+    this._mediaType = mime.getType(this.name) ?? undefined
 
     switch (options.type) {
       case FileBoxType.Buffer:
         this.buffer = options.buffer
+        this._size   = options.buffer.length
         break
 
       case FileBoxType.File:
         if (!options.path) {
           throw new Error('no path')
         }
-        this.localPath = options.path
+        this.localPath  = options.path
+        this._size       = FS.statSync(this.localPath).size
         break
 
       case FileBoxType.Url:
@@ -445,10 +510,24 @@ class FileBox implements Pipeable, FileBoxInterface {
         if (options.headers) {
           this.headers = options.headers
         }
+        if (options.size) {
+          this._size = options.size
+        } else {
+          /**
+           * Add a background task to fetch remote file name & size
+           *
+           * TODO: how to improve it?
+           */
+          // this.syncUrlMetadata().catch(console.error)
+        }
+
         break
 
       case FileBoxType.Stream:
         this.stream = options.stream
+        if (options.size) {
+          this._size = options.size
+        }
         break
 
       case FileBoxType.QRCode:
@@ -463,6 +542,7 @@ class FileBox implements Pipeable, FileBoxInterface {
           throw new Error('no Base64 data')
         }
         this.base64 = options.base64
+        this._size  = Buffer.byteLength(options.base64, 'base64')
         break
 
       case FileBoxType.Uuid:
@@ -470,6 +550,9 @@ class FileBox implements Pipeable, FileBoxInterface {
           throw new Error('no UUID data')
         }
         this.uuid = options.uuid
+        if (options.size) {
+          this._size = options.size
+        }
         break
 
       default:
@@ -479,22 +562,33 @@ class FileBox implements Pipeable, FileBoxInterface {
   }
 
   async ready (): Promise<void> {
-    if (this.type === FileBoxType.Url) {
-      await this.syncRemote()
+    switch (this.type) {
+      case FileBoxType.Url:
+        await this._syncUrlMetadata()
+        break
+
+      case FileBoxType.QRCode:
+        if (this.size === UNKNOWN_SIZE) {
+          this._size = (await this.toBuffer()).length
+        }
+        break
+
+      default:
+        break
     }
   }
 
   /**
    * @todo use http.get/gets instead of Request
    */
-  protected async syncRemote (): Promise<void> {
+  protected async _syncUrlMetadata (): Promise<void> {
     /**
      * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
      *  > Content-Disposition: attachment; filename="cool.html"
      */
 
     if (this.type !== FileBoxType.Url) {
-      throw new Error('type is not Remote')
+      throw new Error('type is not Url')
     }
     if (!this.remoteUrl) {
       throw new Error('no url')
@@ -502,17 +596,23 @@ class FileBox implements Pipeable, FileBoxInterface {
 
     const headers = await httpHeadHeader(this.remoteUrl)
 
-    const filename = httpHeaderToFileName(headers)
-    if (filename) {
-      this.name = filename
+    const httpFilename = httpHeaderToFileName(headers)
+    if (httpFilename) {
+      this._name = httpFilename
     }
 
     if (!this.name) {
       throw new Error('NONAME')
     }
 
-    this.mimeType   = headers['content-type'] || mime.getType(this.name) || undefined
-    this.remoteSize = Number(headers['content-length'] ?? -1)
+    const httpMediaType = headers['content-type'] || (httpFilename && mime.getType(httpFilename))
+    if (httpMediaType) {
+      this._mediaType = httpMediaType
+    }
+
+    if (headers['content-length']) {
+      this._size = Number(headers['content-length'])
+    }
   }
 
   /**
@@ -534,6 +634,10 @@ class FileBox implements Pipeable, FileBoxInterface {
     const objCommon: FileBoxOptionsCommon = {
       metadata : this.metadata,
       name     : this.name,
+    }
+
+    if (typeof this.size !== 'undefined') {
+      objCommon.size = this.size
     }
 
     let obj: FileBoxJsonObject
@@ -613,15 +717,15 @@ class FileBox implements Pipeable, FileBoxInterface {
 
     switch (this.type) {
       case FileBoxType.Buffer:
-        stream = this.transformBufferToStream()
+        stream = this._transformBufferToStream()
         break
 
       case FileBoxType.File:
-        stream = this.transformFileToStream()
+        stream = this._transformFileToStream()
         break
 
       case FileBoxType.Url:
-        stream = await this.transformUrlToStream()
+        stream = await this._transformUrlToStream()
         break
 
       case FileBoxType.Stream:
@@ -647,14 +751,14 @@ class FileBox implements Pipeable, FileBoxInterface {
         if (!this.qrCode) {
           throw new Error('no QR Code')
         }
-        stream = await this.transformQRCodeToStream()
+        stream = await this._transformQRCodeToStream()
         break
 
       case FileBoxType.Base64:
         if (!this.base64) {
           throw new Error('no base64 data')
         }
-        stream = this.transformBase64ToStream()
+        stream = this._transformBase64ToStream()
         break
 
       case FileBoxType.Uuid: {
@@ -681,7 +785,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   /**
    * https://stackoverflow.com/a/16044400/1123955
    */
-  private transformBufferToStream (buffer?: Buffer): Readable {
+  private _transformBufferToStream (buffer?: Buffer): Readable {
     const bufferStream = new PassThrough()
     bufferStream.end(buffer || this.buffer)
 
@@ -692,22 +796,22 @@ class FileBox implements Pipeable, FileBoxInterface {
     return bufferStream.pipe(sizedChunkTransformer())
   }
 
-  private transformBase64ToStream (): Readable {
+  private _transformBase64ToStream (): Readable {
     if (!this.base64) {
       throw new Error('no base64 data')
     }
     const buffer = Buffer.from(this.base64, 'base64')
-    return this.transformBufferToStream(buffer)
+    return this._transformBufferToStream(buffer)
   }
 
-  private transformFileToStream (): Readable {
+  private _transformFileToStream (): Readable {
     if (!this.localPath) {
       throw new Error('no url(path)')
     }
     return FS.createReadStream(this.localPath)
   }
 
-  private async transformUrlToStream (): Promise<Readable> {
+  private async _transformUrlToStream (): Promise<Readable> {
     return new Promise<Readable>((resolve, reject) => {
       if (this.remoteUrl) {
         httpStream(this.remoteUrl, this.headers)
@@ -719,7 +823,7 @@ class FileBox implements Pipeable, FileBoxInterface {
     })
   }
 
-  private async transformQRCodeToStream (): Promise<Readable> {
+  private async _transformQRCodeToStream (): Promise<Readable> {
     if (!this.qrCode) {
       throw new Error('no QR Code Value found')
     }
@@ -737,8 +841,8 @@ class FileBox implements Pipeable, FileBoxInterface {
     overwrite = false,
   ): Promise<void> {
     if (this.type === FileBoxType.Url) {
-      if (!this.mimeType || !this.name) {
-        await this.syncRemote()
+      if (!this.mediaType || !this.name) {
+        await this._syncUrlMetadata()
       }
     }
     const fullFilePath = PATH.resolve(filePath || this.name)
@@ -789,13 +893,13 @@ class FileBox implements Pipeable, FileBoxInterface {
   async toDataURL (): Promise<string> {
     const base64Text = await this.toBase64()
 
-    if (!this.mimeType) {
-      throw new Error('no mimeType')
+    if (!this.mediaType) {
+      throw new Error('no mediaType found')
     }
 
     const dataUrl = [
       'data:',
-      this.mimeType,
+      this.mediaType,
       ';base64,',
       base64Text,
     ].join('')

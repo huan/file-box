@@ -11,9 +11,11 @@ import type {
 }                       from './file-box.type'
 
 interface FileBoxInterface {
-  type: FileBoxType
-  name: string
-  size: number
+  type      : FileBoxType
+
+  name      : string
+  mediaType : string
+  size      : number
 
   // version: any
   // metadata: any

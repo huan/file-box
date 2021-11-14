@@ -1,6 +1,6 @@
 {
   "name": "file-box",
-  "version": "1.2.10",
+  "version": "1.3.0",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "type": "module",
   "exports": {
@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "brolog": "^1.12.4",
-    "clone-class": "^0.10.5",
+    "clone-class": "^1.0.3",
     "jimp": "^0.16.1",
     "jsqr": "^1.4.0",
     "mime": "^2.5.2",

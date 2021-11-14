@@ -472,7 +472,12 @@ console.log(fileBox.remoteSize)
 
 ## History
 
-### master v1.0 (Oct 20, 2021)
+### main v1.3 (Nov 14, 2021)
+
+1. `fileBox.size` will be serialized to/from JSON, and present the `Content-Length` of the file. (`-1` means unknown)
+1. `mimeType` has been renamed to `mediaType`, and added to the `FileBoxInterface`
+
+### v1.0 (Oct 20, 2021)
 
 1. Suppert ES Module. ([#54](https://github.com/huan/file-box/issues/54))
 1. Add UUID boxType support: `FileBox.fromUuid()` and `FileBox.toUuid()`

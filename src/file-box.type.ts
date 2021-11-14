@@ -68,6 +68,11 @@ interface FileBoxOptionsCommon {
    * Can be only set once
    */
   metadata?: Metadata,
+
+  /**
+   * Size
+   */
+  size?: number
 }
 
 interface FileBoxOptionsFile {
