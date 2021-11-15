@@ -394,10 +394,10 @@ class FileBox implements Pipeable, FileBoxInterface {
 
   /**
    * We are using a getter for `type` is because
-   *  getter name can be enumurated by the Object.hasOwnProperties()
+   *  getter name can be enumurated by the `Object.hasOwnProperties()`*
    *    but property name can not.
    *
-   *  required by `validInterface()`
+   *  * required by `validInterface()`
    */
   readonly _type: FileBoxType
   get type () { return this._type }
