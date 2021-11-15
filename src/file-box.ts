@@ -74,6 +74,15 @@ class FileBox implements Pipeable, FileBoxInterface {
   static readonly version = VERSION
 
   /**
+   * Symbol.hasInstance: instanceof
+   *
+   * @link https://www.keithcirkel.co.uk/metaprogramming-in-es6-symbols/
+   */
+  static [Symbol.hasInstance] (lho: any): lho is FileBoxInterface {
+    return this.validInterface(lho)
+  }
+
+  /**
    * Check if obj satisfy FileBox interface
    */
   static valid (target: any): target is FileBoxInterface {
