@@ -1,21 +1,16 @@
 import type {
-  Readable,
-  Writable,
-}                       from 'stream'
-import type {
   Constructor,
 }                       from 'clone-class'
 import type {
-  FileBoxJsonObject,
-  FileBoxType,
-}                       from './file-box.type'
+  FileBox,
+}                       from './file-box.js'
 
 interface FileBoxInterface {
-  type      : FileBoxType
+  type      : FileBox['type']
 
-  name      : string
-  mediaType : string
-  size      : number
+  name      : FileBox['name']
+  mediaType : FileBox['mediaType']
+  size      : FileBox['size']
 
   // version: any
   // metadata: any
@@ -28,18 +23,16 @@ interface FileBoxInterface {
   // transformQRCodeToStream: any
   // transformUrlToStream: any
 
-  toBase64  () : Promise<string>
-  toBuffer  () : Promise<Buffer>
-  toDataURL () : Promise<string>
-  toFile    () : Promise<void>
-  toJSON    () : FileBoxJsonObject
-  toQRCode  () : Promise<string>
-  toStream  () : Promise<Readable>
-  toUuid    () : Promise<string>
+  toBase64  : FileBox['toBase64']
+  toBuffer  : FileBox['toBuffer']
+  toDataURL : FileBox['toDataURL']
+  toFile    : FileBox['toFile']
+  toJSON    : FileBox['toJSON']
+  toQRCode  : FileBox['toQRCode']
+  toStream  : FileBox['toStream']
+  toUuid    : FileBox['toUuid']
 
-  pipe<T extends Writable> (
-    destination: T,
-  ): T
+  pipe: FileBox['pipe']
 }
 
 /**

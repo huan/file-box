@@ -472,7 +472,7 @@ console.log(fileBox.remoteSize)
 
 ## History
 
-### main v1.3 (Nov 14, 2021)
+### main v1.4 (Nov 14, 2021)
 
 1. `fileBox.size` will be serialized to/from JSON, and present the `Content-Length` of the file. (`-1` means unknown)
 1. `mimeType` has been renamed to `mediaType`, and added to the `FileBoxInterface`
