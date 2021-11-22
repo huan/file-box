@@ -116,14 +116,12 @@ type FileBoxOptions = FileBoxOptionsCommon & (
   | FileBoxOptionsUuid
 )
 
-type FileBoxJsonObject =  FileBoxOptionsCommon
-                              & (
-                                    never
-                                  | FileBoxOptionsBase64
-                                  | FileBoxOptionsUrl
-                                  | FileBoxOptionsQRCode
-                                  | FileBoxOptionsUuid
-                                )
+type FileBoxJsonObject =  FileBoxOptionsCommon & (
+  | FileBoxOptionsBase64
+  | FileBoxOptionsUrl
+  | FileBoxOptionsQRCode
+  | FileBoxOptionsUuid
+)
 
 type UuidLoader = (this: FileBox, uuid: string)      => Promise<Readable>
 type UuidSaver  = (this: FileBox, stream: Readable)  => Promise<string>

@@ -344,6 +344,17 @@ class FileBox implements Pipeable, FileBoxInterface {
       obj = JSON.parse(obj) as FileBoxJsonObject
     }
 
+    /**
+     * Huan(202111): compatible with old FileBox.toJSON() key: `boxType`
+     *  this is a breaking change made by v1.0
+     *
+     *  convert `obj.boxType` to `obj.type`
+     *  (will be removed after Dec 31, 2022)
+     */
+    if (!(obj as any).type && 'boxType' in (obj as any)) {
+      obj.type = (obj as any)['boxType']
+    }
+
     let fileBox: FileBox
 
     switch (obj.type) {
@@ -717,6 +728,15 @@ class FileBox implements Pipeable, FileBoxInterface {
         void this.type
         throw new Error('FileBox.toJSON() can only work on limited FileBoxType(s). See: <https://github.com/huan/file-box/issues/25>')
     }
+
+    /**
+     * Huan(202111): compatible with old FileBox.toJSON() key: `boxType`
+     *  this is a breaking change made by v1.0
+     *
+     *  save `obj.type` a copy to `obj.boxType`
+     *  (will be removed after Dec 31, 2022)
+     */
+    (obj as any)['boxType'] = obj.type
 
     return obj
   }
