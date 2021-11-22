@@ -312,7 +312,12 @@ test('toJSON()', async t => {
   // const BASE64_DECODED = 'FileBoxBase64\n'
   const BASE64_ENCODED = 'RmlsZUJveEJhc2U2NAo='
   const BASE64_FILENAME = 'test.txt'
-  const EXPECTED_JSON_TEXT = '{"metadata":{},"name":"test.txt","size":14,"base64":"RmlsZUJveEJhc2U2NAo=","type":1}'
+
+  /**
+   * Huan(202111): we have both `type` and `boxType` is because the compatible issue #73
+   *  @see https://github.com/huan/file-box/issues/73
+   */
+  const EXPECTED_JSON_TEXT = '{"metadata":{},"name":"test.txt","size":14,"base64":"RmlsZUJveEJhc2U2NAo=","type":1,"boxType":1}'
 
   const fileBox = FileBox.fromBase64(BASE64_ENCODED, BASE64_FILENAME)
   const jsonText = JSON.stringify(fileBox)
