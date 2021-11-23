@@ -2,7 +2,6 @@
   "extends": "@chatie/tsconfig",
   "compilerOptions": {
     "outDir": "dist/esm",
-    "esModuleInterop": true,
   },
   "exclude": [
     "node_modules/",
