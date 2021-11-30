@@ -69,6 +69,8 @@ fileBox3.toDataURL()
 
 ## API Reference
 
+[API docs on Paka](https://paka.dev/npm/file-box)
+
 ### 1. Load File in to Box
 
 #### 1.1 `fromFile(filePath: string): FileBox`
