@@ -240,30 +240,30 @@ test('metadata', async t => {
 
   const fileBox = FileBox.fromFile(FILE_PATH)
 
-  t.same(fileBox.metadata, {}, 'should get a empty {} if not set')
+  t.same((fileBox as FileBox).metadata, {}, 'should get a empty {} if not set')
 
   t.doesNotThrow(
     () => {
-      fileBox.metadata = EXPECTED_METADATA
+      (fileBox as FileBox).metadata = EXPECTED_METADATA
     },
     'should not throw for set metadata for the first time',
   )
 
   t.throws(
     () => {
-      fileBox.metadata = EXPECTED_METADATA
+      (fileBox as FileBox).metadata = EXPECTED_METADATA
     },
     'should throw for set metadata again',
   )
 
   t.throws(
     () => {
-      fileBox.metadata['mol'] = EXPECTED_MOL
+      (fileBox as FileBox).metadata['mol'] = EXPECTED_MOL
     },
     'should throw for change value of a property on metadata',
   )
 
-  t.same(fileBox.metadata, EXPECTED_METADATA, 'should get the metadata')
+  t.same((fileBox as FileBox).metadata, EXPECTED_METADATA, 'should get the metadata')
 })
 
 test('fromQRCode()', async t => {
@@ -447,7 +447,7 @@ test('FileBox.validInterface()', async t => {
   Object.getOwnPropertyNames(
     Object.getPrototypeOf(fileBox),
   ).forEach(prop => {
-    copy[prop] = fileBox[prop as keyof FileBox]
+    copy[prop] = (fileBox as FileBox)[prop as keyof FileBox]
   })
 
   function NOT_FILE_BOX_CONSTRUCTOR () {}
