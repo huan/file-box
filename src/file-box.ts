@@ -110,7 +110,7 @@ class FileBox implements Pipeable, FileBoxInterface {
       name?    : string,
       size?    : number,
     },
-  ): FileBoxInterface
+  ): FileBox
 
   /**
    * @deprecated use `fromUrl(url, options)` instead
@@ -119,7 +119,7 @@ class FileBox implements Pipeable, FileBoxInterface {
     url      : string,
     name?    : string,
     headers? : HTTP.OutgoingHttpHeaders,
-  ): FileBoxInterface
+  ): FileBox
 
   /**
    * fromUrl()
@@ -132,7 +132,7 @@ class FileBox implements Pipeable, FileBoxInterface {
       size?    : number,
     },
     headers? : HTTP.OutgoingHttpHeaders,
-  ): FileBoxInterface {
+  ): FileBox {
     let name: undefined | string
     let size: undefined | number
 
@@ -167,7 +167,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromFile (
     path:   string,
     name?:  string,
-  ): FileBoxInterface {
+  ): FileBox {
     if (!name) {
       name = PATH.parse(path).base
     }
@@ -186,7 +186,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromStream (
     stream: Readable,
     name?:  string,
-  ): FileBoxInterface {
+  ): FileBox {
     const options: FileBoxOptions = {
       name: name || 'stream.dat',
       stream,
@@ -198,7 +198,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromBuffer (
     buffer: Buffer,
     name?:   string,
-  ): FileBoxInterface {
+  ): FileBox {
     const options: FileBoxOptions = {
       buffer,
       name: name || 'buffer.dat',
@@ -214,7 +214,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromBase64 (
     base64: string,
     name?:   string,
-  ): FileBoxInterface {
+  ): FileBox {
     const options: FileBoxOptions = {
       base64,
       name: name || 'base64.dat',
@@ -229,7 +229,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromDataURL (
     dataUrl : string,
     name?    : string,
-  ): FileBoxInterface {
+  ): FileBox {
     return this.fromBase64(
       dataUrlToBase64(dataUrl),
       name || 'data-url.dat',
@@ -242,7 +242,7 @@ class FileBox implements Pipeable, FileBoxInterface {
    */
   static fromQRCode (
     qrCode: string,
-  ): FileBoxInterface {
+  ): FileBox {
     const options: FileBoxOptions = {
       name: 'qrcode.png',
       qrCode,
@@ -260,7 +260,7 @@ class FileBox implements Pipeable, FileBoxInterface {
       name?: string,
       size?: number,
     },
-  ): FileBoxInterface
+  ): FileBox
 
   /**
    * @deprecated use `fromUuid(name, options)` instead
@@ -268,7 +268,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromUuid (
     uuid: string,
     name?: string,
-  ): FileBoxInterface
+  ): FileBox
 
   /**
    * @param uuid the UUID of the file. For example: `6f88b03c-1237-4f46-8db2-98ef23200551`
@@ -280,7 +280,7 @@ class FileBox implements Pipeable, FileBoxInterface {
       name?: string,
       size?: number,
     },
-  ): FileBoxInterface {
+  ): FileBox {
     let name: undefined | string
     let size: undefined | number
 
@@ -339,7 +339,7 @@ class FileBox implements Pipeable, FileBoxInterface {
    * @param {(FileBoxJsonObject | string)} obj
    * @returns {FileBox}
    */
-  static fromJSON (obj: FileBoxJsonObject | string): FileBoxInterface {
+  static fromJSON (obj: FileBoxJsonObject | string): FileBox {
     if (typeof obj === 'string') {
       obj = JSON.parse(obj) as FileBoxJsonObject
     }
@@ -355,7 +355,7 @@ class FileBox implements Pipeable, FileBoxInterface {
       obj.type = (obj as any)['boxType']
     }
 
-    let fileBox: FileBoxInterface
+    let fileBox: FileBox
 
     switch (obj.type) {
       case FileBoxType.Base64:
