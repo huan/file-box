@@ -101,9 +101,8 @@ class UniformResourceNameRegistry {
    * Return a FileBox Interface with the current URN Registry for conience
    */
   getFileBox (): typeof FileBox {
-    if (!this.purgerTimer) {
-      this.init()
-    }
+    this.init()
+
     class UUIDFileBox extends FileBox {}
     UUIDFileBox.setUuidLoader(this.load.bind(this))
     UUIDFileBox.setUuidSaver(this.save.bind(this))
@@ -131,12 +130,15 @@ class UniformResourceNameRegistry {
       }
     }
 
-    this.addProcessExitListener()
+    if (!this.purgerTimer) {
+      this.addProcessExitListener()
 
-    this.purgerTimer = setInterval(
-      () => this.purgeExpiredUuid(),
-      DEFAULT_UUID_PURGE_INTERVAL_MINUTES * 60 * 1000,
-    )
+      this.purgerTimer = setInterval(
+        () => this.purgeExpiredUuid(),
+        DEFAULT_UUID_PURGE_INTERVAL_MINUTES * 60 * 1000,
+      )
+    }
+
   }
 
   protected purgeExpiredUuid () {
