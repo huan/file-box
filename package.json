@@ -49,11 +49,11 @@
     "@chatie/eslint-config": "^1.0.4",
     "@chatie/git-scripts": "^0.6.2",
     "@chatie/semver": "^0.4.7",
-    "@chatie/tsconfig": "^1.0.3",
+    "@chatie/tsconfig": "^4.6.2",
     "@types/isomorphic-fetch": "0.0.35",
     "@types/mime": "^2.0.3",
     "@types/qrcode": "^1.4.1",
-    "@types/uuid": "^8.3.1",
+    "@types/uuid": "^8.3.3",
     "gts": "^3.1.0",
     "pkg-jq": "^0.2.11",
     "read-pkg-up": "^8.0.0",
@@ -65,7 +65,7 @@
     "jimp": "^0.16.1",
     "jsqr": "^1.4.0",
     "mime": "^3.0.0",
-    "qrcode": "^1.4.4",
+    "qrcode": "^1.5.0",
     "uuid": "^8.3.2"
   },
   "files": [

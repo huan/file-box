@@ -39,6 +39,10 @@ import { instanceToClass }  from 'clone-class'
 import { log }              from 'brolog'
 
 import {
+  FileBox,
+}                         from '../file-box.js'
+
+import {
   randomUuid,
 }               from './random-uuid.js'
 
@@ -93,17 +97,33 @@ class UniformResourceNameRegistry {
     )
   }
 
-  async init () {
+  /**
+   * Return a FileBox Interface with the current URN Registry for conience
+   */
+  FileBox (): typeof FileBox {
+    this.init()
+    class UUIDFileBox extends FileBox {}
+    UUIDFileBox.setUuidLoader(this.load.bind(this))
+    UUIDFileBox.setUuidSaver(this.save.bind(this))
+    return UUIDFileBox
+  }
+
+  /**
+   * init the UUID registry
+   *
+   * must be called before use.
+   */
+  init () {
     log.verbose('UniformResourceNameRegistry', 'init()')
 
     try {
-      const stat = await fs.promises.stat(this.storeDir)
+      const stat = fs.statSync(this.storeDir)
       if (!stat.isDirectory()) {
         throw new Error(this.storeDir + ' is Not a directory')
       }
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
-        await fs.promises.mkdir(this.storeDir, { recursive: true })
+        fs.mkdirSync(this.storeDir, { recursive: true })
       } else {
         throw e
       }
@@ -259,6 +279,11 @@ class UniformResourceNameRegistry {
     }
   }
 
+  /**
+   * destroy the urn registry.
+   *
+   * This function will be called automatically at `process.on(exit)`
+   */
   destroy () {
     log.verbose('UniformResourceNameRegistry', 'destroy() %s UUIDs left',
       [...this.uuidExpiringTable.values()].flat().length,
