@@ -105,5 +105,5 @@ test('URN FileBox helper smoke testing', async t => {
     .toQRCode()
 
   t.equal(qrcode, QRCODE, 'should get back the qrcode data')
-  await urnRegistry.destroy()
+  urnRegistry.destroy()
 })
