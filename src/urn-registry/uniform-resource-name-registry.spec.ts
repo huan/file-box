@@ -88,3 +88,22 @@ test('expireMilliseconds: time out', async t => {
   await urnRegistry.destroy()
   sandbox.restore()
 })
+
+test('URN FileBox helper smoke testing', async t => {
+  const QRCODE = 'test qrcode'
+
+  const urnRegistry = new UniformResourceNameRegistry()
+
+  const UUIDFileBox = urnRegistry.getFileBox()
+
+  const uuid = await UUIDFileBox
+    .fromQRCode(QRCODE)
+    .toUuid()
+
+  const qrcode = await UUIDFileBox
+    .fromUuid(uuid)
+    .toQRCode()
+
+  t.equal(qrcode, QRCODE, 'should get back the qrcode data')
+  await urnRegistry.destroy()
+})

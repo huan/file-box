@@ -100,7 +100,7 @@ class UniformResourceNameRegistry {
   /**
    * Return a FileBox Interface with the current URN Registry for conience
    */
-  FileBox (): typeof FileBox {
+  getFileBox (): typeof FileBox {
     this.init()
     class UUIDFileBox extends FileBox {}
     UUIDFileBox.setUuidLoader(this.load.bind(this))
@@ -283,6 +283,8 @@ class UniformResourceNameRegistry {
    * destroy the urn registry.
    *
    * This function will be called automatically at `process.on(exit)`
+   * however, it till need to be called before the program ends
+   *  because there have some timers in eventloop task list
    */
   destroy () {
     log.verbose('UniformResourceNameRegistry', 'destroy() %s UUIDs left',
