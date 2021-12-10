@@ -101,7 +101,9 @@ class UniformResourceNameRegistry {
    * Return a FileBox Interface with the current URN Registry for conience
    */
   getFileBox (): typeof FileBox {
-    this.init()
+    if (!this.purgerTimer) {
+      this.init()
+    }
     class UUIDFileBox extends FileBox {}
     UUIDFileBox.setUuidLoader(this.load.bind(this))
     UUIDFileBox.setUuidSaver(this.save.bind(this))
