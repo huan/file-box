@@ -12,7 +12,6 @@ import * as PATH      from 'path'
 import * as URL       from 'url'
 
 import mime           from 'mime'
-import crypto from 'crypto'
 
 import {
   PassThrough,
@@ -175,13 +174,11 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromFile (
     path:   string,
     name?:  string,
+    md5?:    string,
   ): FileBox {
     if (!name) {
       name = PATH.parse(path).base
     }
-    const file = FS.readFileSync(path)
-    const hash = crypto.createHash('md5').update(file as any, 'utf8')
-    const md5 = hash.digest('hex')
     const options: FileBoxOptions = {
       md5,
       name,
@@ -198,8 +195,10 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromStream (
     stream: Readable,
     name?:  string,
+    md5?:   string,
   ): FileBox {
     const options: FileBoxOptions = {
+      md5,
       name: name || 'stream.dat',
       stream,
       type: FileBoxType.Stream,
@@ -210,9 +209,11 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromBuffer (
     buffer: Buffer,
     name?:   string,
+    md5?:    string,
   ): FileBox {
     const options: FileBoxOptions = {
       buffer,
+      md5,
       name: name || 'buffer.dat',
       type : FileBoxType.Buffer,
     }
@@ -226,9 +227,11 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromBase64 (
     base64: string,
     name?:   string,
+    md5?:    string,
   ): FileBox {
     const options: FileBoxOptions = {
       base64,
+      md5,
       name: name || 'base64.dat',
       type : FileBoxType.Base64,
     }
@@ -241,10 +244,12 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromDataURL (
     dataUrl : string,
     name?    : string,
+    md5?     : string,
   ): FileBox {
     return this.fromBase64(
       dataUrlToBase64(dataUrl),
       name || 'data-url.dat',
+      md5,
     )
   }
 
@@ -254,8 +259,10 @@ class FileBox implements Pipeable, FileBoxInterface {
    */
   static fromQRCode (
     qrCode: string,
+    md5?:   string,
   ): FileBox {
     const options: FileBoxOptions = {
+      md5,
       name: 'qrcode.png',
       qrCode,
       type: FileBoxType.QRCode,
@@ -281,6 +288,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   static fromUuid (
     uuid: string,
     name?: string,
+    md5?: string,
   ): FileBox
 
   /**
