@@ -73,6 +73,7 @@ interface FileBoxOptionsCommon {
    * Size
    */
   size?: number
+  md5?: string
 }
 
 interface FileBoxOptionsFile {

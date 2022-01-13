@@ -671,6 +671,7 @@ class FileBox implements Pipeable, FileBoxInterface {
 
   toJSON (): FileBoxJsonObject {
     const objCommon: FileBoxOptionsCommon = {
+      md5      : this.md5,
       metadata : this.metadata,
       name     : this.name,
     }
