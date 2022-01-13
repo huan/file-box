@@ -12,6 +12,8 @@ import * as PATH      from 'path'
 import * as URL       from 'url'
 
 import mime           from 'mime'
+import crypto from 'crypto'
+
 import {
   PassThrough,
   Readable,
@@ -109,6 +111,7 @@ class FileBox implements Pipeable, FileBoxInterface {
       headers? : HTTP.OutgoingHttpHeaders,
       name?    : string,
       size?    : number,
+      md5?     : string,
     },
   ): FileBox
 
@@ -119,6 +122,7 @@ class FileBox implements Pipeable, FileBoxInterface {
     url      : string,
     name?    : string,
     headers? : HTTP.OutgoingHttpHeaders,
+    md5?     : string,
   ): FileBox
 
   /**
@@ -130,16 +134,19 @@ class FileBox implements Pipeable, FileBoxInterface {
       headers? : HTTP.OutgoingHttpHeaders,
       name?    : string,
       size?    : number,
+      md5?     : string,
     },
     headers? : HTTP.OutgoingHttpHeaders,
   ): FileBox {
     let name: undefined | string
     let size: undefined | number
+    let md5: undefined | string
 
     if (typeof nameOrOptions === 'object') {
       headers = nameOrOptions.headers
       name    = nameOrOptions.name
       size    = nameOrOptions.size
+      md5     = nameOrOptions.md5
     } else {
       name = nameOrOptions
     }
@@ -150,6 +157,7 @@ class FileBox implements Pipeable, FileBoxInterface {
     }
     const options: FileBoxOptions = {
       headers,
+      md5,
       name,
       size,
       type : FileBoxType.Url,
@@ -171,7 +179,11 @@ class FileBox implements Pipeable, FileBoxInterface {
     if (!name) {
       name = PATH.parse(path).base
     }
+    const file = FS.readFileSync(path)
+    const hash = crypto.createHash('md5').update(file as any, 'utf8')
+    const md5 = hash.digest('hex')
     const options: FileBoxOptions = {
+      md5,
       name,
       path,
       type : FileBoxType.File,
@@ -259,6 +271,7 @@ class FileBox implements Pipeable, FileBoxInterface {
     options?: {
       name?: string,
       size?: number,
+      md5? : string,
     },
   ): FileBox
 
@@ -279,19 +292,23 @@ class FileBox implements Pipeable, FileBoxInterface {
     nameOrOptions?: string | {
       name?: string,
       size?: number,
+      md5? : string
     },
   ): FileBox {
     let name: undefined | string
     let size: undefined | number
+    let md5 : undefined | string
 
     if (typeof nameOrOptions === 'object') {
       name = nameOrOptions.name
       size = nameOrOptions.size
+      md5  = nameOrOptions.md5
     } else {
       name = nameOrOptions
     }
 
     const options: FileBoxOptions = {
+      md5,
       name: name || `${uuid}.dat`,
       size,
       type: FileBoxType.Uuid,
@@ -484,6 +501,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   private readonly remoteUrl? : string
   private readonly qrCode?    : string
   private readonly uuid?      : string
+  private readonly md5?       : string
 
   /**
    * Can not be serialized to JSON
@@ -506,6 +524,7 @@ class FileBox implements Pipeable, FileBoxInterface {
      *  @see https://stackoverflow.com/a/6080707/1123955
      */
     this._mediaType = mime.getType(this.name) ?? undefined
+    this.md5 = options.md5
 
     switch (options.type) {
       case FileBoxType.Buffer:
