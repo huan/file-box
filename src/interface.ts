@@ -11,9 +11,9 @@ interface FileBoxInterface {
   name      : FileBox['name']
   mediaType : FileBox['mediaType']
   size      : FileBox['size']
+  metadata  : FileBox['metadata']
 
   // version: any
-  // metadata: any
   // ready: any
   // syncRemote: any
   // transformBufferToStream: any
