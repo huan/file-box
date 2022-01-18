@@ -73,21 +73,21 @@ fileBox3.toDataURL()
 
 ### 1. Load File in to Box
 
-#### 1.1 optional argumetns: 
+#### 1.1 `fromFile(filePath: string, name?: string, md5?: string): FileBox`
+
+Alias: `fromLocal()`
+
+About optional arguments:
 
 name: filename, if not passed, will be parsed from file path, url, etc.
 
 md5: file md5 code, only for checking purposes and will not be computed from file.
 
-#### 1.2 `fromFile(filePath: string, name?: string, md5?: string): FileBox`
-
-Alias: `fromLocal()`
-
 ```ts
 const fileBox = FileBox.fromLocal('/tmp/test.txt')
 ```
 
-#### 1.3 `fromUrl(url: string, options?: {headers?: HTTP.OutgoingHttpHeaders, name?: string, size?: string, md5?: string}): FileBox` 
+#### 1.2 `fromUrl(url: string, options?: {headers?: HTTP.OutgoingHttpHeaders, name?: string, size?: string, md5?: string}): FileBox` 
 
 
 Alias: `fromRemote()`
@@ -99,7 +99,7 @@ const fileBox = FileBox.fromUrl(
 )
 ```
 
-#### 1.4 `fromStream(stream: Readable, name?: string, md5?: string): FileBox`
+#### 1.3 `fromStream(stream: Readable, name?: string, md5?: string): FileBox`
 
 Will be named 'stream.dat' if no name is provided.
 
@@ -107,7 +107,7 @@ Will be named 'stream.dat' if no name is provided.
 const fileBox = FileBox.fromStream(res, '/tmp/download.zip')
 ```
 
-#### 1.5 `fromBuffer(buffer: Buffer, name?: string, md5?: string): FileBox`
+#### 1.4 `fromBuffer(buffer: Buffer, name?: string, md5?: string): FileBox`
 
 Will be named 'buffer.dat' if no name is provided.
 
@@ -115,7 +115,7 @@ Will be named 'buffer.dat' if no name is provided.
 const fileBox = FileBox.fromBuffer(buf, '/tmp/download.zip')
 ```
 
-#### 1.6 `FileBox.fromBase64(base64: string, name?: string, md5?: string): FileBox`
+#### 1.5 `FileBox.fromBase64(base64: string, name?: string, md5?: string): FileBox`
 
 Decoded a base64 encoded file data. Will be named 'base64.dat' if no name is provided.
 
@@ -125,7 +125,7 @@ const fileBox = FileBox.fromBase64('d29ybGQK', 'hello.txt')
 fileBox.toFile()
 ```
 
-#### 1.7 `FileBox.fromDataURL(dataUrl: string, name?: string, md5?: string): FileBox`
+#### 1.6 `FileBox.fromDataURL(dataUrl: string, name?: string, md5?: string): FileBox`
 
 Decoded a DataURL data. Will be named 'data-url.dat' if no name is provided.
 
@@ -134,7 +134,7 @@ const fileBox = FileBox.fromDataURL('data:text/plain;base64,d29ybGQK', 'hello.tx
 fileBox.toFile()
 ```
 
-#### 1.8 `FileBox.fromJSON()`
+#### 1.7 `FileBox.fromJSON()`
 
 Restore a `FileBox.toJSON()` text string back to a FileBox instance.
 
@@ -142,7 +142,7 @@ Restore a `FileBox.toJSON()` text string back to a FileBox instance.
 const restoredFileBox = FileBox.fromJSON(jsonText)
 ```
 
-#### 1.9 `FileBox.fromQRCode(qrCodeValue: string, md5?: string)`
+#### 1.8 `FileBox.fromQRCode(qrCodeValue: string, md5?: string)`
 
 Get a FileBox instance that represent a QR Code value.
 
@@ -151,7 +151,7 @@ const fileBox = FileBox.fromQRCode('https://github.com')
 fileBox.toFile('qrcode.png')
 ```
 
-#### 1.10 `FileBox.fromUuid(uuid: string, options?: {name?: string, size?: string, md5?: string})`
+#### 1.9 `FileBox.fromUuid(uuid: string, options?: {name?: string, size?: string, md5?: string})`
 
 Load a FileBox from a UUID. Will be named `${uuid}.dat` if no name is provided.
 
@@ -313,9 +313,9 @@ File md5 of the file in the box. The value is set by user, not computed from fil
 ```ts
 const fileBox = FileBox.fromUrl(
   'https://huan.github.io/file-box/images/file-box-logo.jpg',
-  {md5: 'some-random-md5'}
+  {md5: 'computed-md5-string'}
 )
-console.log(fileBox.md5) // Output: some-random-md5
+console.log(fileBox.md5) // Output: computed-md5-string
 ```
 
 #### 3.3 `metadata: Metadata { [key: string]: any }`
