@@ -121,7 +121,6 @@ class FileBox implements Pipeable, FileBoxInterface {
     url      : string,
     name?    : string,
     headers? : HTTP.OutgoingHttpHeaders,
-    md5?     : string,
   ): FileBox
 
   /**
