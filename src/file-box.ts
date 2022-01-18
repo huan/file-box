@@ -392,9 +392,9 @@ class FileBox implements Pipeable, FileBoxInterface {
 
       case FileBoxType.Url:
         fileBox = FileBox.fromUrl(obj.url, {
+          md5: obj.md5,
           name: obj.name,
           size: obj.size,
-          md5: obj.md5,
         })
         break
 
@@ -407,9 +407,9 @@ class FileBox implements Pipeable, FileBoxInterface {
 
       case FileBoxType.Uuid:
         fileBox = FileBox.fromUuid(obj.uuid, {
+          md5: obj.md5,
           name: obj.name,
           size: obj.size,
-          md5: obj.md5,
         })
         break
 
