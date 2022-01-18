@@ -79,38 +79,31 @@ interface FileBoxOptionsCommon {
 interface FileBoxOptionsFile {
   type : FileBoxType.File
   path : string
-  md5? : string
 }
 interface FileBoxOptionsUrl {
   type     : FileBoxType.Url
   url      : string
   headers? : http.OutgoingHttpHeaders
-  md5?     : string
 }
 interface FileBoxOptionsBuffer {
   type   : FileBoxType.Buffer
   buffer : Buffer
-  md5?   : string
 }
 interface FileBoxOptionsStream {
   type   : FileBoxType.Stream
   stream : Readable
-  md5?   : string
 }
 interface FileBoxOptionsQRCode {
   type   : FileBoxType.QRCode,
   qrCode : string,
-  md5?   : string
 }
 interface FileBoxOptionsBase64 {
   type   : FileBoxType.Base64,
   base64 : string,
-  md5?   : string
 }
 interface FileBoxOptionsUuid {
   type : FileBoxType.Uuid
   uuid : string
-  md5? : string
 }
 
 type FileBoxOptions = FileBoxOptionsCommon & (
