@@ -172,7 +172,18 @@ const fileBox = FileBox.fromRemote(
 await fileBox.toFile('/tmp/logo.jpg')
 ```
 
-#### 2.2 `pipe(destination: Writable): Promise<void>`
+#### 2.2 `toStream(): Readable`
+
+Get the stream of file data.
+
+```ts
+const fileBox = FileBox.fromRemote(
+  'https://huan.github.io/file-box/images/file-box-logo.jpg',
+)
+const readableStream = fileBox.toStream()
+```
+
+#### 2.3 `pipe(destination: Writable): Promise<void>`
 
 Pipe to a writable stream.
 
@@ -184,7 +195,7 @@ const writableStream = fs.createWritable('/tmp/logo.jpg')
 fileBox.pipe(writableStream)
 ```
 
-#### 2.3 `toBase64(): Promise<string>`
+#### 2.4 `toBase64(): Promise<string>`
 
 Get the base64 data of file.
 
@@ -196,7 +207,7 @@ const base64Text = await fileBox.toBase64()
 console.log(base64Text) // Output: the base64 encoded data of the file
 ```
 
-#### 2.4 `toJSON(): string`
+#### 2.5 `toJSON(): string`
 
 Get the `JSON.stringify`-ed text.
 
@@ -216,7 +227,7 @@ const restoredFileBox = fileBox.fromJSON(jsonText1)
 restoredFileBox.toFile('/tmp/file-box-logo.jpg')
 ```
 
-#### 2.5 `toDataURL(): Promise<string>`
+#### 2.6 `toDataURL(): Promise<string>`
 
 Get the DataURL of the file.
 
@@ -226,7 +237,7 @@ const dataUrl = await fileBox.toDataURL()
 console.log(dataUrl) // Output: data:text/plain;base64,d29ybGQK'
 ```
 
-#### 2.6 `toBuffer(): Promise<Buffer>`
+#### 2.7 `toBuffer(): Promise<Buffer>`
 
 Get the Buffer of the file.
 
@@ -236,7 +247,7 @@ const buffer = await fileBox.toBuffer()
 console.log(buffer.toString()) // Output: world
 ```
 
-#### 2.7 `toQRCode(): Promise<string>`
+#### 2.8 `toQRCode(): Promise<string>`
 
 Decode the QR Code value from the file.
 
@@ -247,13 +258,13 @@ console.log(`QR Code decoded value is: "${qrCodeValue}"`)
 // Output: QR Code decoded value is: "https://github.com"
 ```
 
-#### 2.8 `toUuid(): Promise<string>`
+#### 2.9 `toUuid(): Promise<string>`
 
 Save the FileBox to a UUID file and return the UUID.
 
 See: `FileBox.setUuidSaver()`
 
-#### 2.9 `toJSON(): string`
+#### 2.10 `toJSON(): string`
 
 Encode a FileBox instance to JSON string so that we can transfer the FileBox on the wire.
 
