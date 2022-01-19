@@ -73,49 +73,61 @@ fileBox3.toDataURL()
 
 ### 1. Load File in to Box
 
-#### 1.1 `fromFile(filePath: string): FileBox`
+#### 1.1 `fromFile(filePath: string, name?: string, md5?: string): FileBox`
 
 Alias: `fromLocal()`
+
+About optional arguments:
+
+name: filename, if not passed, will be parsed from file path, url, etc.
+
+md5: file md5 code, only for checking purposes and will not be computed from file.
 
 ```ts
 const fileBox = FileBox.fromLocal('/tmp/test.txt')
 ```
 
-#### 1.2 `fromUrl(url: string, name?: string, headers?: http.OutgoingHttpHeaders): FileBox`
+#### 1.2 `fromUrl(url: string, options?: {headers?: HTTP.OutgoingHttpHeaders, name?: string, size?: string, md5?: string}): FileBox` 
+
 
 Alias: `fromRemote()`
 
 ```ts
 const fileBox = FileBox.fromUrl(
   'https://huan.github.io/file-box/images/file-box-logo.jpg',
-  'logo.jpg',
+  {name: 'logo.jpg'},
 )
 ```
 
-#### 1.3 `fromStream(stream: Readable, name: string): FileBox`
+#### 1.3 `fromStream(stream: Readable, name?: string, md5?: string): FileBox`
+
+Will be named 'stream.dat' if no name is provided.
 
 ```ts
 const fileBox = FileBox.fromStream(res, '/tmp/download.zip')
 ```
 
-#### 1.4 `fromBuffer(buffer: Buffer, name: string): FileBox`
+#### 1.4 `fromBuffer(buffer: Buffer, name?: string, md5?: string): FileBox`
+
+Will be named 'buffer.dat' if no name is provided.
 
 ```ts
 const fileBox = FileBox.fromBuffer(buf, '/tmp/download.zip')
 ```
 
-#### 1.5 `FileBox.fromBase64(base64: string, name: string): FileBox`
+#### 1.5 `FileBox.fromBase64(base64: string, name?: string, md5?: string): FileBox`
 
-Decoded a base64 encoded file data.
+Decoded a base64 encoded file data. Will be named 'base64.dat' if no name is provided.
+
 
 ```ts
 const fileBox = FileBox.fromBase64('d29ybGQK', 'hello.txt')
 fileBox.toFile()
 ```
 
-#### 1.6 `FileBox.fromDataURL(dataUrl: string, name: string): FileBox`
+#### 1.6 `FileBox.fromDataURL(dataUrl: string, name?: string, md5?: string): FileBox`
 
-Decoded a DataURL data.
+Decoded a DataURL data. Will be named 'data-url.dat' if no name is provided.
 
 ```ts
 const fileBox = FileBox.fromDataURL('data:text/plain;base64,d29ybGQK', 'hello.txt')
@@ -130,7 +142,7 @@ Restore a `FileBox.toJSON()` text string back to a FileBox instance.
 const restoredFileBox = FileBox.fromJSON(jsonText)
 ```
 
-#### 1.8 `FileBox.fromQRCode(qrCodeValue: string)`
+#### 1.8 `FileBox.fromQRCode(qrCodeValue: string, md5?: string)`
 
 Get a FileBox instance that represent a QR Code value.
 
@@ -139,9 +151,9 @@ const fileBox = FileBox.fromQRCode('https://github.com')
 fileBox.toFile('qrcode.png')
 ```
 
-#### 1.9 `FileBox.fromUuid(uuid: string)`
+#### 1.9 `FileBox.fromUuid(uuid: string, options?: {name?: string, size?: string, md5?: string})`
 
-Load a FileBox from a UUID.
+Load a FileBox from a UUID. Will be named `${uuid}.dat` if no name is provided.
 
 See: `FileBox.setUuidLoader()`
 
@@ -305,7 +317,19 @@ const fileBox = FileBox.fromRemote(
 console.log(fileBox.name) // Output: file-box-logo.jpg
 ```
 
-#### 3.2 `metadata: Metadata { [key: string]: any }`
+#### 3.2 `md5`
+
+File md5 of the file in the box. The value is set by user, not computed from file.
+
+```ts
+const fileBox = FileBox.fromUrl(
+  'https://huan.github.io/file-box/images/file-box-logo.jpg',
+  {md5: 'computed-md5-string'}
+)
+console.log(fileBox.md5) // Output: computed-md5-string
+```
+
+#### 3.3 `metadata: Metadata { [key: string]: any }`
 
 Metadata for the file in the box. This value can only be assigned once, and will be immutable afterwards, all following assign or modify actions on `metadata` will throw errors
 
@@ -322,26 +346,26 @@ console.log(fileBox.metadata)       // Output: { author: 'huan', githubRepo: 'ht
 fileBox.metadata.author = 'Tank'  // Will throw exception
 ```
 
-#### 3.3 `version(): string`
+#### 3.4 `version(): string`
 
 Version of the FileBox
 
-#### 3.4 `toJSON(): string`
+#### 3.5 `toJSON(): string`
 
 Serialize FileBox metadata to JSON.
 
-#### 3.5 `ready(): Promise<void>`
+#### 3.6 `ready(): Promise<void>`
 
 Update the necessary internal data and make everything ready for use.
 
-#### 3.6 `syncRemoteName(): Promise<void>`
+#### 3.7 `syncRemoteName(): Promise<void>`
 
 Sync the filename with the HTTP Response Header
 
 HTTP Header Example:
 > Content-Disposition: attachment; filename="filename.ext"
 
-#### 3.7 `type: FileBoxType`
+#### 3.8 `type: FileBoxType`
 
 Return the type of the current FileBox instance.
 
@@ -360,7 +384,7 @@ enum FileBoxType {
 }
 ```
 
-#### 3.8 `FileBox.setUuidLoader(loader: UuidLoader): void`
+#### 3.9 `FileBox.setUuidLoader(loader: UuidLoader): void`
 
 Required by static method `FileBox.fromUuid()`
 
@@ -384,7 +408,7 @@ The `UuidLoader` is a function that takes a UUID and return a readable stream.
 type UuidLoader = (this: FileBox, uuid: string) => Readable
 ```
 
-#### 3.9 `FileBox.setUuidSaver(saver: UuidSaver): void`
+#### 3.10 `FileBox.setUuidSaver(saver: UuidSaver): void`
 
 Required by instance method `fileBox.toUuid()`
 
@@ -408,7 +432,7 @@ The `UuidSaver` is a function that takes a readable stream and return a UUID pro
 type UuidSaver = (this: FileBox, stream: Readable) => Promise<string>
 ```
 
-#### 3.10 `size`
+#### 3.11 `size`
 
 The file box size in bytes. (`-1` means unknown)
 
@@ -422,7 +446,7 @@ console.log(fileBox.size)
 // > 20 <- this is the length of the URL string
 ```
 
-#### 3.11 `remoteSize`
+#### 3.12 `remoteSize`
 
 The remote file size in bytes. (`-1` or `undefined` means unknown)
 
@@ -484,6 +508,10 @@ console.log(fileBox.remoteSize)
 ```
 
 ## History
+
+### main v1.5 (Jan 18, 2022)
+
+1. `fileBox.md5` can be set by user. This filed is for the receiver of the filebox to check, and it is not computed from the file.
 
 ### main v1.4 (Nov 14, 2021)
 

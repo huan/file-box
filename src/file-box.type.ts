@@ -73,6 +73,7 @@ interface FileBoxOptionsCommon {
    * Size
    */
   size?: number
+  md5?: string
 }
 
 interface FileBoxOptionsFile {
@@ -102,7 +103,7 @@ interface FileBoxOptionsBase64 {
 }
 interface FileBoxOptionsUuid {
   type : FileBoxType.Uuid
-  uuid : string,
+  uuid : string
 }
 
 type FileBoxOptions = FileBoxOptionsCommon & (
