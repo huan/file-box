@@ -27,12 +27,18 @@ Currently the FileBox supports almost all kinds of the data input/output methods
 
 The following example demos:
 
-1. Save URL to File
-1. Convert Buffer to Stream
+1. Load local file
+1. Save URL to local file
+1. Convert buffer to stream
 1. Pack from Base64 then Unpack to DataURL
 
 ```ts
 import { FileBox } from 'file-box'
+
+/**
+ * 0. Load local file
+ */
+const fileBox0 = FileBox.fromFile('/tmp/file.jpg')
 
 /**
  * 1. Save URL to File
