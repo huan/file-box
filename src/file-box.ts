@@ -453,6 +453,11 @@ class FileBox implements Pipeable, FileBoxInterface {
   }
 
   /**
+   * File MD5 Sum
+   */
+  readonly md5: undefined | string
+
+  /**
    * @deprecated: use `mediaType` instead. will be removed after Dec 31, 2022
    */
   mimeType = 'application/unknown'
@@ -500,7 +505,6 @@ class FileBox implements Pipeable, FileBoxInterface {
   private readonly remoteUrl? : string
   private readonly qrCode?    : string
   private readonly uuid?      : string
-  private readonly md5?       : string
 
   /**
    * Can not be serialized to JSON
