@@ -339,7 +339,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   /**
    * UUID Type FielBox Saver
    */
-   static setUuidSaver (
+  static setUuidSaver (
     saver: UuidSaver,
   ): void {
     if (Object.prototype.hasOwnProperty.call(this, 'uuidFromStream')) {
