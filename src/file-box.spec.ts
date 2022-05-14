@@ -2,15 +2,10 @@
 
 import 'reflect-metadata'
 
-import assert   from 'assert'
-import {
-  PassThrough,
-  Readable,
-}               from 'stream'
-import {
-  test,
-  sinon,
-}               from 'tstest'
+import assert                       from 'assert'
+import { PassThrough, Readable }    from 'stream'
+import { test, sinon }              from 'tstest'
+import { instanceToClass }          from 'clone-class'
 
 import { FileBox }      from './file-box.js'
 import { FileBoxType }  from './file-box.type.js'
@@ -470,4 +465,16 @@ test('FileBox.validInterface()', async t => {
   delete target.size
   t.notOk(FileBox.validInterface(target), 'should not be a valid interface if it lack any property')
   t.notOk(FileBox.valid(target), 'should not satisfy interface validation')
+})
+
+test('fromJSON() should keep class', async t => {
+  const JSON_TEXT = '{"metadata":{},"name":"smoke-testing.ts","size":735,"type":7,"uuid":"82f461b9-e654-422d-aade-222d05cb02ad","boxType":7}'
+
+  class FileBoxUuid extends FileBox {}
+  FileBoxUuid.setUuidLoader(() => ({} as any))
+  FileBoxUuid.setUuidSaver(() => ({} as any))
+
+  const fileBoxUuid = FileBoxUuid.fromJSON(JSON_TEXT)
+  const FromJsonKlass = instanceToClass(fileBoxUuid, FileBox)
+  t.equal(FromJsonKlass, FileBoxUuid, 'should get back FileBoxUuid class')
 })

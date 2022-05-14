@@ -374,7 +374,7 @@ class FileBox implements Pipeable, FileBoxInterface {
 
     switch (obj.type) {
       case FileBoxType.Base64:
-        fileBox = FileBox.fromBase64(
+        fileBox = this.fromBase64(
           obj.base64,
           obj.name,
           obj.md5,
@@ -382,7 +382,7 @@ class FileBox implements Pipeable, FileBoxInterface {
         break
 
       case FileBoxType.Url:
-        fileBox = FileBox.fromUrl(obj.url, {
+        fileBox = this.fromUrl(obj.url, {
           md5: obj.md5,
           name: obj.name,
           size: obj.size,
@@ -390,14 +390,14 @@ class FileBox implements Pipeable, FileBoxInterface {
         break
 
       case FileBoxType.QRCode:
-        fileBox = FileBox.fromQRCode(
+        fileBox = this.fromQRCode(
           obj.qrCode,
           obj.md5,
         )
         break
 
       case FileBoxType.Uuid:
-        fileBox = FileBox.fromUuid(obj.uuid, {
+        fileBox = this.fromUuid(obj.uuid, {
           md5: obj.md5,
           name: obj.name,
           size: obj.size,
