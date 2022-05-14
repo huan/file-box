@@ -325,13 +325,8 @@ class FileBox implements Pipeable, FileBoxInterface {
   }
 
   /**
-   * @deprecated use `setUuidLoader()` instead
+   * UUID Type FielBox Loader
    */
-  static setUuidResolver (loader: any) {
-    console.error('FileBox.sxetUuidResolver() is deprecated. Use `setUuidLoader()` instead.\n', new Error().stack)
-    return this.setUuidLoader(loader)
-  }
-
   static setUuidLoader (
     loader: UuidLoader,
   ): void {
@@ -342,13 +337,9 @@ class FileBox implements Pipeable, FileBoxInterface {
   }
 
   /**
-   * @deprecated use `setUuidSaver()` instead
+   * UUID Type FielBox Saver
    */
-  static setUuidRegister () {
-    console.error('FileBox.setUuidRegister() is deprecated. Use `setUuidSaver()` instead.\n', new Error().stack)
-  }
-
-  static setUuidSaver (
+   static setUuidSaver (
     saver: UuidSaver,
   ): void {
     if (Object.prototype.hasOwnProperty.call(this, 'uuidFromStream')) {
@@ -460,9 +451,6 @@ class FileBox implements Pipeable, FileBoxInterface {
     }
     return UNKNOWN_SIZE
   }
-
-  /**
-   *
 
   /**
    * @deprecated: use `mediaType` instead. will be removed after Dec 31, 2022

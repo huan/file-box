@@ -9,8 +9,9 @@ interface FileBoxInterface {
   type      : FileBox['type']
 
   name      : FileBox['name']
-  mediaType : FileBox['mediaType']
   size      : FileBox['size']
+  md5       : FileBox['md5']
+  mediaType : FileBox['mediaType']
   metadata  : FileBox['metadata']
 
   // version: any
