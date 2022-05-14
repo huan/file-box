@@ -819,7 +819,7 @@ class FileBox implements Pipeable, FileBoxInterface {
         }
         const FileBoxKlass = instanceToClass(this, FileBox)
 
-        if (typeof FileBoxKlass.uuidToStream !== 'function') {
+        if (!FileBoxKlass.uuidToStream) {
           throw new Error('need to call FileBox.setUuidLoader() to set UUID loader first.')
         }
 
@@ -998,7 +998,7 @@ class FileBox implements Pipeable, FileBoxInterface {
 
     const FileBoxKlass = instanceToClass(this, FileBox)
 
-    if (typeof FileBoxKlass.uuidFromStream !== 'function') {
+    if (!FileBoxKlass.uuidFromStream) {
       throw new Error('need to use FileBox.setUuidSaver() before dealing with UUID')
     }
 

@@ -381,7 +381,7 @@ test('fromUuid()', async t => {
   const stream = new PassThrough()
   stream.end(TEXT)
 
-  const uuidBox = FileBoxTest.fromUuid(UUID, 'test.txt')
+  const uuidBox = FileBoxTest.fromUuid(UUID, { name: 'test.txt' })
 
   await t.rejects(uuidBox.toBase64(), 'should reject without `FileBox.setUuidLoader()` call`')
 
@@ -424,7 +424,7 @@ test('setUuidLoader() & setUuidSsaver() with `this`', async t => {
   FileBoxTest.setUuidLoader(loader)
   FileBoxTest.setUuidSaver(saver)
 
-  const fileBox = FileBoxTest.fromUuid('uuid', 'test.txt')
+  const fileBox = FileBoxTest.fromUuid('uuid', { name: 'test.txt' })
   await fileBox.toBuffer()
   t.equal(loader.thisValues[0], fileBox, 'should call loader with `this`')
 
