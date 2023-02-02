@@ -3,6 +3,8 @@ import https   from 'https'
 import nodeUrl from 'url'
 import type stream   from 'stream'
 
+const HTTP_TIMEOUT = Number(process.env['FILEBOX_HTTP_TIMEOUT']) || 5000
+
 export function dataUrlToBase64 (dataUrl: string): string {
   const dataList = dataUrl.split(',')
   return dataList[dataList.length - 1]!
@@ -57,8 +59,11 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
     }
 
     return new Promise<http.IncomingMessage>((resolve, reject) => {
-      request(options, resolve)
+      const req = request(options, resolve)
         .on('error', reject)
+        .setTimeout(HTTP_TIMEOUT,()=>{
+          req.destroy(new Error('Http request timeout!'))
+        })
         .end()
     })
   }
@@ -120,8 +125,11 @@ export async function httpStream (
   }
 
   const res = await new Promise<http.IncomingMessage>((resolve, reject) => {
-    get(options, resolve)
+    const req = get(options, resolve)
       .on('error', reject)
+      .setTimeout(HTTP_TIMEOUT,()=>{
+        req.destroy(new Error('Http request timeout!'))
+      })
       .end()
   })
   return res
