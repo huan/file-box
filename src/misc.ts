@@ -59,10 +59,16 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
     }
 
     return new Promise<http.IncomingMessage>((resolve, reject) => {
-      const req = request(options, resolve)
-        .on('error', reject)
-        .setTimeout(HTTP_TIMEOUT,()=>{
-          req.destroy(new Error('Http request timeout!'))
+      let res: http.IncomingMessage
+      const req = request(options, (response) => {
+        res = response
+        resolve(res)
+      })
+        .once('error', reject)
+        .setTimeout(HTTP_TIMEOUT, () => {
+          const e = new Error('Http request timeout!')
+          res?.destroy(e)
+          req.destroy(e)
         })
         .end()
     })
@@ -124,15 +130,20 @@ export async function httpStream (
     ...headers,
   }
 
-  const res = await new Promise<http.IncomingMessage>((resolve, reject) => {
-    const req = get(options, resolve)
-      .on('error', reject)
-      .setTimeout(HTTP_TIMEOUT,()=>{
-        req.destroy(new Error('Http request timeout!'))
+  return new Promise<http.IncomingMessage>((resolve, reject) => {
+    let res: http.IncomingMessage
+    const req = get(options, (response) => {
+      res = response
+      resolve(res)
+    })
+      .once('error', reject)
+      .setTimeout(HTTP_TIMEOUT, () => {
+        const e = new Error('Http request timeout!')
+        res?.destroy(e)
+        req.destroy(e)
       })
       .end()
   })
-  return res
 }
 
 export async function streamToBuffer (

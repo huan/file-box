@@ -1017,12 +1017,12 @@ class FileBox implements Pipeable, FileBoxInterface {
   pipe<T extends Writable> (
     destination: T,
   ): T {
-    this.toStream().then(stream => {
-      stream.on('error', e => {
-        destination.emit('error', e)
+    this.toStream()
+      .then(stream => {
+        stream.once('error', e => destination?.destroy(e))
+        return stream.pipe(destination)
       })
-      return stream.pipe(destination)
-    }).catch(e => destination.emit('error', e))
+      .catch(e => destination?.destroy(e))
     return destination
   }
 
