@@ -58,7 +58,7 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
     }
 
     return new Promise<http.IncomingMessage>((resolve, reject) => {
-      let res: http.IncomingMessage
+      let res: http.IncomingMessage | null = null
       const req = request(parsedUrl, options, (response) => {
         res = response
         resolve(res)
@@ -66,7 +66,9 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
         .once('error', reject)
         .setTimeout(HTTP_TIMEOUT, () => {
           const e = new Error('Http request timeout!')
-          res?.destroy(e)
+          if (res) {
+            res.destroy(e)
+          }
           req.destroy(e)
         })
         .end()
@@ -124,7 +126,7 @@ export async function httpStream (
   }
 
   return new Promise<http.IncomingMessage>((resolve, reject) => {
-    let res: http.IncomingMessage
+    let res: http.IncomingMessage | null = null
     const req = get(parsedUrl, options, (response) => {
       res = response
       resolve(res)
@@ -132,7 +134,9 @@ export async function httpStream (
       .once('error', reject)
       .setTimeout(HTTP_TIMEOUT, () => {
         const e = new Error('Http request timeout!')
-        res?.destroy(e)
+        if (res) {
+          res.destroy(e)
+        }
         req.destroy(e)
       })
       .end()

@@ -1019,10 +1019,10 @@ class FileBox implements Pipeable, FileBoxInterface {
   ): T {
     this.toStream()
       .then(stream => {
-        stream.once('error', e => destination?.destroy(e))
+        stream.once('error', e => destination.destroy(e))
         return stream.pipe(destination)
       })
-      .catch(e => destination?.destroy(e))
+      .catch(e => destination.destroy(e))
     return destination
   }
 
