@@ -478,7 +478,7 @@ console.log(fileBox.remoteSize)
 
 Environment variables can be used to control some behavior.
 
-- `FILEBOX_HTTP_TIMEOUT` [default=5000] Socket idle timeout when FileBox downloads data from URL. For example, when the network is temporarily interrupted, the request will be considered as failed after waiting for a specified time.
+- `FILEBOX_HTTP_TIMEOUT` [default=60000] Socket idle timeout when FileBox downloads data from URL. For example, when the network is temporarily interrupted, the request will be considered as failed after waiting for a specified time.
 
 ## SCHEMAS
 
