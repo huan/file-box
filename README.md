@@ -521,9 +521,9 @@ Environment variables can be used to control some behavior.
 
 ## History
 
-### main v1.5.6 (Feb 18, 2023)
+### main v1.7 (Feb 18, 2023)
 
-1. Environment variables `FILEBOX_HTTP_TIMEOUT` can be set by user. see [Environments](#Environments).
+1. Environment variables `FILEBOX_HTTP_TIMEOUT` can be set by user. see [Environments](#Environments). ([#80](https://github.com/huan/file-box/issues/80), by @[binsee](https://github.com/binsee))
 
 ### main v1.5 (Jan 18, 2022)
 
