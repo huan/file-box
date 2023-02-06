@@ -134,7 +134,7 @@ export async function httpStream (
     })
       .once('error', reject)
       .setTimeout(HTTP_TIMEOUT, () => {
-        const e = new Error('Http request timeout!')
+        const e = new Error(`Http request timeout (${HTTP_TIMEOUT})!`)
         if (res) {
           res.destroy(e)
         }
