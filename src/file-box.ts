@@ -1020,7 +1020,6 @@ class FileBox implements Pipeable, FileBoxInterface {
     this.toStream()
       .then(stream => {
         stream.on('error', e => {
-          console.error(e)
           destination.emit('error', e)
         })
         return stream.pipe(destination)
