@@ -3,7 +3,7 @@ import https   from 'https'
 import { URL } from 'url'
 import type stream   from 'stream'
 
-const HTTP_TIMEOUT = Number(process.env['FILEBOX_HTTP_TIMEOUT']) || 60 * 1000
+import { HTTP_TIMEOUT } from './config.js'
 
 export function dataUrlToBase64 (dataUrl: string): string {
   const dataList = dataUrl.split(',')
