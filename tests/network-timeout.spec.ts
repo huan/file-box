@@ -88,6 +88,19 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     t.ok(errorSpy.calledOnce, `should get error after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
   })
 
+  await t.test('ready should timeout', async (t) => {
+    const url = `${host}${URL.TIMEOUT}`
+    const errorSpy = sandbox.spy()
+
+    // console.debug(`${new Date().toLocaleTimeString()} Start request ...`)
+    const start = Date.now()
+    const fileBox = FileBox.fromUrl(url)
+    await fileBox.ready().catch(errorSpy)
+
+    await sandbox.clock.tickAsync(1)
+    t.ok(errorSpy.calledOnce, `should not get error (${Date.now() - start} passed)`)
+  })
+
   sandbox.restore()
   server.close()
 })
