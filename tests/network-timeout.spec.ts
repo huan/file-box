@@ -18,6 +18,7 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     TIMEOUT: '/timeout',
   }
 
+  /* eslint @typescript-eslint/no-misused-promises:off */
   const server = createServer(async (req, res) => {
     res.write(Buffer.from('This is the first chunk of data.'))
 
