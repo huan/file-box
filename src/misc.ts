@@ -136,9 +136,10 @@ export async function httpStream (
       .setTimeout(HTTP_TIMEOUT, () => {
         const e = new Error(`FileBox: Http request timeout (${HTTP_TIMEOUT})!`)
         if (res) {
-          res.destroy(e)
+          res.emit('error', e)
         }
-        req.destroy(e)
+        req.emit('error', e)
+        req.destroy()
       })
       .end()
   })
