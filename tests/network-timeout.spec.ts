@@ -15,14 +15,14 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     now: Date.now(),
     shouldAdvanceTime: true,
     shouldClearNativeTimers: true,
-    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'nextTick'],
+    toFake: [ 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'nextTick' ],
   })
   t.jobs = 3
   const port = Math.floor(Math.random() * (65535 - 49152 + 1)) + 49152
   const URL = {
     NOT_TIMEOUT: '/not_timeout',
-    TIMEOUT: '/timeout',
     READY: '/ready',
+    TIMEOUT: '/timeout',
   }
 
   /* eslint @typescript-eslint/no-misused-promises:off */
@@ -53,6 +53,7 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     sandbox.restore()
   })
 
+  /** eslint @typescript-eslint/no-floating-promises:off */
   t.test('should not timeout', async (t) => {
     const url = `${host}${URL.NOT_TIMEOUT}`
     const dataSpy = sandbox.spy()
@@ -79,8 +80,9 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     t.ok(dataSpy.calledTwice, `should get chunk 2 after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
     t.ok(errorSpy.notCalled, `should not get error after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
     t.end()
-  })
+  }).catch(t.threw)
 
+  /** eslint @typescript-eslint/no-floating-promises:off */
   t.test('should timeout', async (t) => {
     const url = `${host}${URL.TIMEOUT}`
     const dataSpy = sandbox.spy()
@@ -115,8 +117,9 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     t.ok(dataSpy.calledOnce, `should not get chunk 2 after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
     t.ok(errorSpy.calledOnce, `should get error after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
     t.end()
-  })
+  }).catch(t.threw)
 
+  /** eslint @typescript-eslint/no-floating-promises:off */
   t.test('ready should timeout', async (t) => {
     const url = `${host}${URL.READY}`
     const errorSpy = sandbox.spy()
@@ -129,5 +132,5 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     await sandbox.clock.tickAsync(1)
     t.ok(errorSpy.notCalled, `should not get error (${Date.now() - start} passed)`)
     t.end()
-  })
+  }).catch(t.threw)
 })
