@@ -63,14 +63,11 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
         res = response
         resolve(res)
       })
-        .once('error', reject)
+        .on('error', reject)
         .setTimeout(HTTP_TIMEOUT, () => {
           const e = new Error(`FileBox: Http request timeout (${HTTP_TIMEOUT})!`)
-          if (res) {
-            res.emit('error', e)
-          } else {
-            req.emit('error', e)
-          }
+          req.emit('error', e)
+          req.destroy()
         })
         .end()
     })
@@ -132,7 +129,7 @@ export async function httpStream (
       res = response
       resolve(res)
     })
-      .once('error', reject)
+      .on('error', reject)
       .setTimeout(HTTP_TIMEOUT, () => {
         const e = new Error(`FileBox: Http request timeout (${HTTP_TIMEOUT})!`)
         if (res) {
