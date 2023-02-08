@@ -1,6 +1,6 @@
 {
   "name": "file-box",
-  "version": "1.5.5",
+  "version": "1.7.0",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "type": "module",
   "exports": {
@@ -22,7 +22,7 @@
     "lint": "npm-run-all lint:es lint:ts",
     "lint:ts": "tsc --isolatedModules --noEmit",
     "test": "npm-run-all lint test:unit",
-    "test:unit": "cross-env NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" tap \"src/**/*.spec.ts\" \"tests/*.spec.ts\"",
+    "test:unit": "cross-env NODE_OPTIONS=\"--no-warnings --loader=ts-node/esm\" tap --timeout=90 \"src/**/*.spec.ts\" \"tests/*.spec.ts\"",
     "test:pack": "bash -x scripts/npm-pack-testing.sh",
     "lint:es": "eslint --ignore-pattern fixtures/ \"src/**/*.ts\" \"tests/**/*.ts\""
   },

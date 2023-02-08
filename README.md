@@ -474,6 +474,12 @@ console.log(fileBox.remoteSize)
 1. Serializable
 1. Can be Transfered from server to server, server to browser.
 
+## Environments
+
+Environment variables can be used to control some behavior.
+
+- `FILEBOX_HTTP_TIMEOUT` [default=60000] Socket idle timeout when FileBox downloads data from URL. For example, when the network is temporarily interrupted, the request will be considered as failed after waiting for a specified time.
+
 ## SCHEMAS
 
 ### Url
@@ -514,6 +520,10 @@ console.log(fileBox.remoteSize)
 ```
 
 ## History
+
+### main v1.7 (Feb 18, 2023)
+
+1. Environment variables `FILEBOX_HTTP_TIMEOUT` can be set by user. see [Environments](#Environments). ([#80](https://github.com/huan/file-box/issues/80), by @[binsee](https://github.com/binsee))
 
 ### main v1.5 (Jan 18, 2022)
 
