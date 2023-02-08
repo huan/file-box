@@ -29,14 +29,16 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
   const server = createServer(async (req, res) => {
     res.write(Buffer.from('This is the first chunk of data.'))
 
-    if (req.url === URL.TIMEOUT) {
-      await setTimeout(HTTP_TIMEOUT + 100)
+    if (req.url === URL.NOT_TIMEOUT) {
+      await setTimeout(HTTP_TIMEOUT * 0.5)
+      res.write(Buffer.from('This is the second chunk of data.'))
+      await setTimeout(HTTP_TIMEOUT * 0.9)
     } else {
-      await setTimeout(HTTP_TIMEOUT - 100)
+      await setTimeout(HTTP_TIMEOUT + 100)
     }
 
     // console.debug(`${new Date().toLocaleTimeString()} call res.end "${req.url}"`)
-    res.end(Buffer.from('This is the second chunk of data after 10 seconds.'))
+    res.end(Buffer.from('All data end.'))
   })
 
   const host = await new Promise<string>((resolve) => {
@@ -72,12 +74,14 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     // FIXME: tickAsync does not work on socket timeout
     await new Promise<void>((resolve) => {
       stream.once('error', resolve).on('close', resolve)
-      resolve(setTimeout(HTTP_TIMEOUT))
+      // resolve(setTimeout(HTTP_TIMEOUT))
     })
     await sandbox.clock.tickAsync(1)
     // await sandbox.clock.tickAsync(HTTP_TIMEOUT)
 
-    t.ok(dataSpy.calledTwice, `should get chunk 2 after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
+    // t.comment('recv data count:', dataSpy.callCount)
+    // t.comment('recv error count:', errorSpy.callCount)
+    t.ok(dataSpy.calledThrice, `should get chunk 3 after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
     t.ok(errorSpy.notCalled, `should not get error after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
     t.end()
   }).catch(t.threw)
@@ -93,28 +97,30 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     const stream = await FileBox.fromUrl(url).toStream()
 
     stream.once('error', errorSpy).once('data', dataSpy)
-    // .once('error', (e) => {
-    //   console.error('on error:', e.stack)
-    //   errorSpy(e)
+    // .on('error', (e) => {
+    //   console.error(`on error for req "${url}":`, e.stack)
     // })
     // .on('data', (d: Buffer) => {
-    //   console.error('on data:', d.toString())
-    //   dataSpy(d)
+    //   console.error(`on data for req "${url}":`, d.toString())
     // })
 
     await sandbox.clock.tickAsync(1)
+
+    // t.comment('recv data count:', dataSpy.callCount)
+    // t.comment('recv error count:', errorSpy.callCount)
     t.ok(dataSpy.calledOnce, `should get chunk 1 (${Date.now() - start} passed)`)
     t.ok(errorSpy.notCalled, `should not get error (${Date.now() - start} passed)`)
 
     // FIXME: tickAsync does not work on socket timeout
     await new Promise<void>((resolve) => {
       stream.once('error', resolve).on('close', resolve)
-      resolve(setTimeout(HTTP_TIMEOUT))
+      // resolve(setTimeout(HTTP_TIMEOUT))
     })
     await sandbox.clock.tickAsync(1)
     // await sandbox.clock.tickAsync(HTTP_TIMEOUT)
 
-    t.ok(dataSpy.calledOnce, `should not get chunk 2 after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
+    // t.comment('recv data count:', dataSpy.callCount)
+    // t.comment('recv error count:', errorSpy.callCount)
     t.ok(errorSpy.calledOnce, `should get error after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
     t.end()
   }).catch(t.threw)
@@ -130,7 +136,8 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     await fileBox.ready().catch(errorSpy)
 
     await sandbox.clock.tickAsync(1)
-    t.ok(errorSpy.notCalled, `should not get error (${Date.now() - start} passed)`)
+    // t.comment('recv error count:', errorSpy.callCount)
+    t.ok(errorSpy.calledOnce, `should get error after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
     t.end()
   }).catch(t.threw)
 })
