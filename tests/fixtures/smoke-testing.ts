@@ -3,7 +3,7 @@ import assert from 'assert'
 import {
   FileBox,
   VERSION,
-}             from 'file-box'
+}             from '@juzi/file-box'
 
 async function main () {
   const box = FileBox.fromUrl('https://raw.githubusercontent.com/huan/file-box/main/docs/images/file-box-logo.jpg')
