@@ -57,7 +57,6 @@
     "gts": "^3.1.0",
     "pkg-jq": "^0.2.11",
     "read-pkg-up": "^8.0.0",
-    "esquery": "1.4.0",
     "reflect-metadata": "^0.1.13"
   },
   "dependencies": {
