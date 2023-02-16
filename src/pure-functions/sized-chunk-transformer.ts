@@ -18,7 +18,7 @@ function sizedChunkTransformer (chunkByte = DEFAULT_CHUNK_BYTE) {
   let buffer = Buffer.from([])
 
   const transform: stream.TransformOptions['transform'] = function (chunk, _, done) {
-    buffer = Buffer.concat([buffer, chunk])
+    buffer = Buffer.concat([ buffer, chunk ])
 
     while (buffer.length >= chunkByte) {
       this.push(buffer.slice(0, chunkByte))

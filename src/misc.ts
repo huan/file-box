@@ -1,7 +1,9 @@
 import http    from 'http'
 import https   from 'https'
-import nodeUrl from 'url'
+import { URL } from 'url'
 import type stream   from 'stream'
+
+import { HTTP_TIMEOUT } from './config.js'
 
 export function dataUrlToBase64 (dataUrl: string): string {
   const dataList = dataUrl.split(',')
@@ -39,9 +41,8 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
   }
 
   async function _headHeader (destUrl: string): Promise<http.IncomingMessage> {
-    const parsedUrl = nodeUrl.parse(destUrl)
+    const parsedUrl = new URL(destUrl)
     const options = {
-      ...parsedUrl,
       method   : 'HEAD',
       // method   : 'GET',
     }
@@ -57,8 +58,17 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
     }
 
     return new Promise<http.IncomingMessage>((resolve, reject) => {
-      request(options, resolve)
+      let res: undefined | http.IncomingMessage
+      const req = request(parsedUrl, options, (response) => {
+        res = response
+        resolve(res)
+      })
         .on('error', reject)
+        .setTimeout(HTTP_TIMEOUT, () => {
+          const e = new Error(`FileBox: Http request timeout (${HTTP_TIMEOUT})!`)
+          req.emit('error', e)
+          req.destroy()
+        })
         .end()
     })
   }
@@ -87,14 +97,11 @@ export async function httpStream (
   url     : string,
   headers : http.OutgoingHttpHeaders = {},
 ): Promise<http.IncomingMessage> {
-
-  /* eslint node/no-deprecated-api: off */
-  // FIXME:
-  const parsedUrl = nodeUrl.parse(url)
+  const parsedUrl = new URL(url)
 
   const protocol  = parsedUrl.protocol
 
-  let options: http.RequestOptions
+  const options: http.RequestOptions = {}
 
   let get: typeof https.get
 
@@ -104,27 +111,35 @@ export async function httpStream (
 
   if (protocol.match(/^https:/i)) {
     get           = https.get
-    options       = parsedUrl
     options.agent = https.globalAgent
   } else if (protocol.match(/^http:/i)) {
     get           = http.get
-    options       = parsedUrl
     options.agent = http.globalAgent
   } else {
     throw new Error('protocol unknown: ' + protocol)
   }
 
   options.headers = {
-    ...options.headers,
     ...headers,
   }
 
-  const res = await new Promise<http.IncomingMessage>((resolve, reject) => {
-    get(options, resolve)
+  return new Promise<http.IncomingMessage>((resolve, reject) => {
+    let res: http.IncomingMessage | null = null
+    const req = get(parsedUrl, options, (response) => {
+      res = response
+      resolve(res)
+    })
       .on('error', reject)
+      .setTimeout(HTTP_TIMEOUT, () => {
+        const e = new Error(`FileBox: Http request timeout (${HTTP_TIMEOUT})!`)
+        if (res) {
+          res.emit('error', e)
+        }
+        req.emit('error', e)
+        req.destroy()
+      })
       .end()
   })
-  return res
 }
 
 export async function streamToBuffer (
