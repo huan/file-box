@@ -32,9 +32,12 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     if (req.url === URL.NOT_TIMEOUT) {
       await setTimeout(HTTP_TIMEOUT * 0.5)
       res.write(Buffer.from('This is the second chunk of data.'))
-      await setTimeout(HTTP_TIMEOUT * 0.9)
-    } else {
+    } else if (req.url === URL.READY) {
       await setTimeout(HTTP_TIMEOUT + 100)
+    } else if (req.url === URL.TIMEOUT) {
+      if (req.method === 'GET') {
+        await setTimeout(HTTP_TIMEOUT + 100)
+      }
     }
 
     // console.debug(`${new Date().toLocaleTimeString()} call res.end "${req.url}"`)
