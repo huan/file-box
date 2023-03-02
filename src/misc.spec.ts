@@ -68,3 +68,13 @@ test('httpStream', async t => {
   const obj = JSON.parse(buffer.toString())
   t.equal(obj.headers[MOL_KEY], MOL_VAL, 'should send the header right')
 })
+
+test('httpStream in chunks', async (t) => {
+  const URL = 'https://media.w3.org/2010/05/sintel/trailer.mp4'
+  const res = await httpStream(URL)
+  let length = 0
+  for await (const chunk of res) {
+    length += chunk.length
+  }
+  t.equal(length, 4372373, 'should get data in chunks right')
+})
