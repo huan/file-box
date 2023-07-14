@@ -921,7 +921,10 @@ class FileBox implements Pipeable, FileBoxInterface {
     await new Promise((resolve, reject) => {
       writeStream
         .once('close', resolve)
-        .once('error', reject)
+        .once('error', (error) => {
+          writeStream.close()
+          reject(error)
+        })
 
       this.pipe(writeStream)
     })
