@@ -44,7 +44,10 @@ export async function httpHeadHeader(url: string): Promise<http.IncomingHttpHead
       throw new Error(`ttl expired! too many(>${REDIRECT_TTL}) 302 redirection.`)
     }
 
-    const res = await _headHeader(url)
+    const res = await fetch(url, {
+      method: 'HEAD',
+    })
+    res.destroy()
 
     if (!/^3/.test(String(res.statusCode))) {
       if (originUrl !== url) {
@@ -60,39 +63,6 @@ export async function httpHeadHeader(url: string): Promise<http.IncomingHttpHead
     }
 
     url = res.headers.location
-  }
-
-  async function _headHeader(destUrl: string): Promise<http.IncomingMessage> {
-    const parsedUrl = new URL(destUrl)
-    const options = {
-      method: 'HEAD',
-      // method   : 'GET',
-    }
-
-    let request: typeof http.request
-
-    if (parsedUrl.protocol === 'https:') {
-      request = https.request
-    } else if (parsedUrl.protocol === 'http:') {
-      request = http.request
-    } else {
-      throw new Error('unknown protocol: ' + parsedUrl.protocol)
-    }
-
-    return new Promise<http.IncomingMessage>((resolve, reject) => {
-      let res: undefined | http.IncomingMessage
-      const req = request(parsedUrl, options, (response) => {
-        res = response
-        resolve(res)
-      })
-        .on('error', reject)
-        .setTimeout(HTTP_TIMEOUT, () => {
-          const e = new Error(`FileBox: Http request timeout (${HTTP_TIMEOUT})!`)
-          req.emit('error', e)
-          req.destroy()
-        })
-        .end()
-    })
   }
 }
 
@@ -117,32 +87,32 @@ export async function httpStream(url: string, headers: http.OutgoingHttpHeaders 
   const headHeaders = await httpHeadHeader(url)
   if (headHeaders.location) {
     url = headHeaders.location
+    const { protocol } = new URL(url)
+    getProtocol(protocol)
   }
 
-  const parsedUrl = new URL(url)
-
-  const { request, agent } = getProtocol(parsedUrl.protocol)
   const options: http.RequestOptions = {
     method: 'GET',
-    agent,
     headers: { ...headers },
   }
 
   const fileSize = Number(headHeaders['content-length'])
 
   if (!NO_SLICE_DOWN && headHeaders['accept-ranges'] === 'bytes' && fileSize > HTTP_CHUNK_SIZE) {
-    return await downloadFileInChunks(request, url, options, fileSize, HTTP_CHUNK_SIZE)
+    return await downloadFileInChunks(url, options, fileSize, HTTP_CHUNK_SIZE)
   } else {
-    return await downloadFile(request, url, options)
+    return await fetch(url, options)
   }
 }
 
-async function downloadFile(
-  request: typeof https.request,
-  url: string,
-  options: http.RequestOptions
-): Promise<http.IncomingMessage> {
-  const req = request(url, options)
+async function fetch(url: string, options: http.RequestOptions): Promise<http.IncomingMessage> {
+  const { protocol } = new URL(url)
+  const { request, agent } = getProtocol(protocol)
+  const opts = {
+    agent,
+    ...options,
+  }
+  const req = request(url, opts)
     .setTimeout(HTTP_TIMEOUT)
     .once('timeout', () => {
       req.destroy(new Error(`FileBox: Http request timeout (${HTTP_TIMEOUT})!`))
@@ -153,7 +123,6 @@ async function downloadFile(
 }
 
 async function downloadFileInChunks(
-  request: typeof https.request,
   url: string,
   options: http.RequestOptions,
   fileSize: number,
@@ -162,11 +131,9 @@ async function downloadFileInChunks(
   const tmpFile = join(tmpdir(), `filebox-${randomUUID()}`)
   const writeStream = createWriteStream(tmpFile)
   const allowStatusCode = [200, 206]
-  const ac = new AbortController()
   const requestBaseOptions: http.RequestOptions = {
     headers: {},
     ...options,
-    signal: ac.signal,
     timeout: HTTP_TIMEOUT,
   }
   let chunkSeq = 0
@@ -183,7 +150,7 @@ async function downloadFileInChunks(
     requestOptions.headers['Range'] = range
 
     try {
-      const res = await downloadFile(request, url, options)
+      const res = await fetch(url, options)
       assert(allowStatusCode.includes(res.statusCode ?? 0), `Request failed with status code ${res.statusCode}`)
       assert(Number(res.headers['content-length']) > 0, 'Server returned 0 bytes of data')
       for await (const chunk of res) {
@@ -195,7 +162,7 @@ async function downloadFileInChunks(
     } catch (error) {
       const err = error as Error
       if (--retries <= 0) {
-        void rm(tmpFile, { force: true, maxRetries: 5 })
+        void rm(tmpFile, { force: true })
         writeStream.close()
         throw new Error(`Download file with chunk failed! ${err.message}`, { cause: err })
       }
@@ -209,7 +176,7 @@ async function downloadFileInChunks(
   readStream
     .once('end', () => readStream.close())
     .once('close', () => {
-      void rm(tmpFile, { force: true, maxRetries: 5 })
+      void rm(tmpFile, { force: true })
     })
   return readStream
 }
