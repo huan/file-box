@@ -126,11 +126,11 @@ async function downloadFileInChunks (
   url: string,
   options: http.RequestOptions,
   fileSize: number,
-  chunkSize = HTTP_CHUNK_SIZE
+  chunkSize = HTTP_CHUNK_SIZE,
 ): Promise<Readable> {
   const tmpFile = join(tmpdir(), `filebox-${randomUUID()}`)
   const writeStream = createWriteStream(tmpFile)
-  const allowStatusCode = [200, 206]
+  const allowStatusCode = [ 200, 206 ]
   const requestBaseOptions: http.RequestOptions = {
     headers: {},
     ...options,
