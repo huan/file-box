@@ -19,6 +19,7 @@ export function dataUrlToBase64 (dataUrl: string): string {
  */
 export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHeaders> {
 
+  const originUrl = url
   let REDIRECT_TTL = 7
 
   while (true) {
@@ -29,6 +30,9 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
     const res = await _headHeader(url)
 
     if (!/^3/.test(String(res.statusCode))) {
+      if (originUrl !== url) {
+        res.headers.location = url
+      }
       return res.headers
     }
 
@@ -98,6 +102,11 @@ export async function httpStream (
   url     : string,
   headers : http.OutgoingHttpHeaders = {},
 ): Promise<Readable> {
+  const headHeaders = await httpHeadHeader(url)
+  if (headHeaders.location) {
+    url = headHeaders.location
+  }
+
   const parsedUrl = new URL(url)
 
   const protocol = parsedUrl.protocol
@@ -124,7 +133,6 @@ export async function httpStream (
     ...headers,
   }
 
-  const headHeaders = await httpHeadHeader(url)
   const fileSize    = Number(headHeaders['content-length'])
 
   if (headHeaders['accept-ranges'] === 'bytes' && fileSize > HTTP_CHUNK_SIZE) {
