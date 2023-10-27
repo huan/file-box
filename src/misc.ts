@@ -19,12 +19,12 @@ const protocolMap: {
   'https:': { agent: https.globalAgent, request: https.request },
 }
 
-function getProtocol(protocol: string) {
+function getProtocol (protocol: string) {
   assert(protocolMap[protocol], new Error('unknown protocol: ' + protocol))
   return protocolMap[protocol]!
 }
 
-export function dataUrlToBase64(dataUrl: string): string {
+export function dataUrlToBase64 (dataUrl: string): string {
   const dataList = dataUrl.split(',')
   return dataList[dataList.length - 1]!
 }
@@ -35,7 +35,7 @@ export function dataUrlToBase64(dataUrl: string): string {
  *
  * @credit https://stackoverflow.com/a/43632171/1123955
  */
-export async function httpHeadHeader(url: string): Promise<http.IncomingHttpHeaders> {
+export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHeaders> {
   const originUrl = url
   let REDIRECT_TTL = 7
 
@@ -66,7 +66,7 @@ export async function httpHeadHeader(url: string): Promise<http.IncomingHttpHead
   }
 }
 
-export function httpHeaderToFileName(headers: http.IncomingHttpHeaders): null | string {
+export function httpHeaderToFileName (headers: http.IncomingHttpHeaders): null | string {
   const contentDisposition = headers['content-disposition']
 
   if (!contentDisposition) {
@@ -83,7 +83,7 @@ export function httpHeaderToFileName(headers: http.IncomingHttpHeaders): null | 
   return null
 }
 
-export async function httpStream(url: string, headers: http.OutgoingHttpHeaders = {}): Promise<Readable> {
+export async function httpStream (url: string, headers: http.OutgoingHttpHeaders = {}): Promise<Readable> {
   const headHeaders = await httpHeadHeader(url)
   if (headHeaders.location) {
     url = headHeaders.location
@@ -105,7 +105,7 @@ export async function httpStream(url: string, headers: http.OutgoingHttpHeaders 
   }
 }
 
-async function fetch(url: string, options: http.RequestOptions): Promise<http.IncomingMessage> {
+async function fetch (url: string, options: http.RequestOptions): Promise<http.IncomingMessage> {
   const { protocol } = new URL(url)
   const { request, agent } = getProtocol(protocol)
   const opts = {
@@ -122,7 +122,7 @@ async function fetch(url: string, options: http.RequestOptions): Promise<http.In
   return res
 }
 
-async function downloadFileInChunks(
+async function downloadFileInChunks (
   url: string,
   options: http.RequestOptions,
   fileSize: number,
@@ -181,7 +181,7 @@ async function downloadFileInChunks(
   return readStream
 }
 
-export async function streamToBuffer(stream: Readable): Promise<Buffer> {
+export async function streamToBuffer (stream: Readable): Promise<Buffer> {
   const chunks: Buffer[] = []
   for await (const chunk of stream) {
     chunks.push(chunk)
