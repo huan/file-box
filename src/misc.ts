@@ -215,13 +215,9 @@ async function downloadFileInChunks(
 }
 
 export async function streamToBuffer(stream: Readable): Promise<Buffer> {
-  return new Promise<Buffer>((resolve, reject) => {
-    const bufferList: Buffer[] = []
-    stream.once('error', reject)
-    stream.once('end', () => {
-      const fullBuffer = Buffer.concat(bufferList)
-      resolve(fullBuffer)
-    })
-    stream.on('data', (buffer) => bufferList.push(buffer))
-  })
+  const chunks: Buffer[] = []
+  for await (const chunk of stream) {
+    chunks.push(chunk)
+  }
+  return Buffer.concat(chunks)
 }
