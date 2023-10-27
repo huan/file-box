@@ -13,10 +13,10 @@ import { URL } from 'url'
 import { HTTP_CHUNK_SIZE, HTTP_TIMEOUT, NO_SLICE_DOWN } from './config.js'
 
 const protocolMap: {
-  [key: string]: { request: typeof http.request; agent: http.Agent }
+  [key: string]: { agent: http.Agent; request: typeof http.request }
 } = {
-  'http:': { request: http.request, agent: http.globalAgent },
-  'https:': { request: https.request, agent: https.globalAgent },
+  'http:': { agent: http.globalAgent, request: http.request },
+  'https:': { agent: https.globalAgent, request: https.request },
 }
 
 function getProtocol(protocol: string) {
@@ -92,8 +92,8 @@ export async function httpStream(url: string, headers: http.OutgoingHttpHeaders 
   }
 
   const options: http.RequestOptions = {
-    method: 'GET',
     headers: { ...headers },
+    method: 'GET',
   }
 
   const fileSize = Number(headHeaders['content-length'])
@@ -118,7 +118,7 @@ async function fetch(url: string, options: http.RequestOptions): Promise<http.In
       req.destroy(new Error(`FileBox: Http request timeout (${HTTP_TIMEOUT})!`))
     })
     .end()
-  const [res] = (await once(req, 'response')) as [http.IncomingMessage]
+  const [ res ] = (await once(req, 'response')) as [ http.IncomingMessage ]
   return res
 }
 
