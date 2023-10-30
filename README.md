@@ -478,7 +478,9 @@ console.log(fileBox.remoteSize)
 
 Environment variables can be used to control some behavior.
 
-- `FILEBOX_HTTP_TIMEOUT` [default=60000] Socket idle timeout when FileBox downloads data from URL. For example, when the network is temporarily interrupted, the request will be considered as failed after waiting for a specified time.
+- `FILEBOX_HTTP_REQUEST_TIMEOUT` [default=10000] The timeout period for establishing a communication request with the server. For example, if the network is unavailable or the delay is too high, communication cannot be successfully established.
+- `FILEBOX_HTTP_RESPONSE_TIMEOUT` [default=60000] Socket idle timeout when FileBox downloads data from URL. For example, when the network is temporarily interrupted, the request will be considered as failed after waiting for a specified time.
+- ~~`FILEBOX_HTTP_TIMEOUT` [default=60000]~~ **Deprecated!** Please use `FILEBOX_HTTP_RESPONSE_TIMEOUT`.
 - `NO_SLICE_DOWN` [default=false] Whether to turn off slice downloading. If the network is unstable, an error while downloading the file will cause the file download to fail. If it is not closed, the file will be divided into multiple fragments for downloading, and breakpoint re-downloading is supported.
 - `HTTP_CHUNK_SIZE` [default=524288] When downloading a file using slicing, the number of bytes in each slice.
 
