@@ -10,7 +10,7 @@ import { join } from 'path'
 import type { Readable } from 'stream'
 import { URL } from 'url'
 
-import { HTTP_CHUNK_SIZE, HTTP_TIMEOUT, NO_SLICE_DOWN } from './config.js'
+import { HTTP_CHUNK_SIZE, HTTP_REQUEST_TIMEOUT, HTTP_RESPONSE_TIMEOUT, NO_SLICE_DOWN } from './config.js'
 
 const protocolMap: {
   [key: string]: { agent: http.Agent; request: typeof http.request }
@@ -108,17 +108,27 @@ export async function httpStream (url: string, headers: http.OutgoingHttpHeaders
 async function fetch (url: string, options: http.RequestOptions): Promise<http.IncomingMessage> {
   const { protocol } = new URL(url)
   const { request, agent } = getProtocol(protocol)
-  const opts = {
+  const opts: http.RequestOptions = {
     agent,
     ...options,
   }
-  const req = request(url, opts)
-    .setTimeout(HTTP_TIMEOUT)
-    .once('timeout', () => {
-      req.destroy(new Error(`FileBox: Http request timeout (${HTTP_TIMEOUT})!`))
+  const req = request(url, opts).end()
+  req
+    .on('error', () => {
+      req.destroy()
     })
-    .end()
-  const [ res ] = (await once(req, 'response')) as [ http.IncomingMessage ]
+    .setTimeout(HTTP_REQUEST_TIMEOUT, () => {
+      req.emit('error', new Error(`FileBox: Http request timeout (${HTTP_REQUEST_TIMEOUT})!`))
+    })
+  const responseEvents = await once(req, 'response')
+  const res = responseEvents[0] as http.IncomingMessage
+  res
+    .on('error', () => {
+      res.destroy()
+    })
+    .setTimeout(HTTP_RESPONSE_TIMEOUT, () => {
+      res.emit('error', new Error(`FileBox: Http response timeout (${HTTP_RESPONSE_TIMEOUT})!`))
+    })
   return res
 }
 
@@ -134,7 +144,6 @@ async function downloadFileInChunks (
   const requestBaseOptions: http.RequestOptions = {
     headers: {},
     ...options,
-    timeout: HTTP_TIMEOUT,
   }
   let chunkSeq = 0
   let start = 0
