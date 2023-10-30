@@ -150,7 +150,7 @@ async function downloadFileInChunks (
     requestOptions.headers['Range'] = range
 
     try {
-      const res = await fetch(url, options)
+      const res = await fetch(url, requestOptions)
       assert(allowStatusCode.includes(res.statusCode ?? 0), `Request failed with status code ${res.statusCode}`)
       assert(Number(res.headers['content-length']) > 0, 'Server returned 0 bytes of data')
       for await (const chunk of res) {
