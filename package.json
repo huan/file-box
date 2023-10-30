@@ -1,6 +1,6 @@
 {
   "name": "@juzi/file-box",
-  "version": "1.7.4",
+  "version": "1.7.5",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "type": "module",
   "exports": {
@@ -52,12 +52,15 @@
     "@chatie/tsconfig": "^4.6.2",
     "@types/isomorphic-fetch": "0.0.35",
     "@types/mime": "^2.0.3",
+    "@types/node": "^18.18.7",
     "@types/qrcode": "^1.4.1",
     "@types/uuid": "^8.3.3",
+    "eslint-plugin-n": "^16.2.0",
     "gts": "^3.1.0",
     "pkg-jq": "^0.2.11",
     "read-pkg-up": "^8.0.0",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "tap": "^16.3.9"
   },
   "dependencies": {
     "brolog": "^1.14.2",

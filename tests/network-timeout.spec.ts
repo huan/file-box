@@ -5,9 +5,8 @@ import type { AddressInfo } from 'net'
 import { setTimeout } from 'timers/promises'
 import { sinon, test } from 'tstest'
 
+import { HTTP_REQUEST_TIMEOUT, HTTP_RESPONSE_TIMEOUT } from '../src/config.js'
 import { FileBox } from '../src/mod.js'
-
-import { HTTP_TIMEOUT } from '../src/config.js'
 
 test('slow network stall HTTP_TIMEOUT', async (t) => {
   const sandbox = sinon.createSandbox()
@@ -30,13 +29,13 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     res.write(Buffer.from('This is the first chunk of data.'))
 
     if (req.url === URL.NOT_TIMEOUT) {
-      await setTimeout(HTTP_TIMEOUT * 0.5)
+      await setTimeout(HTTP_REQUEST_TIMEOUT * 0.5)
       res.write(Buffer.from('This is the second chunk of data.'))
     } else if (req.url === URL.READY) {
-      await setTimeout(HTTP_TIMEOUT + 100)
+      await setTimeout(HTTP_REQUEST_TIMEOUT + 100)
     } else if (req.url === URL.TIMEOUT) {
       if (req.method === 'GET') {
-        await setTimeout(HTTP_TIMEOUT + 100)
+        await setTimeout(HTTP_RESPONSE_TIMEOUT + 100)
       }
     }
 
@@ -77,15 +76,15 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     // FIXME: tickAsync does not work on socket timeout
     await new Promise<void>((resolve) => {
       stream.once('error', resolve).on('close', resolve)
-      // resolve(setTimeout(HTTP_TIMEOUT))
+      // resolve(setTimeout(HTTP_REQUEST_TIMEOUT))
     })
     await sandbox.clock.tickAsync(1)
-    // await sandbox.clock.tickAsync(HTTP_TIMEOUT)
+    // await sandbox.clock.tickAsync(HTTP_RESPONSE_TIMEOUT)
 
-    // t.comment('recv data count:', dataSpy.callCount)
-    // t.comment('recv error count:', errorSpy.callCount)
-    t.ok(dataSpy.calledThrice, `should get chunk 3 after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
-    t.ok(errorSpy.notCalled, `should not get error after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
+    t.comment('recv data count:', dataSpy.callCount)
+    t.comment('recv error count:', errorSpy.callCount)
+    t.ok(dataSpy.calledThrice, `should get chunk 3 after TIMEOUT ${HTTP_REQUEST_TIMEOUT} (${Date.now() - start} passed)`)
+    t.ok(errorSpy.notCalled, `should not get error after TIMEOUT ${HTTP_REQUEST_TIMEOUT} (${Date.now() - start} passed)`)
     t.end()
   }).catch(t.threw)
 
@@ -117,14 +116,14 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
     // FIXME: tickAsync does not work on socket timeout
     await new Promise<void>((resolve) => {
       stream.once('error', resolve).on('close', resolve)
-      // resolve(setTimeout(HTTP_TIMEOUT))
+      // resolve(setTimeout(HTTP_RESPONSE_TIMEOUT))
     })
     await sandbox.clock.tickAsync(1)
-    // await sandbox.clock.tickAsync(HTTP_TIMEOUT)
+    // await sandbox.clock.tickAsync(HTTP_RESPONSE_TIMEOUT)
 
     // t.comment('recv data count:', dataSpy.callCount)
     // t.comment('recv error count:', errorSpy.callCount)
-    t.ok(errorSpy.calledOnce, `should get error after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
+    t.ok(errorSpy.calledOnce, `should get error after TIMEOUT ${HTTP_RESPONSE_TIMEOUT} (${Date.now() - start} passed)`)
     t.end()
   }).catch(t.threw)
 
@@ -140,7 +139,7 @@ test('slow network stall HTTP_TIMEOUT', async (t) => {
 
     await sandbox.clock.tickAsync(1)
     // t.comment('recv error count:', errorSpy.callCount)
-    t.ok(errorSpy.calledOnce, `should get error after TIMEOUT ${HTTP_TIMEOUT} (${Date.now() - start} passed)`)
+    t.ok(errorSpy.calledOnce, `should get error after TIMEOUT ${HTTP_REQUEST_TIMEOUT} (${Date.now() - start} passed)`)
     t.end()
   }).catch(t.threw)
 })
