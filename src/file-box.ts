@@ -899,10 +899,23 @@ class FileBox implements Pipeable, FileBoxInterface {
     }
     const fullFilePath = PATH.resolve(filePath || this.name)
 
-    const exist = FS.existsSync(fullFilePath)
+    // Check if file exists
+    let exist = false;
+    try {
+        FS.accessSync(fullFilePath);
+        exist = true;
+    } catch (err) {
+        // File doesn't exist
+    }
 
     if (exist && !overwrite) {
-      throw new Error(`FileBox.toFile(${fullFilePath}): file exist. use FileBox.toFile(${fullFilePath}, true) to force overwrite.`)
+        throw new Error(`FileBox.toFile(${fullFilePath}): file exists. use FileBox.toFile(${fullFilePath}, true) to force overwrite.`);
+    }
+
+    // Create directory if it doesn't exist
+    const directory = PATH.dirname(fullFilePath);
+    if (!FS.existsSync(directory)) {
+        FS.mkdirSync(directory, { recursive: true });
     }
 
     const writeStream = FS.createWriteStream(fullFilePath)
