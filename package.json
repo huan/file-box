@@ -1,6 +1,6 @@
 {
   "name": "@juzi/file-box",
-  "version": "1.7.7",
+  "version": "1.7.8",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "type": "module",
   "exports": {
