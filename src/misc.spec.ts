@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node --no-warnings --loader ts-node/esm
 
 // tslint:disable:no-shadowed-variable
-import { test }  from 'tstest'
+import { test } from 'tstest'
 
 import {
   dataUrlToBase64,
@@ -9,7 +9,7 @@ import {
   httpHeadHeader,
   httpStream,
   streamToBuffer,
-}                         from './misc.js'
+} from './misc.js'
 
 test('dataUrl to base64', async t => {
   const base64 = [

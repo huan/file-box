@@ -3,14 +3,25 @@ import { randomUUID } from 'crypto'
 import { once } from 'events'
 import { createReadStream, createWriteStream } from 'fs'
 import { rm } from 'fs/promises'
-import http from 'http'
+import http, { RequestOptions } from 'http'
 import https from 'https'
+import { HttpsProxyAgent } from 'https-proxy-agent'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import type { Readable } from 'stream'
 import { URL } from 'url'
 
-import { HTTP_CHUNK_SIZE, HTTP_REQUEST_TIMEOUT, HTTP_RESPONSE_TIMEOUT, NO_SLICE_DOWN } from './config.js'
+import {
+  HTTP_CHUNK_SIZE,
+  HTTP_REQUEST_TIMEOUT,
+  HTTP_RESPONSE_TIMEOUT,
+  NO_SLICE_DOWN,
+  PROXY_HOST,
+  PROXY_PASSWORD,
+  PROXY_PORT,
+  PROXY_TYPE,
+  PROXY_USERNAME,
+} from './config.js'
 
 const protocolMap: {
   [key: string]: { agent: http.Agent; request: typeof http.request }
@@ -112,6 +123,7 @@ async function fetch (url: string, options: http.RequestOptions): Promise<http.I
     agent,
     ...options,
   }
+  setProxy(opts)
   const req = request(url, opts).end()
   req
     .on('error', () => {
@@ -196,4 +208,24 @@ export async function streamToBuffer (stream: Readable): Promise<Buffer> {
     chunks.push(chunk)
   }
   return Buffer.concat(chunks)
+}
+
+function getProxyUrl () {
+  const proxyType = PROXY_TYPE
+  const proxyHost = PROXY_HOST
+  const proxyPort = PROXY_PORT
+  const proxyUsername = PROXY_USERNAME
+  const proxyPassword = PROXY_PASSWORD
+  if (proxyType === 'http') {
+    return `http://${proxyUsername}:${proxyPassword}@${proxyHost}:${proxyPort}`
+  }
+  return ''
+}
+
+function setProxy (options: RequestOptions): void {
+  const url = getProxyUrl()
+  if (url) {
+    const agent = new HttpsProxyAgent(url)
+    options.agent = agent
+  }
 }

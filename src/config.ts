@@ -11,3 +11,9 @@ export const NO_SLICE_DOWN = process.env['FILEBOX_NO_SLICE_DOWN'] === 'true'
 
 export const HTTP_CHUNK_SIZE = Number(process.env['FILEBOX_HTTP_CHUNK_SIZE'])
   || 1024 * 512
+
+export const PROXY_TYPE = process.env['PROXY_TYPE']
+export const PROXY_HOST = process.env['PROXY_HOST'] || ''
+export const PROXY_PORT = Number(process.env['PROXY_PORT']) || 0
+export const PROXY_USERNAME = process.env['PROXY_USERNAME'] || ''
+export const PROXY_PASSWORD = process.env['PROXY_PASSWORD'] || ''
