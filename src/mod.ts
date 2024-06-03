@@ -31,3 +31,5 @@ export {
   UniformResourceNameRegistry,
   VERSION,
 }
+
+export * from './misc.js'

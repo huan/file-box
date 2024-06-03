@@ -503,6 +503,7 @@ class FileBox implements Pipeable, FileBoxInterface {
    */
   private readonly base64?    : string
   private readonly remoteUrl? : string
+  public url?                 : string
   private readonly qrCode?    : string
   private readonly uuid?      : string
 
