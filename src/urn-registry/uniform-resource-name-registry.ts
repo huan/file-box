@@ -142,7 +142,7 @@ class UniformResourceNameRegistry {
 
   protected purgeExpiredUuid () {
     log.verbose('UniformResourceNameRegistry', 'purgeExpiredUuid()')
-    const expireTimeList = [...this.uuidExpiringTable.keys()]
+    const expireTimeList = [ ...this.uuidExpiringTable.keys() ]
       .sort((a, b) => Number(a) - Number(b))
 
     for (const expireTime of expireTimeList) {
@@ -291,7 +291,7 @@ class UniformResourceNameRegistry {
    */
   destroy () {
     log.verbose('UniformResourceNameRegistry', 'destroy() %s UUIDs left',
-      [...this.uuidExpiringTable.values()].flat().length,
+      [ ...this.uuidExpiringTable.values() ].flat().length,
     )
 
     if (this.purgerTimer) {
