@@ -2,7 +2,7 @@
  * Unit test verifying FileBox interface assignment and typing.
  */
 import { test } from 'node:test'
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 
 import type {
   FileBoxInterface,

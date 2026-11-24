@@ -7,27 +7,6 @@
  * to execute natively inside browser window contexts without test source modifications.
  */
 
-// Ensure environment globals expected by Node-targeted code exist in browser window
-if (typeof (globalThis as any).global === 'undefined') {
-  ;(globalThis as any).global = globalThis
-}
-
-if (typeof (globalThis as any).setImmediate === 'undefined') {
-  ;(globalThis as any).setImmediate = (fn: (...args: unknown[]) => void, ...args: unknown[]) =>
-    setTimeout(fn, 0, ...args)
-  ;(globalThis as any).clearImmediate = (id: number) => clearTimeout(id)
-}
-
-if (typeof (globalThis as any).process === 'undefined') {
-  ;(globalThis as any).process = {
-    env: { NODE_ENV: 'test' },
-    nextTick: (cb: (...args: unknown[]) => void, ...args: unknown[]) => queueMicrotask(() => cb(...args)),
-    stderr: { write: () => {} },
-    stdout: { write: () => {} },
-    version: 'v20.0.0',
-  }
-}
-
 /**
  * Record describing an individual mock invocation, matching `node:test` MockFunctionCall.
  */

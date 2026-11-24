@@ -1,10 +1,10 @@
 /**
  * Miscellaneous HTTP, Stream, and URL utilities supporting FileBox operations.
  */
-import http from 'node:http'
-import https from 'node:https'
-import nodeUrl from 'node:url'
-import type stream from 'node:stream'
+import * as http from 'node:http'
+import * as https from 'node:https'
+import * as nodeUrl from 'node:url'
+import type * as stream from 'node:stream'
 
 export { dataUrlToBase64, httpHeaderToFileName } from './pure-functions/file-metadata.ts'
 

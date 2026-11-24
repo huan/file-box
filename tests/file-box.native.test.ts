@@ -1,17 +1,14 @@
 /**
- * In-browser unit tests verifying FileBox and QR code operations inside browser contexts.
+ * Native FileBox smoke tests for its QR, Buffer, and JSON interfaces.
  */
 import { test } from 'node:test'
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 import { Buffer } from 'node:buffer'
 import { FileBox } from '../src/file-box.ts'
 import { FileBoxType } from '../src/file-box.type.ts'
 import { bufferToQrValue } from '../src/qrcode.ts'
 
-// This v2 smoke suite exercises the existing Buffer-based FileBox in its own page.
-globalThis.Buffer ??= Buffer
-
-test('In-browser: bufferToQrValue decodes QR image', async () => {
+test('bufferToQrValue decodes QR image', async () => {
   const QRCODE_IMAGE_BASE64 = [
     'iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQMAAACXljzdAAAABlBMVEX///8AAABVwtN+AAAA',
     'CXBIWXMAAA7EAAAOxAGVKw4bAAAA7klEQVRYw+2WsQ3EIAxFjShSMgKjZLRktIzCCJQpIv7Z',
@@ -30,10 +27,10 @@ test('In-browser: bufferToQrValue decodes QR image', async () => {
   }
 
   const result = await bufferToQrValue(bytes)
-  assert.strictEqual(result, EXPECTED, 'should decode QR code in browser via createImageBitmap or canvas')
+  assert.strictEqual(result, EXPECTED, 'should decode QR code from bytes')
 })
 
-test('In-browser: FileBox.fromBase64 -> toQRCode', async () => {
+test('FileBox.fromBase64 -> toQRCode', async () => {
   const QRCODE_IMAGE_BASE64 = [
     'iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQMAAACXljzdAAAABlBMVEX///8AAABVwtN+AAAA',
     'CXBIWXMAAA7EAAAOxAGVKw4bAAAA7klEQVRYw+2WsQ3EIAxFjShSMgKjZLRktIzCCJQpIv7Z',
@@ -46,10 +43,10 @@ test('In-browser: FileBox.fromBase64 -> toQRCode', async () => {
 
   const fileBox = FileBox.fromBase64(QRCODE_IMAGE_BASE64, 'qrcode.png')
   const qrCode = await fileBox.toQRCode()
-  assert.strictEqual(qrCode, 'hello, world!', 'should decode QR code from base64 FileBox in browser')
+  assert.strictEqual(qrCode, 'hello, world!', 'should decode QR code from base64 FileBox')
 })
 
-test('In-browser: FileBox.fromQRCode -> toQRCode', async () => {
+test('FileBox.fromQRCode -> toQRCode', async () => {
   const value = 'https://wechaty.js.org'
   const fileBox = FileBox.fromQRCode(value)
   assert.strictEqual(fileBox.type, FileBoxType.QRCode)
@@ -62,19 +59,19 @@ test('In-browser: FileBox.fromQRCode -> toQRCode', async () => {
   assert.strictEqual(await bufferToQrValue(png), value, 'should round-trip generated PNG bytes')
 })
 
-test('In-browser: FileBox.fromBuffer -> toBase64', async () => {
+test('FileBox.fromBuffer -> toBase64', async () => {
   const content = 'Browser FileBox Test'
   const buffer = Buffer.from(content)
   const fileBox = FileBox.fromBuffer(buffer, 'test.txt')
   const base64 = await fileBox.toBase64()
   const recovered = Buffer.from(base64, 'base64').toString()
-  assert.strictEqual(recovered, content, 'should serialize and deserialize buffer in browser')
+  assert.strictEqual(recovered, content, 'should serialize and deserialize buffer')
 })
 
-test('In-browser: FileBox.fromJSON and toJSON', async () => {
+test('FileBox.fromJSON and toJSON', async () => {
   const BASE64_ENCODED = 'RmlsZUJveEJhc2U2NAo='
   const fileBox = FileBox.fromBase64(BASE64_ENCODED, 'test.txt')
   const jsonText = JSON.stringify(fileBox)
   const restored = FileBox.fromJSON(jsonText)
-  assert.strictEqual(await restored.toBase64(), BASE64_ENCODED, 'should round-trip through JSON in browser')
+  assert.strictEqual(await restored.toBase64(), BASE64_ENCODED, 'should round-trip through JSON')
 })

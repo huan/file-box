@@ -1,5 +1,5 @@
 /** Exercises the shared Data URL and download filename parsing contracts. */
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import { dataUrlToBase64, httpHeaderToFileName } from './file-metadata.ts'

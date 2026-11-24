@@ -29,9 +29,9 @@
  *  transmission are presented.  Finally, there is a discussion of URN
  *  equivalence and how to determine it.
  */
-import fs     from 'fs'
-import os     from 'os'
-import path   from 'path'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
 
 import type { Readable } from 'stream'
 import { pipeline } from 'node:stream/promises'

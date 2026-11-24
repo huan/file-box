@@ -4,7 +4,7 @@
  * Exercises the browser test adapters shared with Wechaty.
  * Source: https://github.com/wechaty/wechaty/tree/4f361b1/tests/browser-shims
  */
-import test, { mock } from 'node:test'
+import { test, mock } from 'node:test'
 import {
   deepEqual,
   deepStrictEqual,
@@ -19,6 +19,12 @@ import {
   strictEqual,
   throws,
 } from 'node:assert/strict'
+
+test('Chromium runs without injected Node globals', () => {
+  equal(typeof globalThis.Buffer, 'undefined')
+  equal(typeof globalThis.process, 'undefined')
+  equal(typeof globalThis.global, 'undefined')
+})
 
 test('assert shim equality operations enforce strict semantics', () => {
   ok(true, 'truthy assertion')

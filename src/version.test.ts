@@ -2,7 +2,7 @@
  * Unit test validating fresh VERSION identifier in source code.
  */
 import { test } from 'node:test'
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 
 import { VERSION } from './version.ts'
 

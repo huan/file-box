@@ -4,7 +4,7 @@
  * This module defines options, interfaces, and enum-like types that identify
  * and configure different FileBox representations across environments.
  */
-import type http from 'node:http'
+import type * as http from 'node:http'
 import type {
   Readable,
   Writable,

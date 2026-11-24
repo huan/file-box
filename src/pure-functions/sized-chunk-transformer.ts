@@ -2,7 +2,7 @@
  * ChunkerTransformStream, a transform stream to take arbitrary chunk sizes and make them consistent
  * https://codereview.stackexchange.com/q/57492/185709
  */
-import stream from 'stream'
+import * as stream from 'node:stream'
 
 /**
  * TCP streaming workload tuning

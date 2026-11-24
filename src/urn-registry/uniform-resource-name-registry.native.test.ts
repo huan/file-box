@@ -1,13 +1,12 @@
 /**
  * Unit tests for UniformResourceNameRegistry lifecycle and expiring table.
  */
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 import { mkdtempSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { test, type TestContext } from 'node:test'
-import sinon from 'sinon'
 
 import { FileBox } from '../file-box.ts'
 import { streamToBuffer } from '../misc.ts'
@@ -26,6 +25,12 @@ class TestRegistry extends UniformResourceNameRegistry {
 
   async waitForPurges (): Promise<void> {
     await Promise.all(this.purges.splice(0))
+  }
+
+  /** Runs the scheduled purge at the time supplied by the test. */
+  async purgeExpiredFiles (): Promise<void> {
+    this.purgeExpiredUuid()
+    await this.waitForPurges()
   }
 
 }
@@ -83,31 +88,26 @@ test('save rejects a failed stream and removes the partial file', async t => {
 })
 
 test('registry expires each UUID on its own deadline', async t => {
-  const sandbox = sinon.createSandbox({
-    useFakeTimers: {
-      now: 0,
-      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'],
-    },
-  })
+  let now = 0
+  t.mock.method(Date, 'now', () => now)
   const expireMilliseconds = 10 * 60 * 1000 // 10 minute
   const { registry: urnRegistry } = createRegistry(t, expireMilliseconds)
-  t.after(() => sandbox.restore())
   const read = async (uuid: string) => (await streamToBuffer(await urnRegistry.load(uuid))).toString()
   const uuid1 = await urnRegistry.save(Readable.from([Buffer.from('first')]))
   assert.equal(await read(uuid1), 'first')
 
-  await sandbox.clock.tickAsync(5 * 60 * 1000)
+  now = 5 * 60 * 1000
   const uuid2 = await urnRegistry.save(Readable.from([Buffer.from('second')]))
   assert.equal(await read(uuid1), 'first')
   assert.equal(await read(uuid2), 'second')
 
-  await sandbox.clock.tickAsync(6 * 60 * 1000)
-  await urnRegistry.waitForPurges()
+  now = 11 * 60 * 1000
+  await urnRegistry.purgeExpiredFiles()
   await assert.rejects(urnRegistry.load(uuid1), { code: 'ENOENT' })
   assert.equal(await read(uuid2), 'second')
 
-  await sandbox.clock.tickAsync(9 * 60 * 1000)
-  await urnRegistry.waitForPurges()
+  now = 20 * 60 * 1000
+  await urnRegistry.purgeExpiredFiles()
   await assert.rejects(urnRegistry.load(uuid2), { code: 'ENOENT' })
 })
 

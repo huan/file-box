@@ -1,5 +1,5 @@
 /** Locks the numeric FileBox discriminator values used on the wire. */
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import { FileBoxType } from './file-box.type.ts'

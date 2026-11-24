@@ -16,7 +16,6 @@ npm pkg set type="module"
 npm install ./*-*.*.*.tgz @types/node typescript
 
 ./node_modules/.bin/tsc \
-  --esModuleInterop \
   --lib esnext,dom \
   --types node \
   --noEmitOnError \

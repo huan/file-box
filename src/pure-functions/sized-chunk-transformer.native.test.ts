@@ -2,7 +2,7 @@
  * Unit tests for sized chunk stream transformer.
  */
 import { test } from 'node:test'
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 import {
   PassThrough,
   type Readable,

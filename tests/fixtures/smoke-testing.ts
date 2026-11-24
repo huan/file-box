@@ -1,5 +1,5 @@
 /** Exercises the packed native entry against a deterministic HTTP response. */
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 import { createServer } from 'node:http'
 
 import {

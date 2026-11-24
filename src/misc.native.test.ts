@@ -1,5 +1,5 @@
 /** Runs the native HTTP and stream helpers against isolated loopback servers. */
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 import { createServer, type RequestListener } from 'node:http'
 import { test, type TestContext } from 'node:test'
 
