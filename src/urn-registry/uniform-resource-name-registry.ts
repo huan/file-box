@@ -40,11 +40,11 @@ import { log }              from 'brolog'
 
 import {
   FileBox,
-}                         from '../file-box.js'
+}                         from '../file-box.ts'
 
 import {
   randomUuid,
-}               from './random-uuid.js'
+}               from './random-uuid.ts'
 
 /**
  * A UUID will be only keep for a certain time.
@@ -136,6 +136,7 @@ class UniformResourceNameRegistry {
         () => this.purgeExpiredUuid(),
         DEFAULT_UUID_PURGE_INTERVAL_MINUTES * 60 * 1000,
       )
+      this.purgerTimer.unref?.()
     }
 
   }

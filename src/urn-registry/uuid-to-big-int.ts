@@ -1,13 +1,16 @@
 /**
- * Convert UUID to BigInt
- * @param uuid
- * @returns BigInt
+ * Utility functions for converting UUID strings to BigInt values.
  */
 
-function uuidToBigInt (uuid: string): BigInt {
-  // credit: https://stackoverflow.com/a/58014300/1123955
-  const hexBytes    = `0x${uuid.replace(/-/g, '')}`
-  const bigInteger  = BigInt(hexBytes)
+/**
+ * Converts a canonical UUID string to a BigInt numeric representation.
+ *
+ * @param uuid Standard 36-character hyphenated UUID string
+ * @returns BigInt representation of the UUID hexadecimal digits
+ */
+function uuidToBigInt (uuid: string): bigint {
+  const hexBytes = `0x${uuid.replace(/-/g, '')}`
+  const bigInteger = BigInt(hexBytes)
   return bigInteger
 }
 

@@ -1,7 +1,8 @@
-#!/usr/bin/env -S node --no-warnings --loader ts-node/esm
-
-// tslint:disable:no-shadowed-variable
-import { test }  from 'tstest'
+/**
+ * Unit tests for miscellaneous HTTP and stream helpers.
+ */
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 
 import {
   dataUrlToBase64,
@@ -9,9 +10,9 @@ import {
   httpHeadHeader,
   httpStream,
   streamToBuffer,
-}                         from './misc.js'
+} from './misc.ts'
 
-test('dataUrl to base64', async t => {
+test('dataUrl to base64', async () => {
   const base64 = [
     'R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl',
     '3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
@@ -23,21 +24,20 @@ test('dataUrl to base64', async t => {
     base64,
   ].join('')
 
-  t.equal(base64, dataUrlToBase64(dataUrl), 'should get base64 from dataUrl')
+  assert.strictEqual(dataUrlToBase64(dataUrl), base64, 'should get base64 from dataUrl')
 })
 
-test('httpHeadHeader', async t => {
+test('httpHeadHeader', async () => {
   const URL = 'https://github.com/huan/file-box/archive/v0.6.tar.gz'
 
-  const EXPECTED_HEADERS_KEY   = 'content-disposition'
+  const EXPECTED_HEADERS_KEY = 'content-disposition'
   const EXPECTED_HEADERS_VALUE = 'attachment; filename=file-box-0.6.tar.gz'
 
   const headers = await httpHeadHeader(URL)
-
-  t.equal(headers[EXPECTED_HEADERS_KEY], EXPECTED_HEADERS_VALUE, 'should get the headers right')
+  assert.strictEqual(headers[EXPECTED_HEADERS_KEY], EXPECTED_HEADERS_VALUE, 'should get the headers right')
 })
 
-test('httpHeaderToFileName', async t => {
+test('httpHeaderToFileName', async () => {
   const HEADERS_QUOTATION_MARK: any = {
     'content-disposition': 'attachment; filename="db-0.0.19.zip"',
   }
@@ -47,16 +47,16 @@ test('httpHeaderToFileName', async t => {
   const EXPECTED_FILE_NAME = 'db-0.0.19.zip'
 
   let filename = httpHeaderToFileName(HEADERS_QUOTATION_MARK)
-  t.equal(filename, EXPECTED_FILE_NAME, 'should get filename with quotation mark')
+  assert.strictEqual(filename, EXPECTED_FILE_NAME, 'should get filename with quotation mark')
 
   filename = httpHeaderToFileName(HEADERS_NO_QUOTATION_MARK)
-  t.equal(filename, EXPECTED_FILE_NAME, 'should get filename with no quotation mark')
+  assert.strictEqual(filename, EXPECTED_FILE_NAME, 'should get filename with no quotation mark')
 })
 
-test('httpStream', async t => {
+test('httpStream', async () => {
   const URL = 'https://httpbin.org/headers'
 
-  const MOL_KEY = 'Mol'
+  const MOL_KEY = 'mol'
   const MOL_VAL = '42'
 
   const headers = {} as { [idx: string]: string }
@@ -66,5 +66,5 @@ test('httpStream', async t => {
 
   const buffer = await streamToBuffer(res)
   const obj = JSON.parse(buffer.toString())
-  t.equal(obj.headers[MOL_KEY], MOL_VAL, 'should send the header right')
+  assert.strictEqual(obj.headers?.Mol ?? obj.headers?.mol, MOL_VAL, 'should send the header right')
 })

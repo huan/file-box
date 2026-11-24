@@ -5,51 +5,26 @@ npm run dist
 npm pack
 
 TMPDIR="/tmp/npm-pack-testing.$$"
-mkdir "$TMPDIR"
+mkdir -p "$TMPDIR"
 mv ./*-*.*.*.tgz "$TMPDIR"
 cp tests/fixtures/smoke-testing.ts "$TMPDIR"
 
-cd $TMPDIR
+cd "$TMPDIR"
 
 npm init -y
-npm install ./*-*.*.*.tgz \
-  @types/node \
-  typescript \
-
-#
-# CommonJS
-#
-./node_modules/.bin/tsc \
-  --esModuleInterop \
-  --lib esnext \
-  --noEmitOnError \
-  --noImplicitAny \
-  --skipLibCheck \
-  --target es5 \
-  --module CommonJS \
-  --moduleResolution node \
-  smoke-testing.ts
-
-echo
-echo "CommonJS: pack testing..."
-node smoke-testing.js
-
-#
-# ES Modules
-#
-
-# https://stackoverflow.com/a/59203952/1123955
-echo "`jq '.type="module"' package.json`" > package.json
+npm pkg set type="module"
+npm install ./*-*.*.*.tgz @types/node typescript
 
 ./node_modules/.bin/tsc \
   --esModuleInterop \
-  --lib esnext \
+  --lib esnext,dom \
+  --types node \
   --noEmitOnError \
   --noImplicitAny \
   --skipLibCheck \
-  --target es2020 \
-  --module es2020 \
-  --moduleResolution node \
+  --target esnext \
+  --module NodeNext \
+  --moduleResolution NodeNext \
   smoke-testing.ts
 
 echo

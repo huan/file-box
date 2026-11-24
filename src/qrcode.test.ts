@@ -1,13 +1,15 @@
-#!/usr/bin/env -S node --no-warnings --loader ts-node/esm
-
-import { test } from 'tstest'
+/**
+ * Unit tests for QR code conversion utilities.
+ */
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 
 import {
   bufferToQrValue,
   qrValueToStream,
-}                     from './qrcode.js'
+} from './qrcode.ts'
 
-test('imageBase64ToQrCode()', async t => {
+test('imageBase64ToQrCode()', async () => {
   const QRCODE_IMAGE_BASE64 = [
     'iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQMAAACXljzdAAAABlBMVEX///8AAABVwtN+AAAA',
     'CXBIWXMAAA7EAAAOxAGVKw4bAAAA7klEQVRYw+2WsQ3EIAxFjShSMgKjZLRktIzCCJQpIv7Z',
@@ -21,10 +23,10 @@ test('imageBase64ToQrCode()', async t => {
 
   const buf = Buffer.from(QRCODE_IMAGE_BASE64, 'base64')
   const text = await bufferToQrValue(buf)
-  t.equal(text, EXPECTED_QRCODE_TEXT, 'should decode qrcode image base64')
+  assert.strictEqual(text, EXPECTED_QRCODE_TEXT, 'should decode qrcode image base64')
 })
 
-test('qrValueToStream()', async t => {
+test('qrValueToStream()', async () => {
   const QRCODE_VALUE = 'hello, world!'
   const EXPECTED_QRCODE_IMAGE_BASE64 = [
     'iVBORw0KGgoAAAANSUhEUgAAAHQAAAB0CAYAAABUmhYnAAAAAklEQVR4AewaftIAAAKcSURBVO3BQY7',
@@ -51,5 +53,5 @@ test('qrValueToStream()', async t => {
   const buf = Buffer.concat(chunks)
   const base64Text = buf.toString('base64')
 
-  t.equal(base64Text, EXPECTED_QRCODE_IMAGE_BASE64, 'should encode QR Code value to expected image')
+  assert.strictEqual(base64Text, EXPECTED_QRCODE_IMAGE_BASE64, 'should encode QR Code value to expected image')
 })

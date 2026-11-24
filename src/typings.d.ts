@@ -1,1 +1,3 @@
-declare module 'jsqr'
+/**
+ * Ambient type declarations for FileBox.
+ */
