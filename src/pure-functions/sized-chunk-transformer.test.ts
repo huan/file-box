@@ -1,17 +1,16 @@
-#!/usr/bin/env -S node --no-warnings --loader ts-node/esm
-
-/* eslint @typescript-eslint/no-unused-vars:off */
-
-import { test } from 'tstest'
-
+/**
+ * Unit tests for sized chunk stream transformer.
+ */
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 import {
   PassThrough,
-  Readable,
-}                     from 'stream'
+  type Readable,
+} from 'node:stream'
 
-import { sizedChunkTransformer } from './sized-chunk-transformer.js'
+import { sizedChunkTransformer } from './sized-chunk-transformer.ts'
 
-test('chunkerTransformStream()', async t => {
+test('chunkerTransformStream()', async () => {
   const DATA_LIST = [
     'a',
     'b',
@@ -35,18 +34,18 @@ test('chunkerTransformStream()', async t => {
   const newStream0 = createStream()
   const dataList0 = await getDataList(newStream0)
 
-  t.equal(dataList0.length, 1, 'should get 1 chunks')
-  t.equal(dataList0[0].toString(), DATA, 'should get data')
+  assert.strictEqual(dataList0.length, 1, 'should get 1 chunks')
+  assert.strictEqual(dataList0[0].toString(), DATA, 'should get data')
 
   const newStream1 = createStream().pipe(sizedChunkTransformer(2))
   const dataList1 = await getDataList(newStream1)
 
-  t.equal(dataList1.length, 1, 'should get 1 chunks')
-  t.equal(dataList1[0].toString(), DATA, 'should get data')
+  assert.strictEqual(dataList1.length, 1, 'should get 1 chunks')
+  assert.strictEqual(dataList1[0].toString(), DATA, 'should get data')
 
   const newStream2 = createStream().pipe(sizedChunkTransformer(1))
   const dataList2 = await getDataList(newStream2)
 
-  t.equal(dataList2.length, 2, 'should get 2 chunks')
-  t.equal(dataList2.join(''), DATA, 'should get data')
+  assert.strictEqual(dataList2.length, 2, 'should get 2 chunks')
+  assert.strictEqual(dataList2.join(''), DATA, 'should get data')
 })

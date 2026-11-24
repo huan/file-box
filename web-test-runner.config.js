@@ -1,0 +1,128 @@
+/**
+ * Configuration for Modern Web Test Runner (@web/test-runner).
+ *
+ * Runs FileBox tests natively inside headless Chromium as in-browser processes,
+ * mapping `node:test` and `node:assert/strict` to browser adapters and
+ * polyfilling Node standard built-ins.
+ */
+import path from 'node:path'
+import { esbuildPlugin } from '@web/dev-server-esbuild'
+import { playwrightLauncher } from '@web/test-runner-playwright'
+import { fromRollup } from '@web/dev-server-rollup'
+import commonjs from '@rollup/plugin-commonjs'
+import nodePolyfills from 'rollup-plugin-node-polyfills'
+
+const poly = nodePolyfills()
+
+/**
+ * Custom dev-server plugin resolving Node test, assert, and runtime built-in specifiers.
+ */
+function browserShimsPlugin () {
+  return {
+    name: 'browser-shims-resolver',
+    resolveImport ({ source }) {
+      if (source === 'node:test' || source === 'test') {
+        return '/tests/browser-shims/node-test.ts'
+      }
+      if (
+        source === 'node:assert/strict' ||
+        source === 'node:assert' ||
+        source === 'assert/strict' ||
+        source === 'assert'
+      ) {
+        return '/tests/browser-shims/assert.ts'
+      }
+      if (source === 'mime') {
+        return '/tests/browser-shims/mime.ts'
+      }
+      if (source === '@pipeletteio/nop') {
+        return '/tests/browser-shims/nop.ts'
+      }
+
+      const cleanSource = source.startsWith('node:') ? source.slice(5) : source
+      const res = poly.resolveId(cleanSource)
+      const id = typeof res === 'string' ? res : res?.id
+      if (id) {
+        return '/' + path.relative(process.cwd(), id).replace(/\\/g, '/')
+      }
+
+      return undefined
+    },
+  }
+}
+
+export default {
+  files: [
+    'tests/browser.test.ts',
+  ],
+
+  nodeResolve: {
+    // Honor package "browser" fields so qrcode resolves to its canvas build,
+    // which exposes toDataURL and not toBuffer.
+    browser: true,
+    exportConditions: ['browser', 'development'],
+  },
+
+  plugins: [
+    browserShimsPlugin(),
+    fromRollup(commonjs)({
+      // The browser qrcode build is CommonJS. `require()` must return
+      // `module.exports` (the default) so helpers like `ECLevel.from` resolve.
+      requireReturnsDefault: 'preferred',
+      strictRequires: true,
+    }),
+    fromRollup(nodePolyfills)(),
+    esbuildPlugin({
+      define: {
+        'process.env.NODE_ENV': '"test"',
+      },
+      target: 'es2022',
+      ts: true,
+    }),
+  ],
+
+  browsers: [
+    playwrightLauncher({
+      product: 'chromium',
+    }),
+  ],
+
+  testFramework: {
+    config: {
+      timeout: 15000,
+      ui: 'bdd',
+    },
+  },
+
+  testRunnerHtml: (testFrameworkImport) => `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <script>
+          window.global = window;
+          window.setImmediate = function (fn) {
+            var args = Array.prototype.slice.call(arguments, 1);
+            return setTimeout(function () { fn.apply(null, args); }, 0);
+          };
+          window.clearImmediate = function (id) {
+            clearTimeout(id);
+          };
+          window.process = {
+            env: { NODE_ENV: 'test' },
+            version: 'v20.0.0',
+            nextTick: function (cb) {
+              var args = Array.prototype.slice.call(arguments, 1);
+              queueMicrotask(function () { cb.apply(null, args); });
+            },
+            stdout: { write: function () {} },
+            stderr: { write: function () {} },
+          };
+        </script>
+      </head>
+      <body>
+        <script type="module" src="${testFrameworkImport}"></script>
+      </body>
+    </html>
+  `,
+}

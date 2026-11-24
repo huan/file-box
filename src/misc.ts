@@ -1,21 +1,29 @@
-import http    from 'http'
-import https   from 'https'
-import nodeUrl from 'url'
-import type stream   from 'stream'
+/**
+ * Miscellaneous HTTP, Stream, and URL utilities supporting FileBox operations.
+ */
+import http from 'node:http'
+import https from 'node:https'
+import nodeUrl from 'node:url'
+import type stream from 'node:stream'
 
+/**
+ * Extracts base64 payload from a data URL string.
+ *
+ * @param dataUrl RFC 2397 Data URI string
+ * @returns Raw base64 payload substring
+ */
 export function dataUrlToBase64 (dataUrl: string): string {
   const dataList = dataUrl.split(',')
   return dataList[dataList.length - 1]!
 }
 
 /**
- * Get http headers for specific `url`
- * follow 302 redirection for max `REDIRECT_TTL` times.
+ * Get http headers for specific `url` following HTTP 302 redirections.
  *
- * @credit https://stackoverflow.com/a/43632171/1123955
+ * @param url Remote target URL
+ * @returns HTTP response headers
  */
 export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHeaders> {
-
   let REDIRECT_TTL = 7
 
   while (true) {
@@ -29,8 +37,6 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
       return res.headers
     }
 
-    // console.log('302 found for ' + url)
-
     if (!res.headers.location) {
       throw new Error('302 found but no location!')
     }
@@ -40,10 +46,12 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
 
   async function _headHeader (destUrl: string): Promise<http.IncomingMessage> {
     const parsedUrl = nodeUrl.parse(destUrl)
-    const options = {
+    const options: https.RequestOptions = {
       ...parsedUrl,
-      method   : 'HEAD',
-      // method   : 'GET',
+      headers: {
+        Connection: 'close',
+      },
+      method: 'HEAD',
     }
 
     let request: typeof http.request
@@ -64,6 +72,12 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
   }
 }
 
+/**
+ * Parses file name from HTTP Content-Disposition header.
+ *
+ * @param headers Incoming HTTP headers
+ * @returns Extracted filename or null if header absent or unparseable
+ */
 export function httpHeaderToFileName (
   headers: http.IncomingHttpHeaders,
 ): null | string {
@@ -73,7 +87,6 @@ export function httpHeaderToFileName (
     return null
   }
 
-  // 'content-disposition': 'attachment; filename=db-0.0.19.zip'
   const matches = contentDisposition.match(/attachment; filename="?(.+[^"])"?$/i)
 
   if (matches && matches[1]) {
@@ -83,19 +96,21 @@ export function httpHeaderToFileName (
   return null
 }
 
+/**
+ * Creates an HTTP GET stream from a remote URL.
+ *
+ * @param url Remote resource URL
+ * @param headers Optional request headers
+ * @returns Readable HTTP incoming message stream
+ */
 export async function httpStream (
-  url     : string,
-  headers : http.OutgoingHttpHeaders = {},
+  url: string,
+  headers: http.OutgoingHttpHeaders = {},
 ): Promise<http.IncomingMessage> {
-
-  /* eslint node/no-deprecated-api: off */
-  // FIXME:
   const parsedUrl = nodeUrl.parse(url)
-
-  const protocol  = parsedUrl.protocol
+  const protocol = parsedUrl.protocol
 
   let options: http.RequestOptions
-
   let get: typeof https.get
 
   if (!protocol) {
@@ -103,18 +118,19 @@ export async function httpStream (
   }
 
   if (protocol.match(/^https:/i)) {
-    get           = https.get
-    options       = parsedUrl
+    get = https.get
+    options = parsedUrl
     options.agent = https.globalAgent
   } else if (protocol.match(/^http:/i)) {
-    get           = http.get
-    options       = parsedUrl
+    get = http.get
+    options = parsedUrl
     options.agent = http.globalAgent
   } else {
     throw new Error('protocol unknown: ' + protocol)
   }
 
   options.headers = {
+    Connection: 'close',
     ...options.headers,
     ...headers,
   }
@@ -127,6 +143,12 @@ export async function httpStream (
   return res
 }
 
+/**
+ * Consumes a Node.js readable stream into an in-memory Buffer.
+ *
+ * @param stream Readable stream to consume
+ * @returns Resolves with concatenated Buffer
+ */
 export async function streamToBuffer (
   stream: stream.Readable,
 ): Promise<Buffer> {
