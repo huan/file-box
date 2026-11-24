@@ -3,8 +3,13 @@
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { FileBox, FileBoxType } from '../src/mod.ts'
+import { Buffer } from 'node:buffer'
+import { FileBox } from '../src/file-box.ts'
+import { FileBoxType } from '../src/file-box.type.ts'
 import { bufferToQrValue } from '../src/qrcode.ts'
+
+// This v2 smoke suite exercises the existing Buffer-based FileBox in its own page.
+globalThis.Buffer ??= Buffer
 
 test('In-browser: bufferToQrValue decodes QR image', async () => {
   const QRCODE_IMAGE_BASE64 = [

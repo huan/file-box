@@ -27,7 +27,7 @@ jobs:
         run: |
           node --version
           npm --version
-          npm install
+          npm ci
 
       - name: Run lint and unit tests
         run: npm test
@@ -37,6 +37,31 @@ jobs:
 
       - name: Run browser tests
         run: npm run test:unit:browser
+
+      - name: Verify the browser runner reports failure
+        run: |
+          if npm run test:unit:browser -- tests/fixtures/browser-failure.test.ts > browser-failure.log 2>&1; then
+            cat browser-failure.log
+            exit 1
+          fi
+          cat browser-failure.log
+          grep -F 'Error: FileBox browser runner failure fixture' browser-failure.log
+
+  deno:
+    name: Deno unit tests (experimental)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+          cache: npm
+      - uses: denoland/setup-deno@v2.0.5
+        with:
+          deno-version: 2.9.8
+      - run: npm ci
+      - run: npm run test:unit:deno
 
   pack:
     name: Pack
@@ -49,7 +74,7 @@ jobs:
           node-version: 26
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Generate Version
         run: ./scripts/generate-version.sh
@@ -73,7 +98,7 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Generate Version
         run: ./scripts/generate-version.sh

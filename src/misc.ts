@@ -6,16 +6,7 @@ import https from 'node:https'
 import nodeUrl from 'node:url'
 import type stream from 'node:stream'
 
-/**
- * Extracts base64 payload from a data URL string.
- *
- * @param dataUrl RFC 2397 Data URI string
- * @returns Raw base64 payload substring
- */
-export function dataUrlToBase64 (dataUrl: string): string {
-  const dataList = dataUrl.split(',')
-  return dataList[dataList.length - 1]!
-}
+export { dataUrlToBase64, httpHeaderToFileName } from './pure-functions/file-metadata.ts'
 
 /**
  * Get http headers for specific `url` following HTTP 302 redirections.
@@ -70,30 +61,6 @@ export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHea
         .end()
     })
   }
-}
-
-/**
- * Parses file name from HTTP Content-Disposition header.
- *
- * @param headers Incoming HTTP headers
- * @returns Extracted filename or null if header absent or unparseable
- */
-export function httpHeaderToFileName (
-  headers: http.IncomingHttpHeaders,
-): null | string {
-  const contentDisposition = headers['content-disposition']
-
-  if (!contentDisposition) {
-    return null
-  }
-
-  const matches = contentDisposition.match(/attachment; filename="?(.+[^"])"?$/i)
-
-  if (matches && matches[1]) {
-    return matches[1]
-  }
-
-  return null
 }
 
 /**

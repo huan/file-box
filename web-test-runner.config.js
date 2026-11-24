@@ -2,8 +2,8 @@
  * Configuration for Modern Web Test Runner (@web/test-runner).
  *
  * Runs FileBox tests natively inside headless Chromium as in-browser processes,
- * mapping `node:test` and `node:assert/strict` to browser adapters and
- * polyfilling Node standard built-ins.
+ * mapping `node:test` and `node:assert/strict` to Wechaty's browser adapters.
+ * The v2 FileBox smoke suite still requires Node polyfills and QR interop.
  */
 import path from 'node:path'
 import { esbuildPlugin } from '@web/dev-server-esbuild'
@@ -53,6 +53,9 @@ function browserShimsPlugin () {
 
 export default {
   files: [
+    'tests/browser-shims/shims.test.ts',
+    'src/**/*.test.ts',
+    '!src/**/*.native.test.ts',
     'tests/browser.test.ts',
   ],
 

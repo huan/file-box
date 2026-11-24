@@ -15,16 +15,6 @@ import { instanceToClass } from 'clone-class'
 import { FileBox } from './file-box.ts'
 import { FileBoxType } from './file-box.type.ts'
 
-test('FileBoxType member types stay addressable', () => {
-  const qr: FileBoxType.QRCode = FileBoxType.QRCode
-  const file: FileBoxType.File = FileBoxType.File
-  const uuid: FileBoxType.Uuid = FileBoxType.Uuid
-  assert.equal(qr, 3)
-  assert.equal(file, 5)
-  assert.equal(uuid, 7)
-  assert.equal(FileBoxType[FileBoxType.QRCode], 'QRCode')
-})
-
 test('File smoke testing', async () => {
   assert.throws(() => FileBox.fromFile('non-existent-file-xyz.txt'), 'should throw for a non-existing file')
 })
@@ -242,7 +232,9 @@ test('setUuidSaver()', async () => {
 
 test('setUuidLoader() & setUuidSaver() on the FileBox class', () => {
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-  const result = spawnSync(process.execPath, [
+  // This fixture checks the Node entry in a fresh process even under Deno.
+  const node = process.versions['deno'] ? 'node' : process.execPath
+  const result = spawnSync(node, [
     '--input-type=module',
     '--eval',
     `

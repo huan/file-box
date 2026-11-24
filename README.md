@@ -513,6 +513,26 @@ console.log(fileBox.remoteSize)
 └──────┴──────────────┴──────┴─────┘
 ```
 
+## Development tests
+
+Install the locked dependencies with `npm ci`. Run `npm test` for lint and the
+Node.js suite, `npm run test:unit:deno` for the Deno suite, and
+`npm run test:unit:browser` for the in-page Chromium suite. Install the browser
+first with `npx playwright install --with-deps chromium`.
+
+| Runtime | Suites |
+| --- | --- |
+| Node.js, Deno, Chromium | FileBox discriminator values, Data URL and filename parsing, UUID conversion, and source version. |
+| Chromium | Wechaty's test adapter conformance cases in `tests/browser-shims/shims.test.ts`. |
+| Node.js, Deno, Chromium | The existing FileBox v2 smoke suite in `tests/browser.test.ts`. Chromium uses the runtime shims for this suite. |
+| Node.js and Deno | `*.native.test.ts` exercises the native FileBox class, Node stream and QR adapters, loopback HTTP, and the disk-based URN registry. `tests/integration.test.ts` runs with the native suites. |
+
+The browser runner also has a deliberately failing assertion fixture in
+`tests/fixtures/browser-failure.test.ts`. CI invokes it separately to check the
+runner exits nonzero. The normal Chromium run exercises failure and skip
+semantics through the shared test adapter tests. The published browser entry
+and its clean consumer check are tracked in [#95](https://github.com/huan/file-box/issues/95).
+
 ## History
 
 ### main v1.5 (Jan 18, 2022)
