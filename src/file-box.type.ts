@@ -29,8 +29,6 @@ const FileBoxTypeValues = {
   Uuid: 7,
 } as const
 
-type FileBoxType = typeof FileBoxTypeValues[keyof typeof FileBoxTypeValues]
-
 /**
  * Huan(202002):
  * We need to keep this enum number to be consistent
@@ -49,6 +47,23 @@ const FileBoxType = {
   7: 'Uuid',
 } as const
 
+type FileBoxType = typeof FileBoxTypeValues[keyof typeof FileBoxTypeValues]
+
+/**
+ * Type-only member aliases. The numeric const above has no runtime enum,
+ * and these names keep `FileBoxType.QRCode` usable in type position.
+ */
+declare namespace FileBoxType {
+  type Unknown = typeof FileBoxTypeValues.Unknown
+  type Base64 = typeof FileBoxTypeValues.Base64
+  type Url = typeof FileBoxTypeValues.Url
+  type QRCode = typeof FileBoxTypeValues.QRCode
+  type Buffer = typeof FileBoxTypeValues.Buffer
+  type File = typeof FileBoxTypeValues.File
+  type Stream = typeof FileBoxTypeValues.Stream
+  type Uuid = typeof FileBoxTypeValues.Uuid
+}
+
 interface Metadata {
   [key: string]: any
 }
@@ -61,32 +76,32 @@ interface FileBoxOptionsCommon {
 }
 
 interface FileBoxOptionsFile {
-  type: typeof FileBoxType.File
+  type: FileBoxType.File
   path: string
 }
 interface FileBoxOptionsUrl {
-  type: typeof FileBoxType.Url
+  type: FileBoxType.Url
   url: string
   headers?: http.OutgoingHttpHeaders
 }
 interface FileBoxOptionsBuffer {
-  type: typeof FileBoxType.Buffer
+  type: FileBoxType.Buffer
   buffer: Buffer
 }
 interface FileBoxOptionsStream {
-  type: typeof FileBoxType.Stream
+  type: FileBoxType.Stream
   stream: Readable
 }
 interface FileBoxOptionsQRCode {
-  type: typeof FileBoxType.QRCode
+  type: FileBoxType.QRCode
   qrCode: string
 }
 interface FileBoxOptionsBase64 {
-  type: typeof FileBoxType.Base64
+  type: FileBoxType.Base64
   base64: string
 }
 interface FileBoxOptionsUuid {
-  type: typeof FileBoxType.Uuid
+  type: FileBoxType.Uuid
   uuid: string
 }
 

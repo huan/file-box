@@ -78,16 +78,31 @@ jobs:
       - name: Generate Version
         run: ./scripts/generate-version.sh
 
+      - name: Set Publish Config
+        run: ./scripts/package-publish-config-tag.sh
+
       - name: Build Dist
         run: npm run dist
 
+      - name: Check Branch
+        id: check-branch
+        run: |
+          if [[ "${GITHUB_REF}" =~ ^refs/heads/(main|v[0-9]+\.[0-9]+.*)$ ]]; then
+            echo "match=true" >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Publish to NPM
+        if: steps.check-branch.outputs.match == 'true'
         run: |
           NAME=$(node -e "import fs from 'node:fs'; console.log(JSON.parse(fs.readFileSync('package.json', 'utf8')).name)")
           VERSION=$(node -e "import fs from 'node:fs'; console.log(JSON.parse(fs.readFileSync('package.json', 'utf8')).version)")
           if npx version-exists "$NAME" "$VERSION"
           then echo "$NAME@$VERSION exists on NPM, skipped."
-          else npm publish --tag next
+          else npm publish
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Is Not A Publish Branch
+        if: steps.check-branch.outputs.match != 'true'
+        run: echo 'Not A Publish Branch'

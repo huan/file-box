@@ -45,10 +45,16 @@ test('In-browser: FileBox.fromBase64 -> toQRCode', async () => {
 })
 
 test('In-browser: FileBox.fromQRCode -> toQRCode', async () => {
-  const fileBox = FileBox.fromQRCode('https://wechaty.js.org')
+  const value = 'https://wechaty.js.org'
+  const fileBox = FileBox.fromQRCode(value)
   assert.strictEqual(fileBox.type, FileBoxType.QRCode)
   const qrCode = await fileBox.toQRCode()
-  assert.strictEqual(qrCode, 'https://wechaty.js.org', 'should get QR code value')
+  assert.strictEqual(qrCode, value, 'should get QR code value')
+
+  const png = await fileBox.toBuffer()
+  assert.ok(png.byteLength > 8, 'should render QR payload to PNG bytes')
+  assert.strictEqual(png[0], 0x89, 'should render a PNG signature')
+  assert.strictEqual(await bufferToQrValue(png), value, 'should round-trip generated PNG bytes')
 })
 
 test('In-browser: FileBox.fromBuffer -> toBase64', async () => {

@@ -271,8 +271,12 @@ class FileBox implements Pipeable, FileBoxInterface {
     return new this(options)
   }
 
-  protected static uuidToStream?:    UuidLoader
-  protected static uuidFromStream?:  UuidSaver
+  /**
+   * Type-only so an ESNext compile does not install `undefined` own properties.
+   * Those own properties make `Object.hasOwn` treat an unset callback as registered.
+   */
+  declare protected static uuidToStream?:    UuidLoader
+  declare protected static uuidFromStream?:  UuidSaver
 
   static fromUuid (
     uuid: string,
@@ -332,7 +336,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   static setUuidLoader (
     loader: UuidLoader,
   ): void {
-    if (Object.hasOwn(this, 'uuidToStream')) {
+    if (Object.hasOwn(this, 'uuidToStream') && this.uuidToStream) {
       throw new Error('this FileBox has been set resolver before, can not set twice')
     }
     this.uuidToStream = loader
@@ -344,7 +348,7 @@ class FileBox implements Pipeable, FileBoxInterface {
   static setUuidSaver (
     saver: UuidSaver,
   ): void {
-    if (Object.hasOwn(this, 'uuidFromStream')) {
+    if (Object.hasOwn(this, 'uuidFromStream') && this.uuidFromStream) {
       throw new Error('this FileBox has been set register before, can not set twice')
     }
     this.uuidFromStream = saver

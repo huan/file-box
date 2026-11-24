@@ -3,15 +3,27 @@
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
+import { fileURLToPath } from 'node:url'
 import { PassThrough, type Readable } from 'node:stream'
 import sinon from 'sinon'
 import { instanceToClass } from 'clone-class'
 
 import { FileBox } from './file-box.ts'
 import { FileBoxType } from './file-box.type.ts'
+
+test('FileBoxType member types stay addressable', () => {
+  const qr: FileBoxType.QRCode = FileBoxType.QRCode
+  const file: FileBoxType.File = FileBoxType.File
+  const uuid: FileBoxType.Uuid = FileBoxType.Uuid
+  assert.equal(qr, 3)
+  assert.equal(file, 5)
+  assert.equal(uuid, 7)
+  assert.equal(FileBoxType[FileBoxType.QRCode], 'QRCode')
+})
 
 test('File smoke testing', async () => {
   assert.throws(() => FileBox.fromFile('non-existent-file-xyz.txt'), 'should throw for a non-existing file')
@@ -226,6 +238,58 @@ test('setUuidSaver()', async () => {
 
   assert.doesNotThrow(() => FileBoxTest2.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should not throw for set loader for the first time')
   assert.throws(() => FileBoxTest2.setUuidSaver((_: Readable) => Promise.resolve('uuid')), 'should throw for set loader twice')
+})
+
+test('setUuidLoader() & setUuidSaver() on the FileBox class', () => {
+  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+  const result = spawnSync(process.execPath, [
+    '--input-type=module',
+    '--eval',
+    `
+      import { FileBox } from './src/file-box.ts'
+      import { PassThrough } from 'node:stream'
+
+      const loader = () => Promise.resolve(new PassThrough())
+      const saver = () => Promise.resolve('uuid')
+
+      if (Object.hasOwn(FileBox, 'uuidToStream') && FileBox.uuidToStream) {
+        throw new Error('uuidToStream should not be registered before the first call')
+      }
+      FileBox.setUuidLoader(loader)
+      FileBox.setUuidSaver(saver)
+
+      let loaderThrew = false
+      try {
+        FileBox.setUuidLoader(loader)
+      } catch (err) {
+        loaderThrew = true
+        if (!(err instanceof Error) || !err.message.includes('set resolver before')) {
+          throw err
+        }
+      }
+      if (!loaderThrew) {
+        throw new Error('second FileBox.setUuidLoader() should throw')
+      }
+
+      let saverThrew = false
+      try {
+        FileBox.setUuidSaver(saver)
+      } catch (err) {
+        saverThrew = true
+        if (!(err instanceof Error) || !err.message.includes('set register before')) {
+          throw err
+        }
+      }
+      if (!saverThrew) {
+        throw new Error('second FileBox.setUuidSaver() should throw')
+      }
+    `,
+  ], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  })
+
+  assert.equal(result.status, 0, `${result.stderr}\n${result.stdout}`)
 })
 
 test('setUuidLoader() & setUuidSaver() with `this`', async () => {

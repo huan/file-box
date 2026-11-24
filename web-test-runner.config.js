@@ -57,12 +57,20 @@ export default {
   ],
 
   nodeResolve: {
+    // Honor package "browser" fields so qrcode resolves to its canvas build,
+    // which exposes toDataURL and not toBuffer.
+    browser: true,
     exportConditions: ['browser', 'development'],
   },
 
   plugins: [
     browserShimsPlugin(),
-    fromRollup(commonjs)(),
+    fromRollup(commonjs)({
+      // The browser qrcode build is CommonJS. `require()` must return
+      // `module.exports` (the default) so helpers like `ECLevel.from` resolve.
+      requireReturnsDefault: 'preferred',
+      strictRequires: true,
+    }),
     fromRollup(nodePolyfills)(),
     esbuildPlugin({
       define: {

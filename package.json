@@ -22,7 +22,7 @@
     "lint:biome": "biome lint src tests",
     "lint:ts": "tsc --isolatedModules --noEmit",
     "test": "npm run lint && npm run test:unit",
-    "test:unit": "node --test src tests",
+    "test:unit": "node --test \"src/**/*.test.ts\" \"tests/**/*.test.ts\"",
     "test:unit:browser": "wtr --config web-test-runner.config.js",
     "test:pack": "bash -x scripts/npm-pack-testing.sh"
   },
@@ -46,13 +46,16 @@
   },
   "homepage": "https://github.com/huan/file-box#readme",
   "dependencies": {
+    "bmp-ts": "^1.2.0",
     "brolog": "^1.14.2",
     "clone-class": "^1.0.3",
     "jpeg-js": "^0.4.4",
     "mime": "^3.0.0",
+    "omggif": "^1.0.10",
     "qr": "^0.7.2",
     "qrcode": "^1.5.4",
     "upng-js": "^2.1.0",
+    "utif2": "^4.1.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
