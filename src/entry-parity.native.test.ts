@@ -79,3 +79,10 @@ test('every exported class has the same static and prototype members', () => {
     )
   }
 })
+
+test('node FileBox is a subtype of web FileBox at compile time', () => {
+  type IsAssignable<A, B> = [A] extends [B] ? true : false
+  const isAssignable: IsAssignable<node.FileBox, web.FileBox> = true
+  assert.ok(isAssignable)
+})
+

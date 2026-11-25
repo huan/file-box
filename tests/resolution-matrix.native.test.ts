@@ -19,6 +19,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { after, before, describe, test } from 'node:test'
+import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
 import { build } from 'esbuild'
@@ -155,7 +156,7 @@ describe('TypeScript', () => {
   ] as const) {
     test(`tsc moduleResolution=${moduleResolution}`, async () => {
       const tsc = join(
-        dirname(new URL(import.meta.resolve('typescript/package.json')).pathname),
+        dirname(fileURLToPath(import.meta.resolve('typescript/package.json'))),
         'bin/tsc',
       )
       const { stdout } = await exec(
