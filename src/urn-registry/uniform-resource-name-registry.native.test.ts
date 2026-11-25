@@ -47,6 +47,11 @@ function createRegistry (t: TestContext, expireMilliseconds?: number) {
   return { registry, storeDir }
 }
 
+test('UniformResourceNameRegistry default expireMilliseconds is 30 minutes', () => {
+  const registry = new UniformResourceNameRegistry()
+  assert.strictEqual((registry as any).expireMilliseconds, 30 * 60 * 1000)
+})
+
 test('UniformResourceNameRegistry class', async t => {
   const QRCODE = 'test qrcode'
 

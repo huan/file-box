@@ -39,3 +39,8 @@ test('sizedChunkTransformer compatibility bridge', async () => {
   const transformer = sizedChunkTransformer(2)
   assert.ok(transformer, 'transformer should be created')
 })
+
+test('sizedChunkTransformStream throws RangeError for non-positive chunkByte', () => {
+  assert.throws(() => sizedChunkTransformStream(0), RangeError)
+  assert.throws(() => sizedChunkTransformStream(-5), RangeError)
+})

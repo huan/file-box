@@ -42,6 +42,10 @@ async function main () {
     assert.ok(browserBox instanceof FileBox)
     assert.strictEqual(browserBox.name, 'browser.txt')
 
+    const promotedBox = ServerFileBox.fromBox(browserBox)
+    assert.ok(promotedBox instanceof ServerFileBox)
+    assert.strictEqual(promotedBox.name, 'browser.txt')
+
     console.log(`FileBox v${VERSION} smoke testing passed!`)
   } finally {
     await new Promise<void>((resolve, reject) => {

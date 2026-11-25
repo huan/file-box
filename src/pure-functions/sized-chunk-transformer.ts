@@ -20,6 +20,9 @@ const DEFAULT_CHUNK_BYTE = 256 * 1024 // 256 KB
 export function sizedChunkTransformStream (
   chunkByte = DEFAULT_CHUNK_BYTE,
 ): TransformStream<Uint8Array, Uint8Array> {
+  if (chunkByte <= 0) {
+    throw new RangeError(`chunkByte must be greater than 0, received ${chunkByte}`)
+  }
   let buffer: Uint8Array<any> = new Uint8Array(0)
 
   return new TransformStream<Uint8Array, Uint8Array>({

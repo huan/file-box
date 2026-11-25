@@ -176,3 +176,45 @@ test('FileBox.validInterface() and instanceof check', () => {
   assert.ok(FileBox.validInterface(fileBox))
   assert.ok(FileBox.valid(fileBox))
 })
+
+test('FileBox.fromBox() preserves metadata, mediaType and bytes', async () => {
+  const original = FileBox.fromBytes(new TextEncoder().encode('Box payload'), 'payload.txt')
+  original.metadata = { custom: 'value' }
+
+  const converted = FileBox.fromBox(original)
+  assert.strictEqual(converted, original, 'same class instance should return itself')
+
+  // Create an object conforming to FileBoxInterface
+  const customBox = {
+    name: 'custom.txt',
+    size: 6,
+    md5: 'dummy-md5',
+    mediaType: 'text/custom',
+    metadata: { key: 'val' },
+    type: FileBoxType.Stream,
+    toReadableStream: async () => new ReadableStream<Uint8Array>({
+      start (controller) {
+        controller.enqueue(new TextEncoder().encode('custom'))
+        controller.close()
+      },
+    }),
+  } as any
+
+  const boxed = FileBox.fromBox(customBox)
+  assert.strictEqual(boxed.name, 'custom.txt')
+  assert.strictEqual(boxed.size, 6)
+  assert.strictEqual(boxed.md5, 'dummy-md5')
+  assert.strictEqual(boxed.mediaType, 'text/custom')
+  assert.deepStrictEqual(boxed.metadata, { key: 'val' })
+  assert.strictEqual(new TextDecoder().decode(await boxed.toBytes()), 'custom')
+})
+
+test('FileBox.fromJSON() preserves headers for Url box', () => {
+  const urlBox = FileBox.fromUrl('https://example.com/file.txt', {
+    headers: { Authorization: 'Bearer token-123' },
+  })
+  const json = urlBox.toJSON()
+  const restored = FileBox.fromJSON(json)
+  assert.strictEqual(restored.type, FileBoxType.Url)
+  assert.deepStrictEqual((restored as any).headers, { Authorization: 'Bearer token-123' })
+})

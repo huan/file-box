@@ -6,6 +6,7 @@ import * as assert from 'node:assert/strict'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as os from 'node:os'
+import { createServer } from 'node:http'
 import { PassThrough, Readable, Writable } from 'node:stream'
 
 import { FileBox as UniversalFileBox } from '../file-box.ts'
@@ -122,6 +123,91 @@ test('UniformResourceNameRegistry with Server FileBox', async () => {
     assert.strictEqual(restoredBuf.toString('utf8'), content)
 
     registry.destroy()
+  } finally {
+    fs.rmSync(tmpDir, { force: true, recursive: true })
+  }
+})
+
+test('ServerFileBox.fromBox promotes UniversalFileBox to ServerFileBox', async () => {
+  const universalBox = UniversalFileBox.fromBytes(new TextEncoder().encode('Universal data'), 'universal.txt')
+  assert.ok(!(universalBox instanceof FileBox), 'should not initially be a ServerFileBox')
+
+  const serverBox = FileBox.fromBox(universalBox)
+  assert.ok(serverBox instanceof FileBox, 'promoted box should be instance of ServerFileBox')
+  assert.ok(serverBox instanceof UniversalFileBox)
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'from-box-test-'))
+  try {
+    const target = path.join(tmpDir, 'saved.txt')
+    await serverBox.toFile(target)
+    assert.strictEqual(fs.readFileSync(target, 'utf8'), 'Universal data')
+  } finally {
+    fs.rmSync(tmpDir, { force: true, recursive: true })
+  }
+})
+
+test('ServerFileBox.toFile removes partial file on stream failure', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'to-file-fail-test-'))
+  try {
+    const errorStream = new ReadableStream<Uint8Array>({
+      start (controller) {
+        controller.enqueue(new Uint8Array([1, 2, 3]))
+        controller.error(new Error('intentional stream failure'))
+      },
+    })
+    const box = FileBox.fromStream(errorStream, 'failing.dat')
+    const target = path.join(tmpDir, 'partial.dat')
+
+    await assert.rejects(
+      box.toFile(target),
+      /intentional stream failure/,
+    )
+    assert.strictEqual(fs.existsSync(target), false, 'partial file must be cleaned up on failure')
+  } finally {
+    fs.rmSync(tmpDir, { force: true, recursive: true })
+  }
+})
+
+test('nodeStreamToWebStream handles string chunks safely', async () => {
+  const nodeReadable = new Readable({
+    read () {
+      this.push('text chunk 1, ')
+      this.push('text chunk 2')
+      this.push(null)
+    },
+  })
+  nodeReadable.setEncoding('utf8')
+
+  const box = FileBox.fromStream(nodeReadable, 'strings.txt')
+  const bytes = await box.toBytes()
+  assert.strictEqual(new TextDecoder().decode(bytes), 'text chunk 1, text chunk 2')
+})
+
+test('Server FileBox toFile syncs URL metadata when filename is determined by header', async t => {
+  const payload = 'URL content for toFile'
+  const server = createServer((_req, res) => {
+    res.setHeader('Content-Disposition', 'attachment; filename=remote-resolved.txt')
+    res.setHeader('Content-Type', 'text/plain')
+    res.end(payload)
+  })
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', resolve)
+  })
+  t.after(() => new Promise<void>((resolve, reject) => {
+    server.close(error => error ? reject(error) : resolve())
+  }))
+
+  const addr = server.address()
+  assert.ok(addr && typeof addr !== 'string')
+  const box = FileBox.fromUrl(`http://127.0.0.1:${addr.port}/endpoint`)
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'url-to-file-test-'))
+  try {
+    const dest = path.join(tmpDir, 'custom-target.txt')
+    await box.toFile(dest)
+    assert.strictEqual(box.name, 'remote-resolved.txt')
+    assert.strictEqual(fs.readFileSync(dest, 'utf8'), payload)
   } finally {
     fs.rmSync(tmpDir, { force: true, recursive: true })
   }

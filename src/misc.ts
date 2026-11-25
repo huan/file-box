@@ -35,7 +35,8 @@ export function normalizeFetchUrlAndHeaders (
     if (parsed.username || parsed.password) {
       const credentials = `${decodeURIComponent(parsed.username)}:${decodeURIComponent(parsed.password)}`
       if (!reqHeaders.has('authorization')) {
-        reqHeaders.set('authorization', `Basic ${btoa(credentials)}`)
+        const credentialBytes = new TextEncoder().encode(credentials)
+        reqHeaders.set('authorization', `Basic ${bytesToBase64(credentialBytes)}`)
       }
       parsed.username = ''
       parsed.password = ''
@@ -138,7 +139,11 @@ export async function streamToBytes (
       resolve(merged)
     })
     stream.on('data', (chunk: any) => {
-      const u8 = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk)
+      const u8 = chunk instanceof Uint8Array
+        ? chunk
+        : typeof chunk === 'string'
+          ? new TextEncoder().encode(chunk)
+          : new Uint8Array(chunk)
       chunks.push(u8)
     })
   })

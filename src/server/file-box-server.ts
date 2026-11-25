@@ -7,12 +7,18 @@
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { Readable, Writable } from 'node:stream'
+import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 
 import { FileBox as UniversalFileBox } from '../file-box.ts'
 import { FileBoxType } from '../file-box.type.ts'
+import type { FileBoxInterface } from '../interface.ts'
 
 export class FileBox extends UniversalFileBox {
+
+  static override [Symbol.hasInstance] (target: any): target is FileBox {
+    return Object.prototype.isPrototypeOf.call(this.prototype, target)
+  }
 
   /**
    * Loads a file from the native filesystem or a Web Blob/File.
@@ -43,6 +49,17 @@ export class FileBox extends UniversalFileBox {
     return super.fromFile(fileOrPath, name, md5) as FileBox
   }
 
+  /**
+   * Creates a server FileBox from any FileBoxInterface instance.
+   * If the box is already a server FileBox, returns it directly.
+   * Otherwise, promotes it to a server FileBox with native OS capabilities.
+   *
+   * @param box Source FileBoxInterface instance
+   */
+  static override fromBox (box: FileBoxInterface): FileBox {
+    return super.fromBox(box) as FileBox
+  }
+
   protected override _transformFileToStream (): ReadableStream<Uint8Array> {
     if (this.localPath) {
       const nodeStream = fs.createReadStream(this.localPath)
@@ -62,7 +79,7 @@ export class FileBox extends UniversalFileBox {
     overwrite = false,
   ): Promise<void> {
     if (this.type === FileBoxType.Url) {
-      if (!this.mediaType || !this.name) {
+      if (!this._mediaType || this.mediaType === 'application/unknown') {
         await this._syncUrlMetadata()
       }
     }
@@ -72,23 +89,16 @@ export class FileBox extends UniversalFileBox {
       throw new Error(`FileBox.toFile(${fullPath}): file exists. Pass overwrite=true to force overwrite.`)
     }
 
-    const writeStream = fs.createWriteStream(fullPath)
-    await new Promise<void>((resolve, reject) => {
-      writeStream.once('open', () => resolve())
-      writeStream.once('error', reject)
-    })
-
-    const webStream = await this.toReadableStream()
-    if (typeof (webStream as any).pipeTo === 'function') {
-      await (webStream as ReadableStream<Uint8Array>).pipeTo(Writable.toWeb(writeStream))
-    } else {
-      await new Promise<void>((resolve, reject) => {
-        const nodeReadable = (webStream as any)
-        nodeReadable.pipe(writeStream)
-        writeStream.once('finish', () => resolve())
-        writeStream.once('error', reject)
-        nodeReadable.once('error', reject)
-      })
+    const writeStream = fs.createWriteStream(fullPath, { flags: overwrite ? 'w' : 'wx' })
+    try {
+      const webStream = await this.toReadableStream()
+      const source = typeof (webStream as any).pipeTo === 'function'
+        ? Readable.fromWeb(webStream as any)
+        : (webStream as unknown as Readable)
+      await pipeline(source, writeStream)
+    } catch (error) {
+      await fs.promises.rm(fullPath, { force: true }).catch(() => undefined)
+      throw error
     }
   }
 

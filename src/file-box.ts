@@ -49,29 +49,39 @@ let interfaceOfFileBox = (_: any): _ is FileBoxInterface => false
 let looseInstanceOfFileBox = (_: any): _ is FileBox => false
 
 /**
- * Converts a Node.js Readable stream into a WHATWG ReadableStream with full teardown
- * and cancellation support across environments.
+ * Converts a Node.js Readable stream into a WHATWG ReadableStream with full teardown,
+ * flow control backpressure, and cancellation support across environments.
  */
 function nodeStreamToWebStream (stream: any): ReadableStream<Uint8Array> {
   let onData: ((chunk: any) => void) | undefined
   let onEnd: (() => void) | undefined
   let onError: ((err: any) => void) | undefined
+  let onClose: (() => void) | undefined
 
   const cleanup = () => {
     if (onData) stream.removeListener?.('data', onData)
     if (onEnd) stream.removeListener?.('end', onEnd)
     if (onError) stream.removeListener?.('error', onError)
+    if (onClose) stream.removeListener?.('close', onClose)
     onData = undefined
     onEnd = undefined
     onError = undefined
+    onClose = undefined
   }
 
   return new ReadableStream<Uint8Array>({
     start (controller) {
       onData = (chunk: any) => {
         try {
-          const u8 = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk)
+          const u8 = chunk instanceof Uint8Array
+            ? chunk
+            : typeof chunk === 'string'
+              ? new TextEncoder().encode(chunk)
+              : new Uint8Array(chunk)
           controller.enqueue(u8)
+          if (controller.desiredSize !== null && controller.desiredSize <= 0) {
+            stream.pause?.()
+          }
         } catch {
           cleanup()
           if (typeof stream.destroy === 'function') {
@@ -87,10 +97,18 @@ function nodeStreamToWebStream (stream: any): ReadableStream<Uint8Array> {
         cleanup()
         try { controller.error(err) } catch {}
       }
+      onClose = () => {
+        cleanup()
+        try { controller.close() } catch {}
+      }
 
       stream.on('data', onData)
       stream.once('end', onEnd)
       stream.once('error', onError)
+      stream.once('close', onClose)
+    },
+    pull () {
+      stream.resume?.()
     },
     cancel (reason) {
       cleanup()
@@ -402,6 +420,7 @@ export class FileBox implements Pipeable, FileBoxInterface {
 
       case FileBoxType.Url:
         fileBox = this.fromUrl(obj.url, {
+          headers: obj.headers,
           md5: obj.md5,
           name: obj.name,
           size: obj.size,
@@ -432,6 +451,57 @@ export class FileBox implements Pipeable, FileBoxInterface {
     }
 
     return fileBox
+  }
+
+  /**
+   * Creates a FileBox from any FileBoxInterface instance.
+   * If the instance is already of this class, returns it directly.
+   * Otherwise, promotes or reconstructs it preserving its name, md5, metadata, and mediaType.
+   *
+   * @param box Source FileBoxInterface instance
+   */
+  static fromBox (box: FileBoxInterface): FileBox {
+    if (Object.prototype.isPrototypeOf.call(this.prototype, box)) {
+      return box as FileBox
+    }
+    let newBox: FileBox
+    const rawBox = box as any
+
+    if (rawBox.type === FileBoxType.Buffer && rawBox.buffer) {
+      newBox = this.fromBytes(rawBox.buffer, rawBox.name, rawBox.md5)
+    } else if (rawBox.type === FileBoxType.Base64 && rawBox.base64) {
+      newBox = this.fromBase64(rawBox.base64, rawBox.name, rawBox.md5)
+    } else if (rawBox.type === FileBoxType.Url && rawBox.remoteUrl) {
+      newBox = this.fromUrl(rawBox.remoteUrl, {
+        headers: rawBox.headers,
+        md5: rawBox.md5,
+        name: rawBox.name,
+        size: rawBox.size === UNKNOWN_SIZE ? undefined : rawBox.size,
+      })
+    } else if (rawBox.type === FileBoxType.QRCode && rawBox.qrCode) {
+      newBox = this.fromQRCode(rawBox.qrCode, rawBox.md5)
+    } else if (rawBox.type === FileBoxType.Uuid && rawBox.uuid) {
+      newBox = this.fromUuid(rawBox.uuid, {
+        md5: rawBox.md5,
+        name: rawBox.name,
+        size: rawBox.size === UNKNOWN_SIZE ? undefined : rawBox.size,
+      })
+    } else {
+      newBox = this.fromStream(
+        () => rawBox.toReadableStream(),
+        rawBox.name,
+        rawBox.md5,
+        { size: rawBox.size === UNKNOWN_SIZE ? undefined : rawBox.size },
+      )
+    }
+
+    if (rawBox.metadata && Object.keys(rawBox.metadata).length > 0) {
+      newBox.metadata = rawBox.metadata
+    }
+    if (rawBox.mediaType && rawBox.mediaType !== 'application/unknown') {
+      newBox._mediaType = rawBox.mediaType
+    }
+    return newBox
   }
 
   readonly version = VERSION
@@ -492,6 +562,7 @@ export class FileBox implements Pipeable, FileBoxInterface {
   protected readonly stream?: ReadableStream<Uint8Array> | (() => ReadableStream<Uint8Array>) | any
   protected readonly headers?: any
   protected localPath?: string
+  protected _streamConsumed = false
 
   constructor (options: FileBoxOptions) {
     this._name = basename(options.name)
@@ -731,16 +802,21 @@ export class FileBox implements Pipeable, FileBoxInterface {
         if (typeof this.stream === 'function') {
           return this.stream()
         }
+        if (this._streamConsumed) {
+          throw new Error('The stream is not readable. Maybe has already been consumed, and now it was drained. See: https://github.com/huan/file-box/issues/50')
+        }
         const stream = this.stream as any
         if (typeof stream.getReader === 'function') {
           if (stream.locked) {
             throw new Error('The stream is not readable. Maybe has already been consumed, and now it was drained. See: https://github.com/huan/file-box/issues/50')
           }
+          this._streamConsumed = true
           return stream as ReadableStream<Uint8Array>
         }
         if (stream.readable === false || stream.destroyed) {
           throw new Error('The stream is not readable. Maybe has already been consumed, and now it was drained. See: https://github.com/huan/file-box/issues/50')
         }
+        this._streamConsumed = true
         return nodeStreamToWebStream(stream)
       }
 
