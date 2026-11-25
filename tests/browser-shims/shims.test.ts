@@ -163,3 +163,43 @@ test('t.mock.method isolates and restores mocked methods after execution', async
   // After subtest completes, subtest-scoped mock is restored
   strictEqual(service.getValue(), 'original', 'scoped mock was restored after subtest')
 })
+
+test('mock.fn restores original implementation when restore is called', () => {
+  const original = (val: number) => val * 2
+  const spy = mock.fn(original)
+  strictEqual(spy(5), 10)
+
+  spy.mock.mockImplementation((val: number) => val * 10)
+  strictEqual(spy(5), 50)
+
+  spy.mock.restore()
+  strictEqual(spy(5), 10)
+})
+
+test('t.mock.fn isolates and restores mocked functions after execution', async (t) => {
+  let fnInstance: any
+  await t.test('subtest overrides mock.fn implementation', (subT) => {
+    fnInstance = subT.mock.fn(() => 'initial')
+    strictEqual(fnInstance(), 'initial')
+    fnInstance.mock.mockImplementation(() => 'overridden')
+    strictEqual(fnInstance(), 'overridden')
+  })
+  strictEqual(fnInstance(), 'initial', 'scoped mock.fn was restored upon teardown')
+})
+
+test('test() skips execution when options.todo is true without failing', { todo: true }, () => {
+  throw new Error('This todo test failure should not fail the suite')
+})
+
+test('test() skips execution when options.todo is a description string', { todo: 'unimplemented feature' }, () => {
+  throw new Error('This todo test failure should not fail the suite')
+})
+
+test('TestContext subtest skips execution when options.todo is true', async (t) => {
+  let executed = false
+  await t.test('subtest with todo', { todo: true }, () => {
+    executed = true
+    throw new Error('should not execute or fail')
+  })
+  strictEqual(executed, false, 'subtest was skipped because todo was set')
+})

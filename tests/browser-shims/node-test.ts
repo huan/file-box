@@ -82,7 +82,9 @@ export const mock = {
         resetCalls: () => {
           calls.length = 0
         },
-        restore: () => {},
+        restore: () => {
+          currentImpl = implementation
+        },
       },
     })
 
@@ -184,7 +186,11 @@ class SubtestSkipError extends Error {
  * Context passed to individual test executions and subtests, conforming to `node:test` TestContext.
  */
 export interface TestContext {
-  test: (name: string, fn: (t: TestContext) => Promise<void> | void) => Promise<void>
+  test: (
+    name: string,
+    optionsOrFn?: TestOptions | ((t: TestContext) => Promise<void> | void),
+    maybeFn?: (t: TestContext) => Promise<void> | void,
+  ) => Promise<void>
   after: (fn: () => Promise<void> | void) => void
   before: (fn: () => Promise<void> | void) => void
   diagnostic: (message: string) => void
@@ -216,7 +222,13 @@ function createTestContext (mochaCtx?: any, isSubtest = false): TestContext {
   const contextMocks: { restore: () => void }[] = []
 
   const scopedMock = {
-    fn: mock.fn,
+    fn: <T extends (...args: any[]) => any = (...args: any[]) => any>(
+      implementation?: T,
+    ): MockFunction<T> => {
+      const mocked = mock.fn(implementation)
+      contextMocks.push({ restore: () => mocked.mock.restore() })
+      return mocked
+    },
     method: <T extends Record<string, any>, K extends keyof T>(
       object: T,
       property: K,
@@ -259,7 +271,23 @@ function createTestContext (mochaCtx?: any, isSubtest = false): TestContext {
         console.log(`[test:skip] ${message || ''}`)
       }
     },
-    test: async (subName: string, subFn: (t: TestContext) => Promise<void> | void) => {
+    test: async (
+      subName: string,
+      optionsOrFn?: TestOptions | ((t: TestContext) => Promise<void> | void),
+      maybeFn?: (t: TestContext) => Promise<void> | void,
+    ) => {
+      const subFn = typeof optionsOrFn === 'function' ? optionsOrFn : maybeFn
+      const options = typeof optionsOrFn === 'object' ? optionsOrFn : undefined
+
+      if (!subFn || options?.skip) {
+        console.log(`[test:subtest:skipped] ${subName}`)
+        return
+      }
+      if (options?.todo) {
+        console.log(`[test:subtest:skipped] [TODO] ${subName}`)
+        return
+      }
+
       // The first subtest starts the parent's setup. Siblings share that result.
       beforeHooksRun ??= (async () => {
         for (const hook of beforeHooks) {
@@ -347,13 +375,14 @@ export function test (
     throw new Error('No in-browser test runner (it/test) found on globalThis')
   }
 
-  if (!fn || options?.skip) {
-    runner.skip(name, () => {})
+  if (!fn || options?.skip || options?.todo) {
+    const todoPrefix = options?.todo ? '[TODO] ' : ''
+    runner.skip(`${todoPrefix}${name}`, () => {})
     return
   }
 
   if (options?.only) {
-    test.only(name, fn)
+    test.only(name, optionsOrFn as any, maybeFn)
     return
   }
 
@@ -384,7 +413,7 @@ test.only = (name: string, optionsOrFn?: TestOptions | TestFunction, maybeFn?: T
   const fn = typeof optionsOrFn === 'function' ? optionsOrFn : maybeFn
   const options = typeof optionsOrFn === 'object' ? optionsOrFn : undefined
 
-  if (!fn) {
+  if (!fn || options?.skip || options?.todo) {
     return
   }
 
@@ -404,7 +433,7 @@ test.only = (name: string, optionsOrFn?: TestOptions | TestFunction, maybeFn?: T
 /**
  * Marks a test case as a todo item.
  */
-test.todo = (name: string): void => {
+test.todo = (name: string, _optionsOrFn?: TestOptions | TestFunction, _maybeFn?: TestFunction): void => {
   test.skip(`[TODO] ${name}`)
 }
 

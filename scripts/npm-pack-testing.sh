@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 set -e
 
+restore_version() {
+  git checkout src/version.ts 2>/dev/null || true
+}
+trap restore_version EXIT
+
+./scripts/generate-version.sh
+
 npm run dist
 npm pack
+
+restore_version
 
 TMPDIR="/tmp/npm-pack-testing.$$"
 mkdir -p "$TMPDIR"
