@@ -1,7 +1,8 @@
 /**
- * Main module entry point for FileBox.
+ * Main module entry point for FileBox (Universal WinterTC root export).
  *
- * Exports FileBox class, FileBoxType, UniformResourceNameRegistry, and related types.
+ * Exports universal FileBox class, FileBoxType, VERSION, and related types.
+ * Fully compatible with browsers, edge runtimes, Node.js, and Deno with zero native OS dependencies.
  */
 import {
   FileBoxType,
@@ -20,9 +21,6 @@ import type {
   UuidSaver,
   UuidLoader,
 } from './file-box.type.ts'
-import {
-  UniformResourceNameRegistry,
-} from './urn-registry/uniform-resource-name-registry.ts'
 
 export type {
   UuidSaver,
@@ -33,6 +31,5 @@ export type {
 export {
   FileBox,
   FileBoxType,
-  UniformResourceNameRegistry,
   VERSION,
 }

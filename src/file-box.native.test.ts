@@ -12,6 +12,7 @@ import { PassThrough, type Readable } from 'node:stream'
 import { instanceToClass } from 'clone-class'
 
 import { FileBox } from './file-box.ts'
+import { FileBox as ServerFileBox } from './server/file-box-server.ts'
 import { FileBoxType } from './file-box.type.ts'
 
 test('File smoke testing', async () => {
@@ -53,7 +54,7 @@ test('toDataURL()', async () => {
   const FILE_PATH = 'tests/fixtures/data.bin'
   const EXPECTED_DATA_URL = 'data:application/octet-stream;base64,dGVzdA=='
 
-  const fileBox = FileBox.fromFile(FILE_PATH)
+  const fileBox = ServerFileBox.fromFile(FILE_PATH)
   const dataUrl = await fileBox.toDataURL()
   assert.strictEqual(dataUrl, EXPECTED_DATA_URL, 'should get expected dataUrl')
 })
@@ -78,7 +79,7 @@ test('toFile() with long name', async () => {
     const targetPath = path.join(tmpDir, longName)
     const content = 'test file content'
 
-    const fileBox = FileBox.fromBuffer(Buffer.from(content), longName)
+    const fileBox = ServerFileBox.fromBuffer(Buffer.from(content), longName)
     await fileBox.toFile(targetPath)
 
     assert.ok(fs.existsSync(targetPath), 'file should exist on disk')
@@ -268,7 +269,7 @@ test('setUuidLoader() & setUuidSaver() on the FileBox class', () => {
 })
 
 test('setUuidLoader() & setUuidSaver() with `this`', async t => {
-  const stream = await FileBox.fromQRCode('qr').toStream()
+  const stream = await ServerFileBox.fromQRCode('qr').toStream()
   const loader = t.mock.fn(async () => stream)
   const saver = t.mock.fn(async () => 'uuid')
 

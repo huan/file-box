@@ -33,7 +33,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-import type { Readable } from 'node:stream'
+import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 
 import { instanceToClass }  from 'clone-class'
@@ -41,7 +41,7 @@ import { log }              from 'brolog'
 
 import {
   FileBox,
-}                         from '../file-box.ts'
+}                         from '../server/file-box-server.ts'
 
 import {
   randomUuid,
@@ -90,7 +90,7 @@ class UniformResourceNameRegistry {
 
     this.uuidExpiringTable = new Map()
 
-    this.expireMilliseconds = options.expireMilliseconds ?? (DEFAULT_UUID_EXPIRE_MINUTES * 60 * 1000 * 1000)
+    this.expireMilliseconds = options.expireMilliseconds ?? (DEFAULT_UUID_EXPIRE_MINUTES * 60 * 1000)
     this.storeDir = options.storeDir || path.join(
       os.tmpdir(),
       'file-box-urn-registry.' + String(process.pid),
@@ -231,14 +231,18 @@ class UniformResourceNameRegistry {
    * Saves the stream and returns a UUID after the file has been written.
    * A failed write leaves no resolvable UUID.
    */
-  async save (stream: Readable): Promise<string> {
+  async save (stream: Readable | ReadableStream<Uint8Array>): Promise<string> {
     log.verbose('UniformResourceNameRegistry', 'save(stream)')
 
     const uuid = randomUuid()
 
     const filename = this.uuidFileName(uuid)
+    const writeStream = fs.createWriteStream(filename)
     try {
-      await pipeline(stream, fs.createWriteStream(filename))
+      const source = typeof (stream as any).pipeTo === 'function'
+        ? Readable.fromWeb(stream as any)
+        : (stream as Readable)
+      await pipeline(source, writeStream)
     } catch (error) {
       await fs.promises.rm(filename, { force: true }).catch(() => undefined)
       throw error

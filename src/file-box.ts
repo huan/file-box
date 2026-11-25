@@ -1,35 +1,18 @@
 /**
- * File Box
- * https://github.com/huan/file-box
+ * Universal WinterTC FileBox implementation.
  *
- * 2018 Huan LI <zixia@zixia.net>
+ * Core file container fully compatible with browsers, edge workers, Node.js,
+ * and Deno runtimes. Uses standard WHATWG Streams and Web APIs with zero native OS imports.
  */
-/* eslint no-use-before-define: off */
-
-import * as FS        from 'fs'
-import type * as HTTP from 'http'
-import * as PATH      from 'path'
-import * as URL       from 'url'
-
-import mime           from 'mime'
-
-import {
-  PassThrough,
-  Readable,
-  Writable,
-}                         from 'stream'
+import mime from 'mime'
 import {
   instanceToClass,
   looseInstanceOfClass,
   interfaceOfClass,
-}                         from 'clone-class'
+} from 'clone-class'
 
-import {
-  VERSION,
-}                         from './config.ts'
-import {
-  FileBoxType,
-}                         from './file-box.type.ts'
+import { VERSION } from './config.ts'
+import { FileBoxType } from './file-box.type.ts'
 import type {
   FileBoxJsonObject,
   FileBoxOptions,
@@ -42,77 +25,128 @@ import type {
   Pipeable,
   UuidLoader,
   UuidSaver,
-}                         from './file-box.type.ts'
+} from './file-box.type.ts'
 import {
+  base64ToBytes,
+  basename,
+  bytesToBase64,
   dataUrlToBase64,
+  fetchHeadHeader,
+  fetchStream,
   httpHeaderToFileName,
-  httpHeadHeader,
-  httpStream,
-  streamToBuffer,
-}                         from './misc.ts'
+  streamToBytes,
+} from './misc.ts'
 import {
   bufferToQrValue,
-  qrValueToStream,
-}                         from './qrcode.ts'
-import {
-  sizedChunkTransformer,
-}                         from './pure-functions/sized-chunk-transformer.ts'
-import type {
-  FileBoxInterface,
-}                         from './interface.ts'
+  qrValueToReadableStream,
+} from './qrcode.ts'
+import type { FileBoxInterface } from './interface.ts'
 
 const EMPTY_META_DATA = Object.freeze({})
-const UNKNOWN_SIZE    = -1
+const UNKNOWN_SIZE = -1
 
-let interfaceOfFileBox      = (_: any): _ is FileBoxInterface => false
-let looseInstanceOfFileBox  = (_: any): _ is FileBox          => false
+let interfaceOfFileBox = (_: any): _ is FileBoxInterface => false
+let looseInstanceOfFileBox = (_: any): _ is FileBox => false
 
-class FileBox implements Pipeable, FileBoxInterface {
+/**
+ * Converts a Node.js Readable stream into a WHATWG ReadableStream with full teardown,
+ * flow control backpressure, and cancellation support across environments.
+ */
+function nodeStreamToWebStream (stream: any): ReadableStream<Uint8Array> {
+  let onData: ((chunk: any) => void) | undefined
+  let onEnd: (() => void) | undefined
+  let onError: ((err: any) => void) | undefined
+  let onClose: (() => void) | undefined
 
-  /**
-   *
-   * Static Properties
-   *
-   */
+  const cleanup = () => {
+    if (onData) stream.removeListener?.('data', onData)
+    if (onEnd) stream.removeListener?.('end', onEnd)
+    if (onError) stream.removeListener?.('error', onError)
+    if (onClose) stream.removeListener?.('close', onClose)
+    onData = undefined
+    onEnd = undefined
+    onError = undefined
+    onClose = undefined
+  }
+
+  return new ReadableStream<Uint8Array>({
+    start (controller) {
+      onData = (chunk: any) => {
+        try {
+          const u8 = chunk instanceof Uint8Array
+            ? chunk
+            : typeof chunk === 'string'
+              ? new TextEncoder().encode(chunk)
+              : new Uint8Array(chunk)
+          controller.enqueue(u8)
+          if (controller.desiredSize !== null && controller.desiredSize <= 0) {
+            stream.pause?.()
+          }
+        } catch {
+          cleanup()
+          if (typeof stream.destroy === 'function') {
+            stream.destroy()
+          }
+        }
+      }
+      onEnd = () => {
+        cleanup()
+        try { controller.close() } catch {}
+      }
+      onError = (err: any) => {
+        cleanup()
+        try { controller.error(err) } catch {}
+      }
+      onClose = () => {
+        cleanup()
+        try { controller.close() } catch {}
+      }
+
+      stream.on('data', onData)
+      stream.once('end', onEnd)
+      stream.once('error', onError)
+      stream.once('close', onClose)
+    },
+    pull () {
+      stream.resume?.()
+    },
+    cancel (reason) {
+      cleanup()
+      if (typeof stream.destroy === 'function') {
+        const error = reason instanceof Error ? reason : undefined
+        stream.destroy(error)
+      }
+    },
+  })
+}
+
+export class FileBox implements Pipeable, FileBoxInterface {
+
   static readonly version = VERSION
 
-  /**
-   * Symbol.hasInstance: instanceof
-   *
-   * @link https://www.keithcirkel.co.uk/metaprogramming-in-es6-symbols/
-   */
   static [Symbol.hasInstance] (lho: any): lho is FileBoxInterface {
     return this.validInterface(lho)
   }
 
-  /**
-   * Check if obj satisfy FileBox interface
-   */
   static valid (target: any): target is FileBoxInterface {
     return this.validInstance(target) || this.validInterface(target)
   }
 
-  /**
-   * Check if obj satisfy FileBox interface
-   */
   static validInterface (target: any): target is FileBoxInterface {
     return interfaceOfFileBox(target)
   }
 
-  /**
-   * loose check instance of FileBox
-   */
   static validInstance (target: any): target is FileBox {
     return looseInstanceOfFileBox(target)
   }
 
   static fromUrl (
-    url      : string,
-    options? : {
-      headers? : HTTP.OutgoingHttpHeaders,
-      name?    : string,
-      size?    : number,
-      md5?     : string,
+    url: string,
+    options?: {
+      headers?: any
+      name?: string
+      size?: number
+      md5?: string
     },
   ): FileBox
 
@@ -120,23 +154,20 @@ class FileBox implements Pipeable, FileBoxInterface {
    * @deprecated use `fromUrl(url, options)` instead
    */
   static fromUrl (
-    url      : string,
-    name?    : string,
-    headers? : HTTP.OutgoingHttpHeaders,
+    url: string,
+    name?: string,
+    headers?: any,
   ): FileBox
 
-  /**
-   * fromUrl()
-   */
   static fromUrl (
-    url            : string,
-    nameOrOptions? : string | {
-      headers? : HTTP.OutgoingHttpHeaders,
-      name?    : string,
-      size?    : number,
-      md5?     : string,
+    url: string,
+    nameOrOptions?: string | {
+      headers?: any
+      name?: string
+      size?: number
+      md5?: string
     },
-    headers? : HTTP.OutgoingHttpHeaders,
+    headers?: any,
   ): FileBox {
     let name: undefined | string
     let size: undefined | number
@@ -144,108 +175,145 @@ class FileBox implements Pipeable, FileBoxInterface {
 
     if (typeof nameOrOptions === 'object') {
       headers = nameOrOptions.headers
-      name    = nameOrOptions.name
-      size    = nameOrOptions.size
-      md5     = nameOrOptions.md5
+      name = nameOrOptions.name
+      size = nameOrOptions.size
+      md5 = nameOrOptions.md5
     } else {
       name = nameOrOptions
     }
 
     if (!name) {
-      const parsedUrl = new URL.URL(url)
-      name = parsedUrl.pathname
+      try {
+        const parsedUrl = new URL(url)
+        name = basename(parsedUrl.pathname)
+      } catch {
+        name = basename(url)
+      }
     }
     const options: FileBoxOptions = {
       headers,
       md5,
       name,
       size,
-      type : FileBoxType.Url,
+      type: FileBoxType.Url,
       url,
     }
     return new this(options)
   }
 
   /**
-   * Alias for `FileBox.fromFile()`
-   *
-   * @alias fromFile
+   * Creates a FileBox from a Web Blob or File.
+   * String paths require native filesystem access and must be loaded via `file-box/server`.
    */
-
   static fromFile (
-    path:   string,
-    name?:  string,
-    md5?:    string,
+    fileOrPath: Blob | string,
+    name?: string,
+    md5?: string,
   ): FileBox {
-    if (!name) {
-      name = PATH.parse(path).base
+    if (fileOrPath instanceof Blob) {
+      const fileName = name || (fileOrPath as any).name || 'file.dat'
+      return new this({
+        blob: fileOrPath,
+        md5,
+        name: fileName,
+        size: fileOrPath.size,
+        type: FileBoxType.File,
+      })
     }
-    const options: FileBoxOptions = {
-      md5,
-      name,
-      path,
-      type : FileBoxType.File,
+    if (typeof fileOrPath === 'string') {
+      throw new Error(`FileBox.fromFile("${fileOrPath}") requires filesystem access. Use import { FileBox } from "file-box/server" or pass a Web File/Blob.`)
     }
-
-    return new this(options)
+    throw new TypeError('FileBox.fromFile() argument must be a Blob/File or a path string.')
   }
 
   /**
-   * TODO: add `FileBoxStreamOptions` with `size` support (@huan, 202111)
+   * Creates a FileBox from a byte buffer (Uint8Array or ArrayBuffer).
    */
-  static fromStream (
-    stream: Readable,
-    name?:  string,
-    md5?:   string,
-  ): FileBox {
-    const options: FileBoxOptions = {
-      md5,
-      name: name || 'stream.dat',
-      stream,
-      type: FileBoxType.Stream,
-    }
-    return new this(options)
-  }
-
   static fromBuffer (
-    buffer: Buffer,
-    name?:   string,
-    md5?:    string,
+    buffer: Uint8Array | ArrayBuffer,
+    name?: string,
+    md5?: string,
   ): FileBox {
-    const options: FileBoxOptions = {
-      buffer,
+    const uint8 = buffer instanceof Uint8Array
+      ? new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+      : new Uint8Array(buffer)
+    return new this({
+      buffer: uint8,
       md5,
       name: name || 'buffer.dat',
-      type : FileBoxType.Buffer,
-    }
-    return new this(options)
+      size: uint8.byteLength,
+      type: FileBoxType.Buffer,
+    })
   }
 
   /**
-   * @param base64
-   * @param name the file name of the base64 data
+   * Symmetrical alias for fromBuffer accepting standard Uint8Array or ArrayBuffer bytes.
    */
+  static fromBytes (
+    bytes: Uint8Array | ArrayBuffer,
+    name?: string,
+    md5?: string,
+  ): FileBox {
+    return this.fromBuffer(bytes, name || 'bytes.dat', md5)
+  }
+
+  /**
+   * Creates a FileBox from a Web Blob.
+   */
+  static fromBlob (
+    blob: Blob,
+    name?: string,
+    md5?: string,
+  ): FileBox {
+    const fileName = name || (blob as any).name || 'blob.dat'
+    return new this({
+      blob,
+      md5,
+      name: fileName,
+      size: blob.size,
+      type: FileBoxType.File,
+    })
+  }
+
+  /**
+   * Creates a FileBox from a WHATWG ReadableStream or stream factory function.
+   */
+  static fromStream (
+    stream: ReadableStream<Uint8Array> | (() => ReadableStream<Uint8Array>) | any,
+    name?: string,
+    md5?: string,
+    options?: { size?: number },
+  ): FileBox {
+    return new this({
+      md5,
+      name: name || 'stream.dat',
+      size: options?.size,
+      stream,
+      type: FileBoxType.Stream,
+    })
+  }
+
   static fromBase64 (
     base64: string,
-    name?:   string,
-    md5?:    string,
+    name?: string,
+    md5?: string,
   ): FileBox {
-    const options: FileBoxOptions = {
-      base64,
+    const clean = base64.trim()
+    const padding = clean.endsWith('==') ? 2 : clean.endsWith('=') ? 1 : 0
+    const size = Math.max(0, Math.floor(clean.length * 3 / 4) - padding)
+    return new this({
+      base64: clean,
       md5,
       name: name || 'base64.dat',
-      type : FileBoxType.Base64,
-    }
-    return new this(options)
+      size,
+      type: FileBoxType.Base64,
+    })
   }
 
-  /**
-   * dataURL: `data:image/png;base64,${base64Text}`,
-   */
   static fromDataURL (
-    dataUrl : string,
-    name?    : string,
-    md5?     : string,
+    dataUrl: string,
+    name?: string,
+    md5?: string,
   ): FileBox {
     return this.fromBase64(
       dataUrlToBase64(dataUrl),
@@ -254,36 +322,27 @@ class FileBox implements Pipeable, FileBoxInterface {
     )
   }
 
-  /**
-   *
-   * @param qrCode the value of the QR Code. For example: `https://github.com`
-   */
   static fromQRCode (
     qrCode: string,
-    md5?:   string,
+    md5?: string,
   ): FileBox {
-    const options: FileBoxOptions = {
+    return new this({
       md5,
       name: 'qrcode.png',
       qrCode,
       type: FileBoxType.QRCode,
-    }
-    return new this(options)
+    })
   }
 
-  /**
-   * Type-only so an ESNext compile does not install `undefined` own properties.
-   * Those own properties make `Object.hasOwn` treat an unset callback as registered.
-   */
-  declare protected static uuidToStream?:    UuidLoader
-  declare protected static uuidFromStream?:  UuidSaver
+  declare protected static uuidToStream?: UuidLoader
+  declare protected static uuidFromStream?: UuidSaver
 
   static fromUuid (
     uuid: string,
     options?: {
-      name?: string,
-      size?: number,
-      md5? : string,
+      name?: string
+      size?: number
+      md5?: string
     },
   ): FileBox
 
@@ -296,82 +355,54 @@ class FileBox implements Pipeable, FileBoxInterface {
     md5?: string,
   ): FileBox
 
-  /**
-   * @param uuid the UUID of the file. For example: `6f88b03c-1237-4f46-8db2-98ef23200551`
-   * @param name the name of the file. For example: `video.mp4`
-   */
   static fromUuid (
     uuid: string,
     nameOrOptions?: string | {
-      name?: string,
-      size?: number,
-      md5? : string
+      name?: string
+      size?: number
+      md5?: string
     },
+    md5?: string,
   ): FileBox {
     let name: undefined | string
     let size: undefined | number
-    let md5 : undefined | string
 
     if (typeof nameOrOptions === 'object') {
       name = nameOrOptions.name
       size = nameOrOptions.size
-      md5  = nameOrOptions.md5
+      md5 = nameOrOptions.md5
     } else {
       name = nameOrOptions
     }
 
-    const options: FileBoxOptions = {
+    return new this({
       md5,
       name: name || `${uuid}.dat`,
       size,
       type: FileBoxType.Uuid,
       uuid,
-    }
-    return new this(options)
+    })
   }
 
-  /**
-   * UUID Type FielBox Loader
-   */
-  static setUuidLoader (
-    loader: UuidLoader,
-  ): void {
+  static setUuidLoader (loader: UuidLoader): void {
     if (Object.hasOwn(this, 'uuidToStream') && this.uuidToStream) {
       throw new Error('this FileBox has been set resolver before, can not set twice')
     }
     this.uuidToStream = loader
   }
 
-  /**
-   * UUID Type FielBox Saver
-   */
-  static setUuidSaver (
-    saver: UuidSaver,
-  ): void {
+  static setUuidSaver (saver: UuidSaver): void {
     if (Object.hasOwn(this, 'uuidFromStream') && this.uuidFromStream) {
       throw new Error('this FileBox has been set register before, can not set twice')
     }
     this.uuidFromStream = saver
   }
 
-  /**
-   *
-   * @static
-   * @param {(FileBoxJsonObject | string)} obj
-   * @returns {FileBox}
-   */
   static fromJSON (obj: FileBoxJsonObject | string): FileBox {
     if (typeof obj === 'string') {
       obj = JSON.parse(obj) as FileBoxJsonObject
     }
 
-    /**
-     * Huan(202111): compatible with old FileBox.toJSON() key: `boxType`
-     *  this is a breaking change made by v1.0
-     *
-     *  convert `obj.boxType` to `obj.type`
-     *  (will be removed after Dec 31, 2022)
-     */
     if (!(obj as any).type && 'boxType' in (obj as any)) {
       obj.type = (obj as any)['boxType']
     }
@@ -389,6 +420,7 @@ class FileBox implements Pipeable, FileBoxInterface {
 
       case FileBoxType.Url:
         fileBox = this.fromUrl(obj.url, {
+          headers: obj.headers,
           md5: obj.md5,
           name: obj.name,
           size: obj.size,
@@ -422,58 +454,76 @@ class FileBox implements Pipeable, FileBoxInterface {
   }
 
   /**
+   * Creates a FileBox from any FileBoxInterface instance.
+   * If the instance is already of this class, returns it directly.
+   * Otherwise, promotes or reconstructs it preserving its name, md5, metadata, and mediaType.
    *
-   * Instance Properties
-   *
+   * @param box Source FileBoxInterface instance
    */
+  static fromBox (box: FileBoxInterface): FileBox {
+    if (Object.prototype.isPrototypeOf.call(this.prototype, box)) {
+      return box as FileBox
+    }
+    let newBox: FileBox
+    const rawBox = box as any
+
+    if (rawBox.type === FileBoxType.Buffer && rawBox.buffer) {
+      newBox = this.fromBytes(rawBox.buffer, rawBox.name, rawBox.md5)
+    } else if (rawBox.type === FileBoxType.Base64 && rawBox.base64) {
+      newBox = this.fromBase64(rawBox.base64, rawBox.name, rawBox.md5)
+    } else if (rawBox.type === FileBoxType.Url && rawBox.remoteUrl) {
+      newBox = this.fromUrl(rawBox.remoteUrl, {
+        headers: rawBox.headers,
+        md5: rawBox.md5,
+        name: rawBox.name,
+        size: rawBox.size === UNKNOWN_SIZE ? undefined : rawBox.size,
+      })
+    } else if (rawBox.type === FileBoxType.QRCode && rawBox.qrCode) {
+      newBox = this.fromQRCode(rawBox.qrCode, rawBox.md5)
+    } else if (rawBox.type === FileBoxType.Uuid && rawBox.uuid) {
+      newBox = this.fromUuid(rawBox.uuid, {
+        md5: rawBox.md5,
+        name: rawBox.name,
+        size: rawBox.size === UNKNOWN_SIZE ? undefined : rawBox.size,
+      })
+    } else {
+      newBox = this.fromStream(
+        () => rawBox.toReadableStream(),
+        rawBox.name,
+        rawBox.md5,
+        { size: rawBox.size === UNKNOWN_SIZE ? undefined : rawBox.size },
+      )
+    }
+
+    if (rawBox.metadata && Object.keys(rawBox.metadata).length > 0) {
+      newBox.metadata = rawBox.metadata
+    }
+    if (rawBox.mediaType && rawBox.mediaType !== 'application/unknown') {
+      newBox._mediaType = rawBox.mediaType
+    }
+    return newBox
+  }
+
   readonly version = VERSION
 
-  /**
-   * We are using a getter for `type` is because
-   *  getter name can be enumurated by the `Object.hasOwnProperties()`*
-   *    but property name can not.
-   *
-   *  * required by `validInterface()`
-   */
   readonly _type: FileBoxType
   get type () { return this._type }
 
-  /**
-   * the Content-Length of the file
-   *  `SIZE_UNKNOWN(-1)` means unknown
-   *
-   * @example
-   * ```ts
-   * const fileBox = FileBox.fromUrl('http://example.com/image.png')
-   * await fileBox.ready()
-   * console.log(fileBox.size)
-   * // > 102400 <- this is the size of the remote image.png
-   * ```
-   */
   _size?: number
   get size (): number {
-    if (this._size) {
+    if (typeof this._size !== 'undefined') {
       return this._size
     }
     return UNKNOWN_SIZE
   }
 
-  /**
-   * File MD5 Sum
-   */
   readonly md5: undefined | string
 
   /**
-   * @deprecated: use `mediaType` instead. will be removed after Dec 31, 2022
+   * @deprecated: use `mediaType` instead.
    */
   mimeType = 'application/unknown'
 
-  /**
-   * (Internet) Media Type is the proper technical term of `MIME Type`
-   *  @see https://stackoverflow.com/a/9277778/1123955
-   *
-   * @example 'text/plain'
-   */
   protected _mediaType?: string
   get mediaType (): string {
     if (this._mediaType) {
@@ -503,50 +553,40 @@ class FileBox implements Pipeable, FileBoxInterface {
     Object.freeze(this._metadata)
   }
 
-  /**
-   * Lazy load data: (can be serialized to JSON)
-   *  Do not read file to Buffer until there's a consumer.
-   */
-  private readonly base64?    : string
-  private readonly remoteUrl? : string
-  private readonly qrCode?    : string
-  private readonly uuid?      : string
+  protected readonly base64?: string
+  protected readonly remoteUrl?: string
+  protected readonly qrCode?: string
+  protected readonly uuid?: string
+  protected readonly buffer?: Uint8Array
+  protected readonly _blob?: Blob
+  protected readonly stream?: ReadableStream<Uint8Array> | (() => ReadableStream<Uint8Array>) | any
+  protected readonly headers?: any
+  protected localPath?: string
+  protected _streamConsumed = false
 
-  /**
-   * Can not be serialized to JSON
-   */
-  private readonly buffer?    : Buffer
-  private readonly localPath? : string
-  private readonly stream?    : Readable
-
-  private readonly headers?: HTTP.OutgoingHttpHeaders
-
-  constructor (
-    options: FileBoxOptions,
-  ) {
-    // Only keep `basename` in this.name
-    this._name = PATH.basename(options.name)
+  constructor (options: FileBoxOptions) {
+    this._name = basename(options.name)
     this._type = options.type
-
-    /**
-     * Unknown file type MIME: `'application/unknown'`
-     *  @see https://stackoverflow.com/a/6080707/1123955
-     */
     this._mediaType = mime.getType(this.name) ?? undefined
     this.md5 = options.md5
 
     switch (options.type) {
       case FileBoxType.Buffer:
         this.buffer = options.buffer
-        this._size   = options.buffer.length
+        this._size = options.buffer.byteLength
         break
 
       case FileBoxType.File:
-        if (!options.path) {
-          throw new Error('no path')
+        if (options.blob) {
+          this._blob = options.blob
+          this._size = options.blob.size
+          this._mediaType = options.blob.type || this._mediaType
+        } else if (options.path) {
+          this.localPath = options.path
+          if (options.size !== undefined) {
+            this._size = options.size
+          }
         }
-        this.localPath  = options.path
-        this._size       = FS.statSync(this.localPath).size
         break
 
       case FileBoxType.Url:
@@ -554,26 +594,17 @@ class FileBox implements Pipeable, FileBoxInterface {
           throw new Error('no url')
         }
         this.remoteUrl = options.url
-
         if (options.headers) {
           this.headers = options.headers
         }
-        if (options.size) {
+        if (options.size !== undefined) {
           this._size = options.size
-        } else {
-          /**
-           * Add a background task to fetch remote file name & size
-           *
-           * TODO: how to improve it?
-           */
-          // this.syncUrlMetadata().catch(console.error)
         }
-
         break
 
       case FileBoxType.Stream:
         this.stream = options.stream
-        if (options.size) {
+        if (options.size !== undefined) {
           this._size = options.size
         }
         break
@@ -590,7 +621,7 @@ class FileBox implements Pipeable, FileBoxInterface {
           throw new Error('no Base64 data')
         }
         this.base64 = options.base64
-        this._size  = Buffer.byteLength(options.base64, 'base64')
+        this._size = Math.max(0, Math.floor(options.base64.length * 3 / 4) - (options.base64.endsWith('==') ? 2 : options.base64.endsWith('=') ? 1 : 0))
         break
 
       case FileBoxType.Uuid:
@@ -598,7 +629,7 @@ class FileBox implements Pipeable, FileBoxInterface {
           throw new Error('no UUID data')
         }
         this.uuid = options.uuid
-        if (options.size) {
+        if (options.size !== undefined) {
           this._size = options.size
         }
         break
@@ -606,7 +637,6 @@ class FileBox implements Pipeable, FileBoxInterface {
       default:
         throw new Error(`unknown options(type): ${JSON.stringify(options)}`)
     }
-
   }
 
   async ready (): Promise<void> {
@@ -617,7 +647,7 @@ class FileBox implements Pipeable, FileBoxInterface {
 
       case FileBoxType.QRCode:
         if (this.size === UNKNOWN_SIZE) {
-          this._size = (await this.toBuffer()).length
+          this._size = (await this.toBytes()).byteLength
         }
         break
 
@@ -626,15 +656,7 @@ class FileBox implements Pipeable, FileBoxInterface {
     }
   }
 
-  /**
-   * @todo use http.get/gets instead of Request
-   */
   protected async _syncUrlMetadata (): Promise<void> {
-    /**
-     * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
-     *  > Content-Disposition: attachment; filename="cool.html"
-     */
-
     if (this.type !== FileBoxType.Url) {
       throw new Error('type is not Url')
     }
@@ -642,7 +664,7 @@ class FileBox implements Pipeable, FileBoxInterface {
       throw new Error('no url')
     }
 
-    const headers = await httpHeadHeader(this.remoteUrl)
+    const headers = await fetchHeadHeader(this.remoteUrl, this.headers)
 
     const httpFilename = httpHeaderToFileName(headers)
     if (httpFilename) {
@@ -658,16 +680,14 @@ class FileBox implements Pipeable, FileBoxInterface {
       this._mediaType = httpMediaType
     }
 
+    const contentEncoding = headers['content-encoding']
     if (headers['content-length']) {
-      this._size = Number(headers['content-length'])
+      if (!contentEncoding || contentEncoding === 'identity') {
+        this._size = Number(headers['content-length'])
+      }
     }
   }
 
-  /**
-   *
-   * toXXX methods
-   *
-   */
   toString () {
     return [
       'FileBox#',
@@ -680,9 +700,9 @@ class FileBox implements Pipeable, FileBoxInterface {
 
   toJSON (): FileBoxJsonObject {
     const objCommon: FileBoxOptionsCommon = {
-      md5      : this.md5,
-      metadata : this.metadata,
-      name     : this.name,
+      md5: this.md5,
+      metadata: this.metadata,
+      name: this.name,
     }
 
     if (typeof this.size !== 'undefined') {
@@ -697,9 +717,9 @@ class FileBox implements Pipeable, FileBoxInterface {
           throw new Error('no url')
         }
         const objUrl: FileBoxOptionsUrl = {
-          headers : this.headers,
-          type    : FileBoxType.Url,
-          url     : this.remoteUrl,
+          headers: this.headers,
+          type: FileBoxType.Url,
+          url: this.remoteUrl,
         }
         obj = {
           ...objCommon,
@@ -713,8 +733,8 @@ class FileBox implements Pipeable, FileBoxInterface {
           throw new Error('no qr code')
         }
         const objQRCode: FileBoxOptionsQRCode = {
-          qrCode : this.qrCode,
-          type   : FileBoxType.QRCode,
+          qrCode: this.qrCode,
+          type: FileBoxType.QRCode,
         }
         obj = {
           ...objCommon,
@@ -728,8 +748,8 @@ class FileBox implements Pipeable, FileBoxInterface {
           throw new Error('no base64 data')
         }
         const objBase64: FileBoxOptionsBase64 = {
-          base64 : this.base64,
-          type   : FileBoxType.Base64,
+          base64: this.base64,
+          type: FileBoxType.Base64,
         }
         obj = {
           ...objCommon,
@@ -743,8 +763,8 @@ class FileBox implements Pipeable, FileBoxInterface {
           throw new Error('no uuid data')
         }
         const objUuid: FileBoxOptionsUuid = {
-          type : FileBoxType.Uuid,
-          uuid : this.uuid,
+          type: FileBoxType.Uuid,
+          uuid: this.uuid,
         }
         obj = {
           ...objCommon,
@@ -754,183 +774,117 @@ class FileBox implements Pipeable, FileBoxInterface {
       }
 
       default:
-        void this.type
         throw new Error('FileBox.toJSON() can only work on limited FileBoxType(s). See: <https://github.com/huan/file-box/issues/25>')
     }
 
-    /**
-     * Huan(202111): compatible with old FileBox.toJSON() key: `boxType`
-     *  this is a breaking change made by v1.0
-     *
-     *  save `obj.type` a copy to `obj.boxType`
-     *  (will be removed after Dec 31, 2022)
-     */
     (obj as any)['boxType'] = obj.type
-
     return obj
   }
 
-  async toStream (): Promise<Readable> {
-    let stream: Readable
-
+  async toReadableStream (): Promise<ReadableStream<Uint8Array>> {
     switch (this.type) {
       case FileBoxType.Buffer:
-        stream = this._transformBufferToStream()
-        break
+        if (!this.buffer) {
+          throw new Error('no buffer!')
+        }
+        return new Blob([this.buffer as any]).stream()
 
       case FileBoxType.File:
-        stream = this._transformFileToStream()
-        break
+        return this._transformFileToStream()
 
       case FileBoxType.Url:
-        stream = await this._transformUrlToStream()
-        break
+        return this._transformUrlToStream()
 
-      case FileBoxType.Stream:
+      case FileBoxType.Stream: {
         if (!this.stream) {
           throw new Error('no stream')
         }
-
-        /**
-          * Huan(202109): the stream.destroyed will not be `true`
-          *   when we have read all the data
-          *   after we change some code.
-          * The reason is unbase64 : this.base64,
-          type   : FileBoxType.Base64,known... so we change to check `readable`
-          */
-        if (!this.stream.readable) {
+        if (typeof this.stream === 'function') {
+          return this.stream()
+        }
+        if (this._streamConsumed) {
           throw new Error('The stream is not readable. Maybe has already been consumed, and now it was drained. See: https://github.com/huan/file-box/issues/50')
         }
-
-        stream = this.stream
-        break
+        const stream = this.stream as any
+        if (typeof stream.getReader === 'function') {
+          if (stream.locked) {
+            throw new Error('The stream is not readable. Maybe has already been consumed, and now it was drained. See: https://github.com/huan/file-box/issues/50')
+          }
+          this._streamConsumed = true
+          return stream as ReadableStream<Uint8Array>
+        }
+        if (stream.readable === false || stream.destroyed) {
+          throw new Error('The stream is not readable. Maybe has already been consumed, and now it was drained. See: https://github.com/huan/file-box/issues/50')
+        }
+        this._streamConsumed = true
+        return nodeStreamToWebStream(stream)
+      }
 
       case FileBoxType.QRCode:
         if (!this.qrCode) {
           throw new Error('no QR Code')
         }
-        stream = await this._transformQRCodeToStream()
-        break
+        return qrValueToReadableStream(this.qrCode)
 
-      case FileBoxType.Base64:
+      case FileBoxType.Base64: {
         if (!this.base64) {
           throw new Error('no base64 data')
         }
-        stream = this._transformBase64ToStream()
-        break
+        const bytes = base64ToBytes(this.base64)
+        return new Blob([bytes as any]).stream()
+      }
 
       case FileBoxType.Uuid: {
         if (!this.uuid) {
           throw new Error('no uuid data')
         }
         const FileBoxKlass = instanceToClass(this, FileBox)
-
         if (!FileBoxKlass.uuidToStream) {
           throw new Error('need to call FileBox.setUuidLoader() to set UUID loader first.')
         }
-
-        stream = await FileBoxKlass.uuidToStream.call(this, this.uuid)
-        break
+        const streamResult = await FileBoxKlass.uuidToStream.call(this, this.uuid)
+        if (streamResult && typeof (streamResult as any).getReader === 'function') {
+          return streamResult as ReadableStream<Uint8Array>
+        }
+        if (streamResult && typeof (streamResult as any).pipe === 'function') {
+          return nodeStreamToWebStream(streamResult)
+        }
+        throw new Error('UUID loader must return a ReadableStream or Readable')
       }
 
       default:
         throw new Error('not supported FileBoxType: ' + FileBoxType[this.type])
     }
-
-    return stream
   }
 
-  /**
-   * https://stackoverflow.com/a/16044400/1123955
-   */
-  private _transformBufferToStream (buffer?: Buffer): Readable {
-    const bufferStream = new PassThrough()
-    bufferStream.end(buffer || this.buffer)
-
-    /**
-     * Use small `chunks` with `toStream()` #44
-     * https://github.com/huan/file-box/issues/44
-     */
-    return bufferStream.pipe(sizedChunkTransformer())
-  }
-
-  private _transformBase64ToStream (): Readable {
-    if (!this.base64) {
-      throw new Error('no base64 data')
-    }
-    const buffer = Buffer.from(this.base64, 'base64')
-    return this._transformBufferToStream(buffer)
-  }
-
-  private _transformFileToStream (): Readable {
-    if (!this.localPath) {
-      throw new Error('no url(path)')
-    }
-    return FS.createReadStream(this.localPath)
-  }
-
-  private async _transformUrlToStream (): Promise<Readable> {
-    return new Promise<Readable>((resolve, reject) => {
-      if (this.remoteUrl) {
-        httpStream(this.remoteUrl, this.headers)
-          .then(resolve)
-          .catch(reject)
-      } else {
-        reject(new Error('no url'))
-      }
-    })
-  }
-
-  private async _transformQRCodeToStream (): Promise<Readable> {
-    if (!this.qrCode) {
-      throw new Error('no QR Code Value found')
-    }
-    const stream = qrValueToStream(this.qrCode)
-    return stream
-  }
-
-  /**
-   * save file
-   *
-   * @param filePath save file
-   */
-  async toFile (
-    filePath?: string,
-    overwrite = false,
+  async pipeTo (
+    destination: WritableStream<Uint8Array>,
+    options?: StreamPipeOptions,
   ): Promise<void> {
-    if (this.type === FileBoxType.Url) {
-      if (!this.mediaType || !this.name) {
-        await this._syncUrlMetadata()
-      }
+    const stream = await this.toReadableStream()
+    await stream.pipeTo(destination, options)
+  }
+
+  async toBytes (): Promise<Uint8Array> {
+    if (this.type === FileBoxType.Buffer && this.buffer) {
+      return this.buffer
     }
-    const fullFilePath = PATH.resolve(filePath || this.name)
-
-    const exist = FS.existsSync(fullFilePath)
-
-    if (exist && !overwrite) {
-      throw new Error(`FileBox.toFile(${fullFilePath}): file exist. use FileBox.toFile(${fullFilePath}, true) to force overwrite.`)
+    if (this.type === FileBoxType.Base64 && this.base64) {
+      return base64ToBytes(this.base64)
     }
+    if (this._blob) {
+      return new Uint8Array(await this._blob.arrayBuffer())
+    }
+    const stream = await this.toReadableStream()
+    return streamToBytes(stream)
+  }
 
-    const writeStream = FS.createWriteStream(fullFilePath)
-
-    /**
-      * Huan(202109): make sure the file can be opened for writting
-      *   before we pipe the stream to it
-      */
-    await new Promise((resolve, reject) => writeStream
-      .once('open', resolve)
-      .once('error', reject),
-    )
-    /**
-      * Start pipe
-      */
-    await new Promise((resolve, reject) => {
-      writeStream
-        .once('close', resolve)
-        .once('error', reject)
-
-      this.pipe(writeStream)
-    })
+  async toBlob (): Promise<Blob> {
+    if (this._blob) {
+      return this._blob
+    }
+    const bytes = await this.toBytes()
+    return new Blob([bytes as any], { type: this.mediaType })
   }
 
   async toBase64 (): Promise<string> {
@@ -940,44 +894,14 @@ class FileBox implements Pipeable, FileBoxInterface {
       }
       return this.base64
     }
-
-    const buffer = await this.toBuffer()
-    return buffer.toString('base64')
+    const bytes = await this.toBytes()
+    return bytesToBase64(bytes)
   }
 
-  /**
-   * dataUrl: `data:image/png;base64,${base64Text}',
-   */
   async toDataURL (): Promise<string> {
     const base64Text = await this.toBase64()
-
-    if (!this.mediaType) {
-      throw new Error('no mediaType found')
-    }
-
-    const dataUrl = [
-      'data:',
-      this.mediaType,
-      ';base64,',
-      base64Text,
-    ].join('')
-
-    return dataUrl
-  }
-
-  async toBuffer (): Promise<Buffer> {
-    if (this.type === FileBoxType.Buffer) {
-      if (!this.buffer) {
-        throw new Error('no buffer!')
-      }
-      return this.buffer
-    }
-
-    const stream = new PassThrough()
-    this.pipe(stream)
-
-    const buffer: Buffer = await streamToBuffer(stream)
-    return buffer
+    const mediaType = this.mediaType || 'application/octet-stream'
+    return `data:${mediaType};base64,${base64Text}`
   }
 
   async toQRCode (): Promise<string> {
@@ -987,11 +911,8 @@ class FileBox implements Pipeable, FileBoxInterface {
       }
       return this.qrCode
     }
-
-    const buf = await this.toBuffer()
-    const qrValue = await bufferToQrValue(buf)
-
-    return qrValue
+    const bytes = await this.toBytes()
+    return bufferToQrValue(bytes)
   }
 
   async toUuid (): Promise<string> {
@@ -1003,46 +924,51 @@ class FileBox implements Pipeable, FileBoxInterface {
     }
 
     const FileBoxKlass = instanceToClass(this, FileBox)
-
     if (!FileBoxKlass.uuidFromStream) {
       throw new Error('need to use FileBox.setUuidSaver() before dealing with UUID')
     }
 
-    const stream = new PassThrough()
-    this.pipe(stream)
-
+    const stream = await this.toReadableStream()
     return FileBoxKlass.uuidFromStream.call(this, stream)
   }
 
-  /**
-   *
-   * toXXX methods END
-   *
-   */
+  async toBuffer (): Promise<any> {
+    const bytes = await this.toBytes()
+    if (typeof (globalThis as any).Buffer !== 'undefined') {
+      return (globalThis as any).Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+    }
+    return bytes
+  }
 
-  pipe<T extends Writable> (
-    destination: T,
-  ): T {
-    this.toStream().then(stream => {
-      stream.on('error', e => {
-        console.info('error:', e)
+  async toStream (): Promise<any> {
+    throw new Error('FileBox.toStream() requires Node.js streams. For universal WHATWG streams, use toReadableStream(). For Node.js streams, import { FileBox } from "file-box/server".')
+  }
 
-        destination.emit('error', e)
-      })
-      return stream.pipe(destination)
-    }).catch(e => destination.emit('error', e))
-    return destination
+  pipe<T> (_destination: T, _options?: { end?: boolean }): T {
+    throw new Error('FileBox.pipe() requires Node.js streams. For universal WHATWG streams, use pipeTo(). For Node.js streams, import { FileBox } from "file-box/server".')
+  }
+
+  async toFile (_filePath?: string, _overwrite = false): Promise<void> {
+    throw new Error('FileBox.toFile() requires native filesystem access. In browser and edge runtimes, use toBlob() or toBytes(). For Node.js filesystem access, import { FileBox } from "file-box/server".')
+  }
+
+  protected _transformFileToStream (): Promise<ReadableStream<Uint8Array>> | ReadableStream<Uint8Array> {
+    if (this._blob) {
+      return this._blob.stream()
+    }
+    throw new Error('Local filesystem streaming requires "file-box/server". In browser/edge runtimes, pass a Web Blob or File to fromFile().')
+  }
+
+  private async _transformUrlToStream (): Promise<ReadableStream<Uint8Array>> {
+    if (!this.remoteUrl) {
+      throw new Error('no url')
+    }
+    return fetchStream(this.remoteUrl, this.headers)
   }
 
 }
 
-/**
- * Huan(202110): lazy initialize `interfaceOfClass(FileBox)`
- *  because we only can reference a class after its declaration
- */
-interfaceOfFileBox      = interfaceOfClass(FileBox)<FileBoxInterface>()
-looseInstanceOfFileBox  = looseInstanceOfClass(FileBox)
+interfaceOfFileBox = interfaceOfClass(FileBox)<FileBoxInterface>()
+looseInstanceOfFileBox = looseInstanceOfClass(FileBox)
 
-export {
-  FileBox,
-}
+export default FileBox

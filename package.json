@@ -1,12 +1,20 @@
 {
   "name": "file-box",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/esm/src/mod.d.ts",
       "import": "./dist/esm/src/mod.js"
+    },
+    "./browser": {
+      "types": "./dist/esm/src/mod.d.ts",
+      "import": "./dist/esm/src/mod.js"
+    },
+    "./server": {
+      "types": "./dist/esm/src/server/mod.d.ts",
+      "import": "./dist/esm/src/server/mod.js"
     }
   },
   "types": "./dist/esm/src/mod.d.ts",

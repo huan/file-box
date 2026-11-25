@@ -8,7 +8,7 @@ import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { test, type TestContext } from 'node:test'
 
-import { FileBox } from '../file-box.ts'
+import { FileBox } from '../server/file-box-server.ts'
 import { streamToBuffer } from '../misc.ts'
 import { UniformResourceNameRegistry } from './uniform-resource-name-registry.ts'
 
@@ -46,6 +46,11 @@ function createRegistry (t: TestContext, expireMilliseconds?: number) {
   registry.init()
   return { registry, storeDir }
 }
+
+test('UniformResourceNameRegistry default expireMilliseconds is 30 minutes', () => {
+  const registry = new UniformResourceNameRegistry()
+  assert.strictEqual((registry as any).expireMilliseconds, 30 * 60 * 1000)
+})
 
 test('UniformResourceNameRegistry class', async t => {
   const QRCODE = 'test qrcode'

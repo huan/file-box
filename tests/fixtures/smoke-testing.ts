@@ -28,6 +28,24 @@ async function main () {
     assert.deepEqual(await box.toBuffer(), payload)
     assert.notEqual(VERSION, '0.0.0', 'the pack workflow should stamp the release version')
     assert.equal(box.version, VERSION)
+
+    // Verify subpath exports
+    const { FileBox: ServerFileBox, UniformResourceNameRegistry } = await import('file-box/server')
+    const { FileBox: BrowserFileBox } = await import('file-box/browser')
+
+    const serverBox = ServerFileBox.fromBuffer(payload, 'server.txt')
+    assert.ok(serverBox instanceof FileBox)
+    assert.ok(serverBox instanceof ServerFileBox)
+    assert.ok(typeof UniformResourceNameRegistry === 'function')
+
+    const browserBox = BrowserFileBox.fromBytes(new Uint8Array(payload), 'browser.txt')
+    assert.ok(browserBox instanceof FileBox)
+    assert.strictEqual(browserBox.name, 'browser.txt')
+
+    const promotedBox = ServerFileBox.fromBox(browserBox)
+    assert.ok(promotedBox instanceof ServerFileBox)
+    assert.strictEqual(promotedBox.name, 'browser.txt')
+
     console.log(`FileBox v${VERSION} smoke testing passed!`)
   } finally {
     await new Promise<void>((resolve, reject) => {

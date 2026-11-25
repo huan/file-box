@@ -45,3 +45,32 @@ test('httpStream forwards headers and reads the response bytes', async t => {
   const bytes = await streamToBuffer(stream)
   assert.equal(bytes.toString(), '42')
 })
+
+test('httpStream normalizes credentials in URL and sends authorization header', async t => {
+  let authHeader: string | undefined
+  const url = await serve(t, (request, response) => {
+    authHeader = request.headers.authorization
+    response.end('authenticated')
+  })
+
+  const authUrl = url.replace('http://', 'http://user:pass@')
+  const stream = await httpStream(authUrl)
+  const bytes = await streamToBuffer(stream)
+  assert.equal(bytes.toString(), 'authenticated')
+  assert.equal(authHeader, `Basic ${btoa('user:pass')}`)
+})
+
+test('httpStream normalizes Unicode credentials in URL and sends authorization header', async t => {
+  let authHeader: string | undefined
+  const url = await serve(t, (request, response) => {
+    authHeader = request.headers.authorization
+    response.end('unicode-authenticated')
+  })
+
+  const authUrl = url.replace('http://', 'http://user:密码@')
+  const stream = await httpStream(authUrl)
+  const bytes = await streamToBuffer(stream)
+  assert.equal(bytes.toString(), 'unicode-authenticated')
+  const expectedAuth = `Basic ${Buffer.from('user:密码', 'utf8').toString('base64')}`
+  assert.equal(authHeader, expectedAuth)
+})
