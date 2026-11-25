@@ -12,7 +12,7 @@ import { PassThrough, type Readable } from 'node:stream'
 import { instanceToClass } from 'clone-class'
 
 import { FileBox } from './file-box.ts'
-import { FileBox as ServerFileBox } from './server/file-box-server.ts'
+import { FileBox as ServerFileBox } from './node/file-box-node.ts'
 import { FileBoxType } from './file-box.type.ts'
 
 test('File smoke testing', async () => {

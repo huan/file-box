@@ -1,0 +1,6 @@
+# Instructions for coding agents
+
+- WinterTC-first: libraries import only the package root. `exports["."]` has exactly `types`, `browser`, `node`, `default` (never other keys): `node` (Node.js, Deno, Bun) → `src/node/`; `browser` and `default` → web-platform code at `src/`, which MUST NOT import `node:*`, native addons, or `process`. Builds share one API and one test suite. Missing capability → throw, never silently degrade. `./browser` and `./node` are application overrides only.
+- Keep the two builds' public API identical: every name and class member exists in both, and an unsupported call throws an error that names the supported route. `src/entry-parity.native.test.ts` enforces it; add a protected node-only helper to its `NODE_INTERNALS` list instead of mirroring it in the web stand-in.
+- `*.test.ts` files are portable (node:test, node:assert/strict) and run in Node.js, Deno, and Chromium; `*.native.test.ts` files are Node-only. Shared behavior is tested through the `#file-box` import, which resolves to the node build or the web build by condition. Behavior that exists in one build only gets its own file (`file-box.unsupported.test.ts` for the web build).
+- `tests/resolution-matrix.native.test.ts` pins which build each tool resolves for the root. Change `exports` only together with that test.

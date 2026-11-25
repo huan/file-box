@@ -1,20 +1,22 @@
 {
   "name": "file-box",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Pack a File into Box for easy move/transfer between servers no matter of where it is.(local path, remote url, or cloud storage)",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/esm/src/mod.d.ts",
-      "import": "./dist/esm/src/mod.js"
+      "browser": "./dist/esm/src/mod.js",
+      "node": "./dist/esm/src/node/mod.js",
+      "default": "./dist/esm/src/mod.js"
     },
     "./browser": {
       "types": "./dist/esm/src/mod.d.ts",
-      "import": "./dist/esm/src/mod.js"
+      "default": "./dist/esm/src/mod.js"
     },
-    "./server": {
-      "types": "./dist/esm/src/server/mod.d.ts",
-      "import": "./dist/esm/src/server/mod.js"
+    "./node": {
+      "types": "./dist/esm/src/mod.d.ts",
+      "default": "./dist/esm/src/node/mod.js"
     }
   },
   "types": "./dist/esm/src/mod.d.ts",
@@ -29,14 +31,15 @@
     "lint": "npm run lint:biome && npm run lint:ts",
     "lint:biome": "biome lint src tests",
     "lint:ts": "tsc --isolatedModules --noEmit",
-    "test": "npm run lint && npm run test:unit",
-    "test:unit": "node --test --experimental-test-coverage src tests/file-box-smoke.native.test.ts tests/integration.test.ts",
+    "test": "npm run lint && npm run test:unit && npm run test:unit:web",
+    "test:unit": "node --test --experimental-test-coverage src tests/file-box-smoke.native.test.ts tests/resolution-matrix.native.test.ts tests/integration.test.ts",
+    "test:unit:web": "node --conditions=browser --test src/file-box.test.ts src/file-box.unsupported.test.ts",
     "test:unit:deno": "deno test --no-check --node-modules-dir=manual --allow-read=.,/tmp --allow-write=/tmp --allow-env --allow-net=127.0.0.1 --allow-run=node --allow-sys=homedir,hostname src tests/file-box-smoke.native.test.ts tests/integration.test.ts",
     "test:unit:browser": "wtr --config web-test-runner.config.js",
     "test:browser": "npm run test:unit:browser",
     "test:pack": "bash -x scripts/npm-pack-testing.sh",
     "coverage": "npm run coverage:unit && npm run coverage:browser",
-    "coverage:unit": "node --test --experimental-test-coverage src tests/file-box-smoke.native.test.ts tests/integration.test.ts",
+    "coverage:unit": "node --test --experimental-test-coverage src tests/file-box-smoke.native.test.ts tests/resolution-matrix.native.test.ts tests/integration.test.ts",
     "coverage:browser": "wtr --config web-test-runner.config.js --coverage"
   },
   "repository": {
@@ -74,8 +77,16 @@
     "@web/test-runner": "^1.0.1",
     "@web/test-runner-playwright": "^1.0.2",
     "chai": "^6.3.0",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.65.1",
     "shx": "^0.3.4",
     "typescript": "^5.8.0"
+  },
+  "imports": {
+    "#file-box": {
+      "browser": "./src/mod.ts",
+      "default": "./src/node/mod.ts"
+    }
   },
   "files": [
     "dist",

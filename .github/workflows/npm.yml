@@ -73,8 +73,15 @@ jobs:
         with:
           node-version: 26
 
+      - uses: denoland/setup-deno@v2.0.5
+        with:
+          deno-version: 2.9.8
+
       - name: Install Dependencies
         run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
 
       - name: Generate Version
         run: ./scripts/generate-version.sh

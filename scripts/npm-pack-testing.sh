@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+REPO_DIR="$(pwd)"
+
 TMPDIR=""
 cleanup() {
   git checkout src/version.ts 2>/dev/null || true
@@ -42,3 +44,15 @@ npm install ./"$TARBALL" @types/node typescript
 echo
 echo "ES Module: pack testing..."
 node smoke-testing.js
+
+echo
+echo "Deno: pack testing..."
+if command -v deno >/dev/null 2>&1; then
+  deno run --node-modules-dir=manual -A smoke-testing.js
+else
+  echo "deno not found, skipped"
+fi
+
+echo
+echo "Chromium: pack testing..."
+node "$REPO_DIR/scripts/npm-pack-browser-testing.ts" "$TMPDIR"

@@ -203,7 +203,7 @@ export class FileBox implements Pipeable, FileBoxInterface {
 
   /**
    * Creates a FileBox from a Web Blob or File.
-   * String paths require native filesystem access and must be loaded via `file-box/server`.
+   * String paths need filesystem access, which only the node build (Node.js, Deno, Bun) provides.
    */
   static fromFile (
     fileOrPath: Blob | string,
@@ -221,7 +221,7 @@ export class FileBox implements Pipeable, FileBoxInterface {
       })
     }
     if (typeof fileOrPath === 'string') {
-      throw new Error(`FileBox.fromFile("${fileOrPath}") requires filesystem access. Use import { FileBox } from "file-box/server" or pass a Web File/Blob.`)
+      throw new Error(`FileBox.fromFile("${fileOrPath}") is not supported in the web build (no filesystem). Run on Node.js, Deno, or Bun, where importing "file-box" supports it (or import "file-box/node" explicitly), or pass a Web File/Blob.`)
     }
     throw new TypeError('FileBox.fromFile() argument must be a Blob/File or a path string.')
   }
@@ -941,22 +941,22 @@ export class FileBox implements Pipeable, FileBoxInterface {
   }
 
   async toStream (): Promise<any> {
-    throw new Error('FileBox.toStream() requires Node.js streams. For universal WHATWG streams, use toReadableStream(). For Node.js streams, import { FileBox } from "file-box/server".')
+    throw new Error('FileBox.toStream() is not supported in the web build (no Node.js streams). Use toReadableStream() for WHATWG streams. Run on Node.js, Deno, or Bun, where importing "file-box" supports it (or import "file-box/node" explicitly).')
   }
 
   pipe<T> (_destination: T, _options?: { end?: boolean }): T {
-    throw new Error('FileBox.pipe() requires Node.js streams. For universal WHATWG streams, use pipeTo(). For Node.js streams, import { FileBox } from "file-box/server".')
+    throw new Error('FileBox.pipe() is not supported in the web build (no Node.js streams). Use pipeTo() for WHATWG streams. Run on Node.js, Deno, or Bun, where importing "file-box" supports it (or import "file-box/node" explicitly).')
   }
 
   async toFile (_filePath?: string, _overwrite = false): Promise<void> {
-    throw new Error('FileBox.toFile() requires native filesystem access. In browser and edge runtimes, use toBlob() or toBytes(). For Node.js filesystem access, import { FileBox } from "file-box/server".')
+    throw new Error('FileBox.toFile() is not supported in the web build (no filesystem). Use toBlob() or toBytes(). Run on Node.js, Deno, or Bun, where importing "file-box" supports it (or import "file-box/node" explicitly).')
   }
 
   protected _transformFileToStream (): Promise<ReadableStream<Uint8Array>> | ReadableStream<Uint8Array> {
     if (this._blob) {
       return this._blob.stream()
     }
-    throw new Error('Local filesystem streaming requires "file-box/server". In browser/edge runtimes, pass a Web Blob or File to fromFile().')
+    throw new Error('Local filesystem streaming is not supported in the web build. Pass a Web Blob or File to fromFile(). Run on Node.js, Deno, or Bun, where importing "file-box" supports it (or import "file-box/node" explicitly).')
   }
 
   private async _transformUrlToStream (): Promise<ReadableStream<Uint8Array>> {

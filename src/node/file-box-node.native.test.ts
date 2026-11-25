@@ -10,8 +10,8 @@ import { createServer } from 'node:http'
 import { PassThrough, Readable, Writable } from 'node:stream'
 
 import { FileBox as UniversalFileBox } from '../file-box.ts'
-import { FileBox } from './file-box-server.ts'
-import { UniformResourceNameRegistry } from '../urn-registry/uniform-resource-name-registry.ts'
+import { FileBox } from './file-box-node.ts'
+import { UniformResourceNameRegistry } from './uniform-resource-name-registry.ts'
 
 test('Server FileBox subclasses Universal FileBox and preserves identity', () => {
   const box = FileBox.fromBytes(new Uint8Array([1, 2, 3]), 'test.dat')

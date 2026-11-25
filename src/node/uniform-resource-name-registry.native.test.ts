@@ -8,7 +8,7 @@ import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { test, type TestContext } from 'node:test'
 
-import { FileBox } from '../server/file-box-server.ts'
+import { FileBox } from './file-box-node.ts'
 import { streamToBuffer } from '../misc.ts'
 import { UniformResourceNameRegistry } from './uniform-resource-name-registry.ts'
 

@@ -30,20 +30,29 @@ async function main () {
     assert.equal(box.version, VERSION)
 
     // Verify subpath exports
-    const { FileBox: ServerFileBox, UniformResourceNameRegistry } = await import('file-box/server')
+    const { FileBox: NodeFileBox, UniformResourceNameRegistry } = await import('file-box/node')
     const { FileBox: BrowserFileBox } = await import('file-box/browser')
 
-    const serverBox = ServerFileBox.fromBuffer(payload, 'server.txt')
-    assert.ok(serverBox instanceof FileBox)
-    assert.ok(serverBox instanceof ServerFileBox)
+    // On Node the `node` export condition makes the root the node build.
+    assert.strictEqual(FileBox, NodeFileBox, 'root should resolve to the node build on Node.js')
+    assert.notStrictEqual(BrowserFileBox, NodeFileBox, 'file-box/browser should stay the web build')
+
+    const nodeBox = NodeFileBox.fromBuffer(payload, 'node.txt')
+    assert.ok(nodeBox instanceof FileBox)
+    assert.ok(nodeBox instanceof NodeFileBox)
     assert.ok(typeof UniformResourceNameRegistry === 'function')
 
     const browserBox = BrowserFileBox.fromBytes(new Uint8Array(payload), 'browser.txt')
-    assert.ok(browserBox instanceof FileBox)
+    assert.ok(browserBox instanceof BrowserFileBox)
+    // The node class is strict about instanceof so a web box is never mistaken
+    // for one that can use the filesystem; the interface check and fromBox()
+    // are the supported ways to accept boxes made by the other build.
+    assert.ok(!(browserBox instanceof FileBox), 'a web box is not an instance of the node class')
+    assert.ok(FileBox.validInterface(browserBox), 'a web box still satisfies the FileBox interface')
     assert.strictEqual(browserBox.name, 'browser.txt')
 
-    const promotedBox = ServerFileBox.fromBox(browserBox)
-    assert.ok(promotedBox instanceof ServerFileBox)
+    const promotedBox = NodeFileBox.fromBox(browserBox)
+    assert.ok(promotedBox instanceof NodeFileBox)
     assert.strictEqual(promotedBox.name, 'browser.txt')
 
     console.log(`FileBox v${VERSION} smoke testing passed!`)
