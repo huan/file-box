@@ -1,13 +1,18 @@
 /**
- * Universal unit test suite for FileBox.
+ * Conformance suite shared by both builds of FileBox.
  *
- * Runs across all target environments: Chromium browser, Node.js, and Deno.
- * Tests WHATWG streams, blobs, byte buffers, base64, data URLs, QR codes, and JSON serialization.
+ * `#file-box` (see package.json `imports`) resolves to the node build under plain
+ * Node.js and Deno, and to the web build in Chromium and under
+ * `node --conditions=browser` (`npm run test:unit:web`). Every case here must pass
+ * on both, so it only covers behavior the two builds share: WHATWG streams, blobs,
+ * byte buffers, base64, data URLs, QR codes, and JSON serialization. Behavior that
+ * exists in one build only lives in `file-box.unsupported.test.ts` (web) and the
+ * `*.native.test.ts` files (node).
  */
 import { test } from 'node:test'
 import * as assert from 'node:assert/strict'
 
-import { FileBox } from './file-box.ts'
+import { FileBox } from '#file-box'
 import { FileBoxType } from './file-box.type.ts'
 
 test('FileBox.fromBytes() and toBytes()', async () => {
@@ -135,30 +140,6 @@ test('FileBox.fromJSON() and toJSON() round-trip', async () => {
   assert.strictEqual(restored.type, FileBoxType.Base64)
   assert.strictEqual(await restored.toBase64(), BASE64_ENCODED)
   assert.deepStrictEqual(restored.metadata, { testKey: 'testValue' })
-})
-
-test('Universal FileBox raises descriptive errors on native-only methods', async () => {
-  assert.throws(
-    () => FileBox.fromFile('/path/to/file.txt'),
-    /fromFile.*not supported in the web build.*file-box\/node/i,
-  )
-
-  const box = FileBox.fromBytes(new Uint8Array([1, 2, 3]), 'sample.dat')
-
-  await assert.rejects(
-    box.toFile('/tmp/file.dat'),
-    /toFile.*not supported in the web build.*file-box\/node/i,
-  )
-
-  await assert.rejects(
-    box.toStream(),
-    /not supported in the web build.*Node\.js streams.*file-box\/node/i,
-  )
-
-  assert.throws(
-    () => box.pipe({} as any),
-    /not supported in the web build.*Node\.js streams.*file-box\/node/i,
-  )
 })
 
 test('FileBox preserves literal hash and question mark in filenames', () => {

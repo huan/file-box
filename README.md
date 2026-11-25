@@ -69,6 +69,23 @@ fileBox3.toDataURL()
 // Output: data:text/plain;base64,d29ybGQK
 ```
 
+## Platforms
+
+Import `file-box` the same way everywhere; the build tool or runtime picks the build:
+
+```ts
+import { FileBox } from 'file-box'
+```
+
+| Where it runs | Build | What works |
+|---|---|---|
+| Node.js, Deno, Bun | node build | everything, including `fromFile(path)`, `toFile()`, `toStream()`, `pipe()` and `UniformResourceNameRegistry` |
+| Browsers, Cloudflare Workers, other web runtimes | web build | everything that needs only Web APIs (`fetch`, `Blob`, WHATWG streams) |
+
+Both builds export the same names and the same types. In the web build, the calls that need the filesystem or Node.js streams (`fromFile(path)`, `toFile()`, `toStream()`, `pipe()`, `UniformResourceNameRegistry`) throw an error that says what to use instead, for example `toBlob()`, `toBytes()` or `toReadableStream()`. `toStream()`, `toBuffer()` and `pipe()` are typed loosely so one set of types fits both builds.
+
+Applications (not libraries) can force a build with `file-box/node` or `file-box/browser`. A box made by the other build is not an `instanceof` the node class on purpose; accept it with `FileBox.validInterface(box)` and convert it with `FileBox.fromBox(box)`.
+
 ## Known Issues
 
 1. TypeError [ERR_UNESCAPED_CHARACTERS]: Request path contains unescaped characters [#56](https://github.com/huan/file-box/issues/56)

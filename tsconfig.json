@@ -27,6 +27,7 @@
     "noUnusedParameters": true,
     "noImplicitThis": true,
     "forceConsistentCasingInFileNames": true,
+    "rootDir": ".",
     "outDir": "dist/esm"
   },
   "include": [
