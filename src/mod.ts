@@ -1,8 +1,11 @@
 /**
- * Main module entry point for FileBox (Universal WinterTC root export).
+ * Web-platform entry for FileBox: served for the `browser` and `default` export
+ * conditions, and as `file-box/browser`.
  *
- * Exports universal FileBox class, FileBoxType, VERSION, and related types.
- * Fully compatible with browsers, edge runtimes, Node.js, and Deno with zero native OS dependencies.
+ * Exports the same names as `./node/mod.ts` (FileBox, FileBoxType,
+ * UniformResourceNameRegistry, VERSION, and types). Methods that need native OS
+ * capabilities exist here too but throw an error naming the supported route.
+ * It must not import `node:*`, native addons, or `process`.
  */
 import {
   FileBoxType,
@@ -13,6 +16,9 @@ import {
 import {
   FileBox,
 } from './file-box.ts'
+import {
+  UniformResourceNameRegistry,
+} from './urn-registry/uniform-resource-name-registry.ts'
 import type {
   FileBoxInterface,
   FileBoxConstructor,
@@ -31,5 +37,6 @@ export type {
 export {
   FileBox,
   FileBoxType,
+  UniformResourceNameRegistry,
   VERSION,
 }

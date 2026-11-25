@@ -140,24 +140,24 @@ test('FileBox.fromJSON() and toJSON() round-trip', async () => {
 test('Universal FileBox raises descriptive errors on native-only methods', async () => {
   assert.throws(
     () => FileBox.fromFile('/path/to/file.txt'),
-    /requires filesystem access.*file-box\/server/i,
+    /fromFile.*not supported in the web build.*file-box\/node/i,
   )
 
   const box = FileBox.fromBytes(new Uint8Array([1, 2, 3]), 'sample.dat')
 
   await assert.rejects(
     box.toFile('/tmp/file.dat'),
-    /requires native filesystem access.*file-box\/server/i,
+    /toFile.*not supported in the web build.*file-box\/node/i,
   )
 
   await assert.rejects(
     box.toStream(),
-    /requires Node\.js streams.*file-box\/server/i,
+    /not supported in the web build.*Node\.js streams.*file-box\/node/i,
   )
 
   assert.throws(
     () => box.pipe({} as any),
-    /requires Node\.js streams.*file-box\/server/i,
+    /not supported in the web build.*Node\.js streams.*file-box\/node/i,
   )
 })
 

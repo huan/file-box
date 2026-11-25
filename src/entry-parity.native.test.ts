@@ -17,6 +17,23 @@ import * as node from './node/mod.ts'
 
 const IGNORED = new Set(['length', 'name', 'prototype', 'constructor'])
 
+/**
+ * Protected helpers that only the node implementation needs. They are runtime
+ * members but not public API, so the web stand-in does not mirror them. Adding a
+ * public method to a node class without mirroring it must fail this test, so a
+ * name belongs here only when it is `protected` or `private` in the node class.
+ */
+const NODE_INTERNALS: Record<string, readonly string[]> = {
+  UniformResourceNameRegistry: [
+    'processExitMap',
+    'purgeExpiredUuid',
+    'addProcessExitListener',
+    'uuidFileName',
+    'addToExpiringTable',
+    'purge',
+  ],
+}
+
 /** Collects own and inherited member names up to, but excluding, Object/Function. */
 function members (target: object): string[] {
   const names = new Set<string>()
@@ -48,9 +65,15 @@ test('every exported class has the same static and prototype members', () => {
   for (const [name, value] of Object.entries(web)) {
     if (typeof value !== 'function') continue
     const other = (node as Record<string, unknown>)[name] as typeof value
-    assert.deepEqual(members(other), members(value), `${name} statics`)
+    const internals = NODE_INTERNALS[name] ?? []
+    const nodeMembers = [...members(other), ...members(other.prototype)]
+    for (const internal of internals) {
+      assert.ok(nodeMembers.includes(internal), `${name}.${internal} is listed as a node internal but no longer exists`)
+    }
+    const publicOnly = (names: string[]) => names.filter(n => !internals.includes(n))
+    assert.deepEqual(publicOnly(members(other)), members(value), `${name} statics`)
     assert.deepEqual(
-      members(other.prototype),
+      publicOnly(members(other.prototype)),
       members(value.prototype),
       `${name} prototype`,
     )
