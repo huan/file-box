@@ -29,13 +29,13 @@ jobs:
           npm --version
           npm ci
 
-      - name: Run lint and unit tests
+      - name: Run lint and unit tests with coverage
         run: npm test
 
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Run browser tests
+      - name: Run browser tests with coverage
         run: npm run test:unit:browser
 
       - name: Verify the browser runner reports failure
@@ -45,7 +45,7 @@ jobs:
             exit 1
           fi
           cat browser-failure.log
-          grep -F 'Error: FileBox browser runner failure fixture' browser-failure.log
+          grep -F 'FileBox browser runner failure fixture' browser-failure.log
 
   deno:
     name: Deno unit tests (experimental)

@@ -8,6 +8,11 @@ export default {
     'src/**/*.test.ts',
     '!src/**/*.native.test.ts',
   ],
+  coverage: true,
+  coverageConfig: {
+    include: ['src/**/*.ts'],
+    exclude: ['src/**/*.test.ts', 'src/**/*.native.test.ts'],
+  },
   nodeResolve: {
     exportConditions: ['browser', 'development'],
   },

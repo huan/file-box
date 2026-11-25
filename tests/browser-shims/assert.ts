@@ -73,6 +73,16 @@ function validateExpectedError (
   if (expected instanceof RegExp) {
     const msg = thrownError instanceof Error ? thrownError.message : String(thrownError)
     chaiAssert.match(msg, expected, assertionMessage)
+  } else if (expected instanceof Error) {
+    chaiAssert.instanceOf(thrownError, (expected as any).constructor, assertionMessage)
+    chaiAssert.strictEqual((thrownError as Error).message, expected.message, assertionMessage)
+    for (const [key, val] of Object.entries(expected)) {
+      if (val instanceof RegExp) {
+        chaiAssert.match(String((thrownError as any)?.[key]), val, assertionMessage)
+      } else {
+        chaiAssert.deepStrictEqual((thrownError as any)?.[key], val, assertionMessage)
+      }
+    }
   } else if (typeof expected === 'function') {
     if ((expected as any).prototype instanceof Error || expected === Error) {
       chaiAssert.instanceOf(thrownError, expected as any, assertionMessage)

@@ -100,7 +100,8 @@ export const mock = {
     implementation?: T[K],
   ): MockFunction<T[K]> => {
     const orig = object[property]
-    originalMethods.push({ obj: object, orig, prop: property as string })
+    const methodRecord = { obj: object, orig, prop: property as string }
+    originalMethods.push(methodRecord)
 
     let currentImpl = implementation
     const calls: MockCall[] = []
@@ -131,6 +132,10 @@ export const mock = {
 
     const restoreFn = () => {
       object[property] = orig
+      const idx = originalMethods.indexOf(methodRecord)
+      if (idx !== -1) {
+        originalMethods.splice(idx, 1)
+      }
     }
 
     Object.defineProperty(mocked, 'mock', {
@@ -297,6 +302,7 @@ function createTestContext (mochaCtx?: any, isSubtest = false): TestContext {
       await beforeHooksRun
 
       const subContext = createTestContext(mochaCtx, true)
+      let subError: unknown
       try {
         await subFn(subContext)
       } catch (err) {
@@ -304,15 +310,26 @@ function createTestContext (mochaCtx?: any, isSubtest = false): TestContext {
           console.log(`[test:subtest:skipped] ${subName}: ${err.message}`)
           return
         }
-        throw err
+        subError = err
       } finally {
+        let hookError: unknown
         try {
           const hooks = (subContext as any)._afterHooks || []
           for (const hook of hooks) {
-            await hook()
+            try {
+              await hook()
+            } catch (err) {
+              hookError ??= err
+            }
           }
         } finally {
           subContext.mock.restoreAll()
+        }
+        if (subError) {
+          throw subError
+        }
+        if (hookError) {
+          throw hookError
         }
       }
     },
@@ -345,16 +362,30 @@ export type TestFunction = (t: TestContext) => Promise<void> | void
  */
 async function runWithContext (fn: TestFunction, mochaCtx: any): Promise<void> {
   const context = createTestContext(mochaCtx, false)
+  let testError: unknown
   try {
     await fn(context)
+  } catch (err) {
+    testError = err
   } finally {
+    let hookError: unknown
     try {
       const hooks = (context as any)._afterHooks || []
       for (const hook of hooks) {
-        await hook()
+        try {
+          await hook()
+        } catch (err) {
+          hookError ??= err
+        }
       }
     } finally {
       context.mock.restoreAll()
+    }
+    if (testError) {
+      throw testError
+    }
+    if (hookError) {
+      throw hookError
     }
   }
 }

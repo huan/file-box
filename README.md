@@ -516,8 +516,9 @@ console.log(fileBox.remoteSize)
 ## Development tests
 
 Install the locked dependencies with `npm ci`. Run `npm test` for lint and the
-Node.js suite, `npm run test:unit:deno` for the Deno suite, and
-`npm run test:unit:browser` for the in-page Chromium suite. Install the browser
+Node.js suite (with built-in unit test coverage), `npm run test:unit:deno` for the Deno suite, and
+`npm run test:unit:browser` (or `npm run test:browser`) for the in-page Chromium suite (with browser code coverage).
+Run `npm run coverage` to generate both unit and browser coverage reports. Install the browser
 first with `npx playwright install --with-deps chromium`.
 
 | Runtime | Suites |

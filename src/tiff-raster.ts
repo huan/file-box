@@ -2,6 +2,9 @@
 
 /** Recognizes the little- and big-endian TIFF file signatures. */
 export function isTiff (bytes: Uint8Array): boolean {
+  if (bytes.length < 4) {
+    return false
+  }
   return (bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 42 && bytes[3] === 0)
       || (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0 && bytes[3] === 42)
 }
@@ -17,7 +20,12 @@ export async function decodeTiffRgba (bytes: Uint8Array): Promise<{ width: numbe
   const { width, height, data: samples, palette, components } = page
   const rgba = new Uint8Array(width * height * 4)
   const floatingPoint = samples instanceof Float32Array || samples instanceof Float64Array
-  const sampleMax = floatingPoint ? 1 : 2 ** page.bitsPerSample - 1
+  const bits = typeof page.bitsPerSample === 'number'
+    ? page.bitsPerSample
+    : Array.isArray(page.bitsPerSample)
+      ? page.bitsPerSample[0] ?? 8
+      : 8
+  const sampleMax = floatingPoint ? 1 : 2 ** bits - 1
   const toByte = (sample: number | undefined) => Math.round((sample ?? 0) * 255 / sampleMax)
 
   for (let pixel = 0; pixel < width * height; pixel++) {

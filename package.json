@@ -22,10 +22,14 @@
     "lint:biome": "biome lint src tests",
     "lint:ts": "tsc --isolatedModules --noEmit",
     "test": "npm run lint && npm run test:unit",
-    "test:unit": "node --test src tests/file-box-smoke.native.test.ts tests/integration.test.ts",
+    "test:unit": "node --test --experimental-test-coverage src tests/file-box-smoke.native.test.ts tests/integration.test.ts",
     "test:unit:deno": "deno test --no-check --node-modules-dir=manual --allow-read=.,/tmp --allow-write=/tmp --allow-env --allow-net=127.0.0.1 --allow-run=node --allow-sys=homedir,hostname src tests/file-box-smoke.native.test.ts tests/integration.test.ts",
     "test:unit:browser": "wtr --config web-test-runner.config.js",
-    "test:pack": "bash -x scripts/npm-pack-testing.sh"
+    "test:browser": "npm run test:unit:browser",
+    "test:pack": "bash -x scripts/npm-pack-testing.sh",
+    "coverage": "npm run coverage:unit && npm run coverage:browser",
+    "coverage:unit": "node --test --experimental-test-coverage src tests/file-box-smoke.native.test.ts tests/integration.test.ts",
+    "coverage:browser": "wtr --config web-test-runner.config.js --coverage"
   },
   "repository": {
     "type": "git",

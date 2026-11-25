@@ -206,3 +206,47 @@ test('TestContext subtest skips execution when options.todo is true', async (t) 
   })
   strictEqual(executed, false, 'subtest was skipped because todo was set')
 })
+
+test('assert shim throws and rejects validate Error instance type and message', async () => {
+  throws(() => {
+    throw new TypeError('invalid parameter')
+  }, new TypeError('invalid parameter'))
+
+  throws(() => {
+    throws(() => {
+      throw new TypeError('actual message')
+    }, new TypeError('mismatched message'))
+  })
+
+  await rejects(
+    async () => { throw new RangeError('out of bounds') },
+    new RangeError('out of bounds'),
+  )
+
+  await rejects(
+    rejects(
+      async () => { throw new RangeError('actual') },
+      new RangeError('mismatched'),
+    ),
+  )
+})
+
+test('mock.method and t.mock.method restore without leaving active entries in global mock tracker', async (t) => {
+  const target = {
+    getValue () {
+      return 'initial'
+    },
+  }
+
+  await t.test('subtest mocks target', (subT) => {
+    subT.mock.method(target, 'getValue', () => 'subtest-mocked')
+    strictEqual(target.getValue(), 'subtest-mocked')
+  })
+
+  strictEqual(target.getValue(), 'initial')
+
+  // Global mock.restoreAll should not revert any subsequent changes made to target
+  target.getValue = () => 'updated'
+  mock.restoreAll()
+  strictEqual(target.getValue(), 'updated', 'global restoreAll did not resurrect stale mock references')
+})
