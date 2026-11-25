@@ -261,7 +261,7 @@ class UniformResourceNameRegistry {
     // https://stackoverflow.com/a/22687090
     const expireTimeNearestMinute = Math.ceil(expireTime / expireTimeInterval) * expireTimeInterval
 
-    const uuidList = this.uuidExpiringTable.get(expireTime) || []
+    const uuidList = this.uuidExpiringTable.get(expireTimeNearestMinute) || []
     uuidList.push(uuid)
     this.uuidExpiringTable.set(expireTimeNearestMinute, uuidList)
 

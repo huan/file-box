@@ -40,7 +40,7 @@ jobs:
 
       - name: Verify the browser runner reports failure
         run: |
-          if npm run test:unit:browser -- tests/fixtures/browser-failure.test.ts > browser-failure.log 2>&1; then
+          if npm run test:unit:browser -- tests/fixtures/browser-failure.fixture.ts > browser-failure.log 2>&1; then
             cat browser-failure.log
             exit 1
           fi

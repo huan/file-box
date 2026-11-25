@@ -425,8 +425,13 @@ test.only = (name: string, optionsOrFn?: TestOptions | TestFunction, maybeFn?: T
       }
       await runWithContext(fn, this)
     })
-  } else {
-    test(name, optionsOrFn as any, maybeFn)
+  } else if (runner) {
+    runner(name, async function (this: any) {
+      if (options?.timeout && typeof this?.timeout === 'function') {
+        this.timeout(options.timeout)
+      }
+      await runWithContext(fn, this)
+    })
   }
 }
 

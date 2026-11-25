@@ -527,7 +527,7 @@ first with `npx playwright install --with-deps chromium`.
 | Node.js and Deno | `*.native.test.ts` exercises the native FileBox class, Node stream adapters, loopback HTTP, and the disk-based URN registry. `tests/integration.test.ts` runs with the native suites. |
 
 The browser runner also has a deliberately failing assertion fixture in
-`tests/fixtures/browser-failure.test.ts`. CI invokes it separately to check the
+`tests/fixtures/browser-failure.fixture.ts`. CI invokes it separately to check the
 runner exits nonzero. The normal Chromium run uses ESM and exercises failure and skip
 semantics through the shared test adapter tests. The published browser entry
 and its clean consumer check are tracked in [#95](https://github.com/huan/file-box/issues/95).

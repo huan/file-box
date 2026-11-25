@@ -17,8 +17,12 @@ export const ok = (value: unknown, message?: string | Error): void =>
 /**
  * Asserts strict equality (===) between actual and expected.
  */
-export const strictEqual = (actual: unknown, expected: unknown, message?: string | Error): void =>
+export const strictEqual = (actual: unknown, expected: unknown, message?: string | Error): void => {
+  if (Object.is(actual, expected)) {
+    return
+  }
   chaiAssert.strictEqual(actual, expected, typeof message === 'string' ? message : message?.message)
+}
 
 /**
  * Asserts strict inequality (!==) between actual and expected.
@@ -224,6 +228,12 @@ export const match = (actual: string, regexp: RegExp, message?: string | Error):
   chaiAssert.match(actual, regexp, typeof message === 'string' ? message : message?.message)
 
 /**
+ * Asserts that actual does not match the given RegExp pattern.
+ */
+export const doesNotMatch = (actual: string, regexp: RegExp, message?: string | Error): void =>
+  chaiAssert.notMatch(actual, regexp, typeof message === 'string' ? message : message?.message)
+
+/**
  * Asserts that err is falsy, throwing it if truthy.
  */
 export const ifError = (err: unknown): void =>
@@ -239,6 +249,7 @@ const strictAssert = Object.assign(
   {
     deepEqual,
     deepStrictEqual,
+    doesNotMatch,
     doesNotReject,
     doesNotThrow,
     equal,

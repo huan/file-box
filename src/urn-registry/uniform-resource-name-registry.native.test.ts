@@ -111,6 +111,31 @@ test('registry expires each UUID on its own deadline', async t => {
   await assert.rejects(urnRegistry.load(uuid2), { code: 'ENOENT' })
 })
 
+test('registry retains and purges multiple UUIDs registered in the same expiry window', async t => {
+  let now = 0
+  t.mock.method(Date, 'now', () => now)
+  const expireMilliseconds = 10 * 60 * 1000 // 10 minute
+  const { registry: urnRegistry } = createRegistry(t, expireMilliseconds)
+  const read = async (uuid: string) => (await streamToBuffer(await urnRegistry.load(uuid))).toString()
+
+  const uuid1 = await urnRegistry.save(Readable.from([Buffer.from('alpha')]))
+  now = 10 * 1000
+  const uuid2 = await urnRegistry.save(Readable.from([Buffer.from('beta')]))
+
+  assert.equal(await read(uuid1), 'alpha')
+  assert.equal(await read(uuid2), 'beta')
+
+  now = 9 * 60 * 1000
+  await urnRegistry.purgeExpiredFiles()
+  assert.equal(await read(uuid1), 'alpha')
+  assert.equal(await read(uuid2), 'beta')
+
+  now = 11 * 60 * 1000
+  await urnRegistry.purgeExpiredFiles()
+  await assert.rejects(urnRegistry.load(uuid1), { code: 'ENOENT' })
+  await assert.rejects(urnRegistry.load(uuid2), { code: 'ENOENT' })
+})
+
 test('URN FileBox helper smoke testing', async t => {
   const QRCODE = 'test qrcode'
 

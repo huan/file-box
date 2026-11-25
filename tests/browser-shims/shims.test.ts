@@ -8,6 +8,7 @@ import { test, mock } from 'node:test'
 import {
   deepEqual,
   deepStrictEqual,
+  doesNotMatch,
   doesNotReject,
   doesNotThrow,
   equal,
@@ -29,12 +30,14 @@ test('Chromium runs without injected Node globals', () => {
 test('assert shim equality operations enforce strict semantics', () => {
   ok(true, 'truthy assertion')
   strictEqual(42, 42)
+  strictEqual(NaN, NaN, 'Object.is equality handles NaN')
   equal('hello', 'hello')
   notStrictEqual(1, 2)
   notEqual('a', 'b')
   deepStrictEqual({ a: 1, b: [2] }, { a: 1, b: [2] })
   deepEqual({ a: 1 }, { a: 1 })
   notDeepStrictEqual({ a: 1 }, { a: 2 })
+  doesNotMatch('hello, world!', /earth/)
 })
 
 test('assert shim throws and doesNotThrow support expected patterns', () => {

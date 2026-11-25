@@ -18,7 +18,7 @@ export default {
         if (source === 'node:test') {
           return '/tests/browser-shims/node-test.ts'
         }
-        if (source === 'node:assert/strict') {
+        if (source === 'node:assert/strict' || source === 'node:assert') {
           return '/tests/browser-shims/assert.ts'
         }
         return undefined
