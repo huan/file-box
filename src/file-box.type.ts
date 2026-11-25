@@ -3,19 +3,13 @@
  *
  * This module defines options, interfaces, and enum-like types that identify
  * and configure different FileBox representations across environments.
+ * Standardized on WinterTC and standard Web APIs with zero native OS dependencies.
  */
-import type * as http from 'node:http'
-import type {
-  Readable,
-  Writable,
-} from 'node:stream'
-
-import type {
-  FileBox,
-} from './file-box.ts'
+import type { FileBox } from './file-box.ts'
 
 interface Pipeable {
-  pipe<T extends Writable>(destination: T, options?: { end?: boolean }): T
+  pipeTo?(destination: WritableStream<Uint8Array>, options?: StreamPipeOptions): Promise<void>
+  pipe?<T>(destination: T, options?: { end?: boolean }): T
 }
 
 const FileBoxTypeValues = {
@@ -30,10 +24,8 @@ const FileBoxTypeValues = {
 } as const
 
 /**
- * Huan(202002):
- * We need to keep this enum number to be consistent
- * because of toJSON & fromJSON need the same type number across versions.
- * and gRPC maybe will use those numbers in the future as well.
+ * Numeric enum-like type discriminator for FileBox instances and serialized payloads.
+ * Must remain numerically stable across all versions for cross-process compatibility.
  */
 const FileBoxType = {
   ...FileBoxTypeValues,
@@ -49,10 +41,6 @@ const FileBoxType = {
 
 type FileBoxType = typeof FileBoxTypeValues[keyof typeof FileBoxTypeValues]
 
-/**
- * Type-only member aliases. The numeric const above has no runtime enum,
- * and these names keep `FileBoxType.QRCode` usable in type position.
- */
 declare namespace FileBoxType {
   type Unknown = typeof FileBoxTypeValues.Unknown
   type Base64 = typeof FileBoxTypeValues.Base64
@@ -77,29 +65,36 @@ interface FileBoxOptionsCommon {
 
 interface FileBoxOptionsFile {
   type: FileBoxType.File
-  path: string
+  path?: string
+  blob?: Blob
 }
+
 interface FileBoxOptionsUrl {
   type: FileBoxType.Url
   url: string
-  headers?: http.OutgoingHttpHeaders
+  headers?: any
 }
+
 interface FileBoxOptionsBuffer {
   type: FileBoxType.Buffer
-  buffer: Buffer
+  buffer: Uint8Array
 }
+
 interface FileBoxOptionsStream {
   type: FileBoxType.Stream
-  stream: Readable
+  stream: ReadableStream<Uint8Array> | (() => ReadableStream<Uint8Array>) | any
 }
+
 interface FileBoxOptionsQRCode {
   type: FileBoxType.QRCode
   qrCode: string
 }
+
 interface FileBoxOptionsBase64 {
   type: FileBoxType.Base64
   base64: string
 }
+
 interface FileBoxOptionsUuid {
   type: FileBoxType.Uuid
   uuid: string
@@ -122,15 +117,18 @@ type FileBoxJsonObject = FileBoxOptionsCommon & (
   | FileBoxOptionsUuid
 )
 
-type UuidLoader = (this: FileBox, uuid: string) => Promise<Readable>
-type UuidSaver = (this: FileBox, stream: Readable) => Promise<string>
+type UuidLoader = (this: FileBox, uuid: string) => Promise<ReadableStream<Uint8Array> | any>
+type UuidSaver = (this: FileBox, stream: ReadableStream<Uint8Array> | any) => Promise<string>
 
 export type {
   FileBoxJsonObject,
   FileBoxOptions,
   FileBoxOptionsBase64,
+  FileBoxOptionsBuffer,
   FileBoxOptionsCommon,
+  FileBoxOptionsFile,
   FileBoxOptionsQRCode,
+  FileBoxOptionsStream,
   FileBoxOptionsUrl,
   FileBoxOptionsUuid,
   Metadata,

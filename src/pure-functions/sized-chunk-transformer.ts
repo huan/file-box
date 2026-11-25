@@ -1,49 +1,65 @@
 /**
- * ChunkerTransformStream, a transform stream to take arbitrary chunk sizes and make them consistent
- * https://codereview.stackexchange.com/q/57492/185709
+ * ChunkerTransformStream: A WHATWG TransformStream to chunk arbitrary byte streams consistently.
+ *
+ * Slices input byte buffers into uniform chunk sizes suitable for network and streaming workloads.
+ * Fully universal and compliant with WinterTC specifications with zero native runtime imports.
  */
-import * as stream from 'node:stream'
 
 /**
- * TCP streaming workload tuning
- *  https://www.ibm.com/docs/en/aix/7.2?topic=tuning-tcp-streaming-workload
+ * Default chunk size for streaming (256 KB).
+ * Tuned for standard network throughput and socket streaming.
  */
 const DEFAULT_CHUNK_BYTE = 256 * 1024 // 256 KB
 
 /**
- * @param chunkByte The size of the chunks to be created
- * @returns
+ * Creates a WHATWG TransformStream that emits Uint8Array chunks of at most `chunkByte` size.
+ *
+ * @param chunkByte Maximum byte length per chunk (defaults to 256KB)
+ * @returns TransformStream slicing incoming bytes into uniform chunks
  */
-function sizedChunkTransformer (chunkByte = DEFAULT_CHUNK_BYTE) {
-  let buffer = Buffer.from([])
+export function sizedChunkTransformStream (
+  chunkByte = DEFAULT_CHUNK_BYTE,
+): TransformStream<Uint8Array, Uint8Array> {
+  let buffer: Uint8Array<any> = new Uint8Array(0)
 
-  const transform: stream.TransformOptions['transform'] = function (chunk, _, done) {
-    buffer = Buffer.concat([buffer, chunk])
+  return new TransformStream<Uint8Array, Uint8Array>({
+    transform (chunk, controller) {
+      if (buffer.byteLength === 0) {
+        buffer = chunk
+      } else {
+        const next = new Uint8Array(buffer.byteLength + chunk.byteLength)
+        next.set(buffer, 0)
+        next.set(chunk, buffer.byteLength)
+        buffer = next
+      }
 
-    while (buffer.length >= chunkByte) {
-      this.push(buffer.slice(0, chunkByte))
-      buffer = buffer.slice(chunkByte)
-    }
-
-    done()
-  }
-
-  const flush: stream.TransformOptions['flush'] = function (done) {
-    if (buffer.length) {
-      this.push(buffer)
-    }
-    done()
-  }
-
-  const chunker = new stream.Transform({
-    flush,
-    objectMode: true,
-    transform,
+      while (buffer.byteLength >= chunkByte) {
+        controller.enqueue(buffer.subarray(0, chunkByte))
+        buffer = buffer.subarray(chunkByte)
+      }
+    },
+    flush (controller) {
+      if (buffer.byteLength > 0) {
+        controller.enqueue(buffer)
+        buffer = new Uint8Array(0)
+      }
+    },
   })
-
-  return chunker
 }
 
-export {
-  sizedChunkTransformer,
+/**
+ * Legacy transformer bridge for Node.js stream pipelines.
+ * In Node.js environments, wraps sizedChunkTransformStream as a Node Transform stream.
+ *
+ * @param chunkByte Maximum chunk size
+ * @returns Node stream.Transform when running under Node.js, or TransformStream otherwise
+ */
+export function sizedChunkTransformer (chunkByte = DEFAULT_CHUNK_BYTE): any {
+  if (typeof (globalThis as any).process !== 'undefined') {
+    const nodeStream = (globalThis as any).process?.getBuiltinModule?.('node:stream')
+    if (nodeStream?.Transform?.fromWeb) {
+      return nodeStream.Transform.fromWeb(sizedChunkTransformStream(chunkByte))
+    }
+  }
+  return sizedChunkTransformStream(chunkByte)
 }

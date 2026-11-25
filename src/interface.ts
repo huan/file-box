@@ -23,9 +23,15 @@ interface FileBoxInterface {
   toJSON: FileBox['toJSON']
   toQRCode: FileBox['toQRCode']
   toStream: FileBox['toStream']
+  toReadableStream: FileBox['toReadableStream']
   toUuid: FileBox['toUuid']
+  toBytes: FileBox['toBytes']
+  toBlob: FileBox['toBlob']
+  bytes: FileBox['bytes']
+  blob: FileBox['blob']
 
   pipe: FileBox['pipe']
+  pipeTo: FileBox['pipeTo']
 }
 
 type FileBoxConstructor = Constructor<FileBoxInterface>

@@ -1,131 +1,175 @@
 /**
- * Miscellaneous HTTP, Stream, and URL utilities supporting FileBox operations.
+ * Miscellaneous HTTP, Stream, and String utilities supporting FileBox operations.
+ *
+ * Fully universal and compliant with WinterTC specifications with zero native runtime imports.
  */
-import * as http from 'node:http'
-import * as https from 'node:https'
-import * as nodeUrl from 'node:url'
-import type * as stream from 'node:stream'
-
 export { dataUrlToBase64, httpHeaderToFileName } from './pure-functions/file-metadata.ts'
 
 /**
- * Get http headers for specific `url` following HTTP 302 redirections.
+ * Strips directory and path prefixes from a file path or URL to return its basename.
+ * Works uniformly across Unix, Windows, and URL pathname formats.
  *
- * @param url Remote target URL
- * @returns HTTP response headers
+ * @param filePath Path or URL string
+ * @returns Basename portion of the input string
  */
-export async function httpHeadHeader (url: string): Promise<http.IncomingHttpHeaders> {
-  let REDIRECT_TTL = 7
-
-  while (true) {
-    if (REDIRECT_TTL-- <= 0) {
-      throw new Error(`ttl expired! too many(>${REDIRECT_TTL}) 302 redirection.`)
-    }
-
-    const res = await _headHeader(url)
-
-    if (!/^3/.test(String(res.statusCode))) {
-      return res.headers
-    }
-
-    if (!res.headers.location) {
-      throw new Error('302 found but no location!')
-    }
-
-    url = res.headers.location
+export function basename (filePath: string): string {
+  let clean = filePath
+  const questionIdx = clean.indexOf('?')
+  if (questionIdx !== -1) {
+    clean = clean.substring(0, questionIdx)
   }
-
-  async function _headHeader (destUrl: string): Promise<http.IncomingMessage> {
-    const parsedUrl = nodeUrl.parse(destUrl)
-    const options: https.RequestOptions = {
-      ...parsedUrl,
-      headers: {
-        Connection: 'close',
-      },
-      method: 'HEAD',
-    }
-
-    let request: typeof http.request
-
-    if (parsedUrl.protocol === 'https:') {
-      request = https.request
-    } else if (parsedUrl.protocol === 'http:') {
-      request = http.request
-    } else {
-      throw new Error('unknown protocol: ' + parsedUrl.protocol)
-    }
-
-    return new Promise<http.IncomingMessage>((resolve, reject) => {
-      request(options, resolve)
-        .on('error', reject)
-        .end()
-    })
+  const hashIdx = clean.indexOf('#')
+  if (hashIdx !== -1) {
+    clean = clean.substring(0, hashIdx)
   }
+  const parts = clean.replace(/\\/g, '/').split('/')
+  return parts.filter(Boolean).pop() || filePath
 }
 
 /**
- * Creates an HTTP GET stream from a remote URL.
+ * Retrieves HTTP response headers following redirects via standard Web fetch.
  *
- * @param url Remote resource URL
+ * @param url Target HTTP(S) URL
  * @param headers Optional request headers
- * @returns Readable HTTP incoming message stream
+ * @returns Normalised lowercase header key-value map
  */
-export async function httpStream (
+export async function fetchHeadHeader (
   url: string,
-  headers: http.OutgoingHttpHeaders = {},
-): Promise<http.IncomingMessage> {
-  const parsedUrl = nodeUrl.parse(url)
-  const protocol = parsedUrl.protocol
-
-  let options: http.RequestOptions
-  let get: typeof https.get
-
-  if (!protocol) {
-    throw new Error('protocol is empty')
-  }
-
-  if (protocol.match(/^https:/i)) {
-    get = https.get
-    options = parsedUrl
-    options.agent = https.globalAgent
-  } else if (protocol.match(/^http:/i)) {
-    get = http.get
-    options = parsedUrl
-    options.agent = http.globalAgent
-  } else {
-    throw new Error('protocol unknown: ' + protocol)
-  }
-
-  options.headers = {
-    Connection: 'close',
-    ...options.headers,
-    ...headers,
-  }
-
-  const res = await new Promise<http.IncomingMessage>((resolve, reject) => {
-    get(options, resolve)
-      .on('error', reject)
-      .end()
+  headers?: HeadersInit,
+): Promise<Record<string, string>> {
+  const response = await fetch(url, {
+    headers,
+    method: 'HEAD',
+    redirect: 'follow',
   })
-  return res
+  const result: Record<string, string> = {}
+  response.headers.forEach((value, key) => {
+    result[key.toLowerCase()] = value
+  })
+  return result
 }
 
 /**
- * Consumes a Node.js readable stream into an in-memory Buffer.
+ * Initiates an HTTP GET request and returns the response body as a WHATWG ReadableStream.
  *
- * @param stream Readable stream to consume
- * @returns Resolves with concatenated Buffer
+ * @param url Target HTTP(S) URL
+ * @param headers Optional request headers
+ * @param signal Optional abort signal
+ * @returns Readable stream of byte chunks
  */
-export async function streamToBuffer (
-  stream: stream.Readable,
-): Promise<Buffer> {
-  return new Promise<Buffer>((resolve, reject) => {
-    const bufferList: Buffer[] = []
+export async function fetchStream (
+  url: string,
+  headers?: HeadersInit,
+  signal?: AbortSignal,
+): Promise<ReadableStream<Uint8Array>> {
+  const response = await fetch(url, {
+    headers,
+    method: 'GET',
+    redirect: 'follow',
+    signal,
+  })
+  if (!response.ok) {
+    throw new Error(`fetch failed with HTTP ${response.status}: ${response.statusText}`)
+  }
+  if (!response.body) {
+    throw new Error(`response body is null for ${url}`)
+  }
+  return response.body
+}
+
+/**
+ * Backward-compatible alias for fetchHeadHeader.
+ */
+export const httpHeadHeader = fetchHeadHeader
+
+/**
+ * Backward-compatible HTTP streaming helper.
+ * Returns a WHATWG ReadableStream, which is consumed seamlessly by streamToBuffer.
+ */
+export const httpStream = fetchStream
+
+/**
+ * Consumes a WHATWG ReadableStream or Node.js Readable into a Uint8Array.
+ *
+ * @param stream Byte stream to consume
+ * @returns Concatenated bytes
+ */
+export async function streamToBytes (
+  stream: ReadableStream<Uint8Array> | any,
+): Promise<Uint8Array> {
+  if (stream && typeof stream.getReader === 'function') {
+    const response = new Response(stream)
+    return new Uint8Array(await response.arrayBuffer())
+  }
+  return new Promise<Uint8Array>((resolve, reject) => {
+    const chunks: Uint8Array[] = []
     stream.once('error', reject)
     stream.once('end', () => {
-      const fullBuffer = Buffer.concat(bufferList)
-      resolve(fullBuffer)
+      const totalLen = chunks.reduce((acc, c) => acc + c.byteLength, 0)
+      const merged = new Uint8Array(totalLen)
+      let offset = 0
+      for (const chunk of chunks) {
+        merged.set(chunk, offset)
+        offset += chunk.byteLength
+      }
+      resolve(merged)
     })
-    stream.on('data', buffer => bufferList.push(buffer))
+    stream.on('data', (chunk: any) => {
+      const u8 = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk)
+      chunks.push(u8)
+    })
   })
+}
+
+/**
+ * Consumes a stream into a Node Buffer or Uint8Array.
+ *
+ * @param stream Byte stream to consume
+ * @returns Resolves with Buffer in Node.js/Deno, or Uint8Array in browser
+ */
+export async function streamToBuffer (
+  stream: ReadableStream<Uint8Array> | any,
+): Promise<any> {
+  const bytes = await streamToBytes(stream)
+  if (typeof (globalThis as any).Buffer !== 'undefined') {
+    return (globalThis as any).Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  }
+  return bytes
+}
+
+/**
+ * Encodes a Uint8Array into a Base64 string without native Node.js dependencies.
+ *
+ * @param bytes Binary payload
+ * @returns Base64 encoded string
+ */
+export function bytesToBase64 (bytes: Uint8Array): string {
+  if (typeof (bytes as any).toBase64 === 'function') {
+    return (bytes as any).toBase64()
+  }
+  let binary = ''
+  const len = bytes.byteLength
+  for (let i = 0; i < len; i += 8192) {
+    const chunk = bytes.subarray(i, Math.min(i + 8192, len))
+    binary += String.fromCharCode(...chunk)
+  }
+  return btoa(binary)
+}
+
+/**
+ * Decodes a Base64 string into a Uint8Array without native Node.js dependencies.
+ *
+ * @param base64 Base64 encoded string
+ * @returns Decoded byte array
+ */
+export function base64ToBytes (base64: string): Uint8Array {
+  if (typeof (Uint8Array as any).fromBase64 === 'function') {
+    return (Uint8Array as any).fromBase64(base64)
+  }
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
 }
