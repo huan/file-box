@@ -6,7 +6,7 @@ import * as assert from 'node:assert/strict'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as os from 'node:os'
-import { Writable } from 'node:stream'
+import { PassThrough, Readable, Writable } from 'node:stream'
 
 import { FileBox as UniversalFileBox } from '../file-box.ts'
 import { FileBox } from './file-box-server.ts'
@@ -65,6 +65,43 @@ test('Server FileBox pipe() to Node Writable stream', async () => {
 
   const merged = Buffer.concat(chunks).toString('utf8')
   assert.strictEqual(merged, content)
+})
+
+test('Server FileBox pipe() forwards source errors to destination', async () => {
+  const errorSource = new Readable({
+    read () {
+      this.destroy(new Error('source stream failure'))
+    },
+  })
+  const fileBox = FileBox.fromStream(errorSource, 'error.txt')
+
+  const writable = new Writable({
+    write (_chunk, _encoding, callback) {
+      callback()
+    },
+  })
+
+  await new Promise<void>((resolve, reject) => {
+    writable.once('error', err => {
+      try {
+        assert.match(err.message, /source stream failure/)
+        resolve()
+      } catch (e) {
+        reject(e)
+      }
+    })
+    fileBox.pipe(writable)
+  })
+})
+
+test('Canceling Web stream stops and destroys Node source', async () => {
+  const source = new PassThrough()
+  const fileBox = FileBox.fromStream(source, 'cancel.txt')
+  const webStream = await fileBox.toReadableStream()
+  const reader = webStream.getReader()
+
+  await reader.cancel('cancel stream')
+  assert.ok(source.destroyed, 'Node stream source should be destroyed on Web stream cancel')
 })
 
 test('UniformResourceNameRegistry with Server FileBox', async () => {

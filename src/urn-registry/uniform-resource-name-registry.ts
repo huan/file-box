@@ -33,7 +33,8 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-import { Writable, type Readable } from 'node:stream'
+import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 
 import { instanceToClass }  from 'clone-class'
 import { log }              from 'brolog'
@@ -238,16 +239,10 @@ class UniformResourceNameRegistry {
     const filename = this.uuidFileName(uuid)
     const writeStream = fs.createWriteStream(filename)
     try {
-      if (typeof (stream as any).pipeTo === 'function') {
-        await (stream as ReadableStream<Uint8Array>).pipeTo(Writable.toWeb(writeStream))
-      } else {
-        await new Promise<void>((resolve, reject) => {
-          (stream as Readable).pipe(writeStream)
-          writeStream.on('finish', () => resolve())
-          writeStream.on('error', reject)
-          ;(stream as Readable).on('error', reject)
-        })
-      }
+      const source = typeof (stream as any).pipeTo === 'function'
+        ? Readable.fromWeb(stream as any)
+        : (stream as Readable)
+      await pipeline(source, writeStream)
     } catch (error) {
       await fs.promises.rm(filename, { force: true }).catch(() => undefined)
       throw error

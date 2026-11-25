@@ -13,17 +13,38 @@ export { dataUrlToBase64, httpHeaderToFileName } from './pure-functions/file-met
  * @returns Basename portion of the input string
  */
 export function basename (filePath: string): string {
-  let clean = filePath
-  const questionIdx = clean.indexOf('?')
-  if (questionIdx !== -1) {
-    clean = clean.substring(0, questionIdx)
-  }
-  const hashIdx = clean.indexOf('#')
-  if (hashIdx !== -1) {
-    clean = clean.substring(0, hashIdx)
-  }
-  const parts = clean.replace(/\\/g, '/').split('/')
+  const parts = filePath.replace(/\\/g, '/').split('/')
   return parts.filter(Boolean).pop() || filePath
+}
+
+/**
+ * Normalizes credentials from HTTP Basic authentication URLs into Authorization headers.
+ * Standard Web fetch rejects URLs containing username/password credentials.
+ *
+ * @param url Target URL
+ * @param headers Optional request headers
+ * @returns Clean URL and merged Headers
+ */
+export function normalizeFetchUrlAndHeaders (
+  url: string,
+  headers?: HeadersInit,
+): { cleanUrl: string, headers: Headers } {
+  const reqHeaders = new Headers(headers)
+  try {
+    const parsed = new URL(url)
+    if (parsed.username || parsed.password) {
+      const credentials = `${decodeURIComponent(parsed.username)}:${decodeURIComponent(parsed.password)}`
+      if (!reqHeaders.has('authorization')) {
+        reqHeaders.set('authorization', `Basic ${btoa(credentials)}`)
+      }
+      parsed.username = ''
+      parsed.password = ''
+      return { cleanUrl: parsed.toString(), headers: reqHeaders }
+    }
+  } catch {
+    // Return original url if unparseable
+  }
+  return { cleanUrl: url, headers: reqHeaders }
 }
 
 /**
@@ -37,8 +58,9 @@ export async function fetchHeadHeader (
   url: string,
   headers?: HeadersInit,
 ): Promise<Record<string, string>> {
-  const response = await fetch(url, {
-    headers,
+  const { cleanUrl, headers: reqHeaders } = normalizeFetchUrlAndHeaders(url, headers)
+  const response = await fetch(cleanUrl, {
+    headers: reqHeaders,
     method: 'HEAD',
     redirect: 'follow',
   })
@@ -62,8 +84,9 @@ export async function fetchStream (
   headers?: HeadersInit,
   signal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
-  const response = await fetch(url, {
-    headers,
+  const { cleanUrl, headers: reqHeaders } = normalizeFetchUrlAndHeaders(url, headers)
+  const response = await fetch(cleanUrl, {
+    headers: reqHeaders,
     method: 'GET',
     redirect: 'follow',
     signal,

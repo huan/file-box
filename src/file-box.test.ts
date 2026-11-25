@@ -24,9 +24,6 @@ test('FileBox.fromBytes() and toBytes()', async () => {
 
   const recoveredText = new TextDecoder().decode(recoveredBytes)
   assert.strictEqual(recoveredText, text)
-
-  const aliasBytes = await fileBox.bytes()
-  assert.deepStrictEqual(aliasBytes, bytes)
 })
 
 test('FileBox.fromBlob() and toBlob()', async () => {
@@ -39,9 +36,6 @@ test('FileBox.fromBlob() and toBlob()', async () => {
 
   const outBlob = await fileBox.toBlob()
   assert.strictEqual(await outBlob.text(), content)
-
-  const aliasBlob = await fileBox.blob()
-  assert.strictEqual(await aliasBlob.text(), content)
 })
 
 test('FileBox.toReadableStream() and pipeTo()', async () => {
@@ -165,6 +159,14 @@ test('Universal FileBox raises descriptive errors on native-only methods', async
     () => box.pipe({} as any),
     /requires Node\.js streams.*file-box\/server/i,
   )
+})
+
+test('FileBox preserves literal hash and question mark in filenames', () => {
+  const box1 = FileBox.fromBytes(new Uint8Array([1]), 'report#1.txt')
+  assert.strictEqual(box1.name, 'report#1.txt')
+
+  const box2 = FileBox.fromBytes(new Uint8Array([1]), 'query?v=2.dat')
+  assert.strictEqual(box2.name, 'query?v=2.dat')
 })
 
 test('FileBox.validInterface() and instanceof check', () => {

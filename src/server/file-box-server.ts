@@ -114,7 +114,10 @@ export class FileBox extends UniversalFileBox {
     options?: { end?: boolean },
   ): T {
     this.toStream()
-      .then(stream => stream.pipe(destination as any, options))
+      .then(stream => {
+        stream.on('error', (err: any) => (destination as any).emit?.('error', err))
+        return stream.pipe(destination as any, options)
+      })
       .catch(err => (destination as any).emit?.('error', err))
     return destination
   }

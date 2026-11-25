@@ -27,8 +27,6 @@ interface FileBoxInterface {
   toUuid: FileBox['toUuid']
   toBytes: FileBox['toBytes']
   toBlob: FileBox['toBlob']
-  bytes: FileBox['bytes']
-  blob: FileBox['blob']
 
   pipe: FileBox['pipe']
   pipeTo: FileBox['pipeTo']

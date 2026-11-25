@@ -48,6 +48,60 @@ const UNKNOWN_SIZE = -1
 let interfaceOfFileBox = (_: any): _ is FileBoxInterface => false
 let looseInstanceOfFileBox = (_: any): _ is FileBox => false
 
+/**
+ * Converts a Node.js Readable stream into a WHATWG ReadableStream with full teardown
+ * and cancellation support across environments.
+ */
+function nodeStreamToWebStream (stream: any): ReadableStream<Uint8Array> {
+  let onData: ((chunk: any) => void) | undefined
+  let onEnd: (() => void) | undefined
+  let onError: ((err: any) => void) | undefined
+
+  const cleanup = () => {
+    if (onData) stream.removeListener?.('data', onData)
+    if (onEnd) stream.removeListener?.('end', onEnd)
+    if (onError) stream.removeListener?.('error', onError)
+    onData = undefined
+    onEnd = undefined
+    onError = undefined
+  }
+
+  return new ReadableStream<Uint8Array>({
+    start (controller) {
+      onData = (chunk: any) => {
+        try {
+          const u8 = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk)
+          controller.enqueue(u8)
+        } catch {
+          cleanup()
+          if (typeof stream.destroy === 'function') {
+            stream.destroy()
+          }
+        }
+      }
+      onEnd = () => {
+        cleanup()
+        try { controller.close() } catch {}
+      }
+      onError = (err: any) => {
+        cleanup()
+        try { controller.error(err) } catch {}
+      }
+
+      stream.on('data', onData)
+      stream.once('end', onEnd)
+      stream.once('error', onError)
+    },
+    cancel (reason) {
+      cleanup()
+      if (typeof stream.destroy === 'function') {
+        const error = reason instanceof Error ? reason : undefined
+        stream.destroy(error)
+      }
+    },
+  })
+}
+
 export class FileBox implements Pipeable, FileBoxInterface {
 
   static readonly version = VERSION
@@ -555,8 +609,11 @@ export class FileBox implements Pipeable, FileBoxInterface {
       this._mediaType = httpMediaType
     }
 
+    const contentEncoding = headers['content-encoding']
     if (headers['content-length']) {
-      this._size = Number(headers['content-length'])
+      if (!contentEncoding || contentEncoding === 'identity') {
+        this._size = Number(headers['content-length'])
+      }
     }
   }
 
@@ -684,16 +741,7 @@ export class FileBox implements Pipeable, FileBoxInterface {
         if (stream.readable === false || stream.destroyed) {
           throw new Error('The stream is not readable. Maybe has already been consumed, and now it was drained. See: https://github.com/huan/file-box/issues/50')
         }
-        return new ReadableStream<Uint8Array>({
-          start (controller) {
-            stream.on('data', (chunk: any) => {
-              const u8 = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk)
-              controller.enqueue(u8)
-            })
-            stream.once('end', () => controller.close())
-            stream.once('error', (err: any) => controller.error(err))
-          },
-        })
+        return nodeStreamToWebStream(stream)
       }
 
       case FileBoxType.QRCode:
@@ -723,16 +771,7 @@ export class FileBox implements Pipeable, FileBoxInterface {
           return streamResult as ReadableStream<Uint8Array>
         }
         if (streamResult && typeof (streamResult as any).pipe === 'function') {
-          return new ReadableStream<Uint8Array>({
-            start (controller) {
-              streamResult.on('data', (chunk: any) => {
-                const u8 = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk)
-                controller.enqueue(u8)
-              })
-              streamResult.once('end', () => controller.close())
-              streamResult.once('error', (err: any) => controller.error(err))
-            },
-          })
+          return nodeStreamToWebStream(streamResult)
         }
         throw new Error('UUID loader must return a ReadableStream or Readable')
       }
@@ -770,14 +809,6 @@ export class FileBox implements Pipeable, FileBoxInterface {
     }
     const bytes = await this.toBytes()
     return new Blob([bytes as any], { type: this.mediaType })
-  }
-
-  async bytes (): Promise<Uint8Array> {
-    return this.toBytes()
-  }
-
-  async blob (): Promise<Blob> {
-    return this.toBlob()
   }
 
   async toBase64 (): Promise<string> {
