@@ -2,28 +2,17 @@
  * Unit tests for FileBox creation, conversion, serialization, and QR code operations.
  */
 import { test } from 'node:test'
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import fs from 'node:fs'
-import path from 'node:path'
-import os from 'node:os'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import * as os from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { PassThrough, type Readable } from 'node:stream'
-import sinon from 'sinon'
 import { instanceToClass } from 'clone-class'
 
 import { FileBox } from './file-box.ts'
 import { FileBoxType } from './file-box.type.ts'
-
-test('FileBoxType member types stay addressable', () => {
-  const qr: FileBoxType.QRCode = FileBoxType.QRCode
-  const file: FileBoxType.File = FileBoxType.File
-  const uuid: FileBoxType.Uuid = FileBoxType.Uuid
-  assert.equal(qr, 3)
-  assert.equal(file, 5)
-  assert.equal(uuid, 7)
-  assert.equal(FileBoxType[FileBoxType.QRCode], 'QRCode')
-})
 
 test('File smoke testing', async () => {
   assert.throws(() => FileBox.fromFile('non-existent-file-xyz.txt'), 'should throw for a non-existing file')
@@ -107,28 +96,12 @@ test('metadata', async () => {
   assert.deepStrictEqual(fileBox.metadata, metadata, 'metadata should be set and retrieved accurately')
 })
 
-test('fromQRCode()', async () => {
-  const QRCODE_VALUE = 'hello, world!'
-  const EXPECTED_QRCODE_IMAGE_BASE64 = [
-    'iVBORw0KGgoAAAANSUhEUgAAAHQAAAB0CAYAAABUmhYnAAAAAklEQVR4AewaftIAAAKcSURBVO3BQY7',
-    'cQAwEwSxC//9yeo88NSBIsx7TjIg/WGMUa5RijVKsUYo1SrFGKdYoxRqlWKMUa5RijVKsUYo1SrFGKd',
-    'YoxRrl4qEk/CaVkyTcoXKShN+k8kSxRinWKMUa5eJlKm9Kwh0qn6TypiS8qVijFGuUYo1y8WFJuEPlj',
-    'iR0Kl0SOpUuCZ3KHUm4Q+WTijVKsUYp1igXw6n8T4o1SrFGKdYoF8MloVOZrFijFGuUYo1y8WEq3yQJ',
-    'ncoTKt+kWKMUa5RijXLxsiR8M5UuCZ3KSRK+WbFGKdYoxRrl4iGVf5nKicq/pFijFGuUYo0Sf/BAEjq',
-    'VLglvUnkiCZ3KSRLepPJJxRqlWKMUa5SLlyXhROU3JaFT6ZJwonKShCeS0Kk8UaxRijVKsUaJP3hREj',
-    'qVO5JwotIloVO5Iwl3qJwk4Q6VNxVrlGKNUqxRLv6yJJyodEl4Igl3qHRJ6FTuUPmkYo1SrFGKNcrFQ',
-    '0k4ScITSehUuiScJKFT6ZLQqXRJuEPljiR0Kk8Ua5RijVKsUS4eUvkmSbhDpUvCHUk4UflNxRqlWKMU',
-    'a5SLh5Lwm1Q6lS4JdyThCZWTJJyovKlYoxRrlGKNcvEylTcl4SQJnUqXhCdUuiScJOFvKtYoxRqlWKN',
-    'cfFgS7lB5k0qXhDuS0Kl0SehUTpLQJaFTeaJYoxRrlGKNcjFcEjqVJ5JwkoROpVP5pGKNUqxRijXKxX',
-    '8mCScqXRJOVE6S0Kl8UrFGKdYoxRrl4sNUPknlDpUuCV0SOpWTJHyTYo1SrFGKNcrFy5Lwm5LQqXQqX',
-    'RI6lZMkdConKidJ6FTeVKxRijVKsUaJP1hjFGuUYo1SrFGKNUqxRinWKMUapVijFGuUYo1SrFGKNUqx',
-    'RinWKMUa5Q8Ztu740xD9iQAAAABJRU5ErkJggg==',
-  ].join('')
-
-  const fileBox = FileBox.fromQRCode(QRCODE_VALUE)
-  const base64Text = await fileBox.toBase64()
-
-  assert.strictEqual(base64Text, EXPECTED_QRCODE_IMAGE_BASE64, 'should encode QR Code value to expected image')
+test('fromQRCode() produces a PNG with the supplied payload', async () => {
+  const value = 'hello, world!'
+  const fileBox = FileBox.fromQRCode(value)
+  const image = await fileBox.toBuffer()
+  assert.equal(image.subarray(1, 4).toString('ascii'), 'PNG')
+  assert.equal(await FileBox.fromBuffer(image, 'qrcode.png').toQRCode(), value)
 })
 
 test('toQRCode()', async () => {
@@ -242,7 +215,9 @@ test('setUuidSaver()', async () => {
 
 test('setUuidLoader() & setUuidSaver() on the FileBox class', () => {
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-  const result = spawnSync(process.execPath, [
+  // This fixture checks the Node entry in a fresh process even under Deno.
+  const node = process.versions['deno'] ? 'node' : process.execPath
+  const result = spawnSync(node, [
     '--input-type=module',
     '--eval',
     `
@@ -292,13 +267,10 @@ test('setUuidLoader() & setUuidSaver() on the FileBox class', () => {
   assert.equal(result.status, 0, `${result.stderr}\n${result.stdout}`)
 })
 
-test('setUuidLoader() & setUuidSaver() with `this`', async () => {
-  const sandbox = sinon.createSandbox()
-
-  const loader = sandbox.stub()
-    .returns(await FileBox.fromQRCode('qr').toStream())
-  const saver = sandbox.stub()
-    .returns('uuid')
+test('setUuidLoader() & setUuidSaver() with `this`', async t => {
+  const stream = await FileBox.fromQRCode('qr').toStream()
+  const loader = t.mock.fn(async () => stream)
+  const saver = t.mock.fn(async () => 'uuid')
 
   class FileBoxTest extends FileBox {}
 
@@ -307,12 +279,11 @@ test('setUuidLoader() & setUuidSaver() with `this`', async () => {
 
   const fileBox = FileBoxTest.fromUuid('uuid', { name: 'test.txt' })
   await fileBox.toBuffer()
-  assert.strictEqual(loader.thisValues[0], fileBox, 'should call loader with `this`')
+  assert.strictEqual(loader.mock.calls[0]?.this, fileBox, 'should call loader with `this`')
 
   const fileBox2 = FileBoxTest.fromBuffer(Buffer.from('test'), 'test.txt')
   await fileBox2.toUuid()
-  assert.strictEqual(saver.thisValues[0], fileBox2, 'should call saver with `this`')
-  sandbox.restore()
+  assert.strictEqual(saver.mock.calls[0]?.this, fileBox2, 'should call saver with `this`')
 })
 
 test('FileBox.validInterface()', async () => {

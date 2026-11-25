@@ -13,7 +13,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "skipLibCheck": true,
-    "esModuleInterop": true,
+    "esModuleInterop": false,
     "strict": true,
     "noEmitOnError": true,
     "noUnusedLocals": true,

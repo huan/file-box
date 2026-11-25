@@ -29,11 +29,12 @@
  *  transmission are presented.  Finally, there is a discussion of URN
  *  equivalence and how to determine it.
  */
-import fs     from 'fs'
-import os     from 'os'
-import path   from 'path'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
 
-import type { Readable } from 'stream'
+import type { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 
 import { instanceToClass }  from 'clone-class'
 import { log }              from 'brolog'
@@ -227,22 +228,21 @@ class UniformResourceNameRegistry {
   }
 
   /**
-   * Save the `Readable` stream and return a random UUID
-   *  The UUID will be expired after MAX_KEEP_MINUTES
+   * Saves the stream and returns a UUID after the file has been written.
+   * A failed write leaves no resolvable UUID.
    */
   async save (stream: Readable): Promise<string> {
     log.verbose('UniformResourceNameRegistry', 'save(stream)')
 
     const uuid = randomUuid()
 
-    const fileStream = fs.createWriteStream(this.uuidFileName(uuid))
-    const future = new Promise<void>((resolve, reject) => {
-      stream.on('end',        resolve)
-      stream.on('error',      reject)
-      fileStream.on('error',  reject)
-    })
-    stream.pipe(fileStream)
-    await future
+    const filename = this.uuidFileName(uuid)
+    try {
+      await pipeline(stream, fs.createWriteStream(filename))
+    } catch (error) {
+      await fs.promises.rm(filename, { force: true }).catch(() => undefined)
+      throw error
+    }
 
     this.addToExpiringTable(uuid)
 
@@ -261,7 +261,7 @@ class UniformResourceNameRegistry {
     // https://stackoverflow.com/a/22687090
     const expireTimeNearestMinute = Math.ceil(expireTime / expireTimeInterval) * expireTimeInterval
 
-    const uuidList = this.uuidExpiringTable.get(expireTime) || []
+    const uuidList = this.uuidExpiringTable.get(expireTimeNearestMinute) || []
     uuidList.push(uuid)
     this.uuidExpiringTable.set(expireTimeNearestMinute, uuidList)
 

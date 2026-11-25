@@ -2,7 +2,7 @@
  * Unit tests for UUID to BigInt conversion.
  */
 import { test } from 'node:test'
-import assert from 'node:assert/strict'
+import * as assert from 'node:assert/strict'
 
 import { uuidToBigInt } from './uuid-to-big-int.ts'
 
